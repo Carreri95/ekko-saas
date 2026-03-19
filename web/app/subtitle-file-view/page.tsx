@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type SubtitleCueDto = {
   id: string;
@@ -17,11 +17,52 @@ type SubtitleFileResponse = {
   cues: SubtitleCueDto[];
 };
 
+type ProblemFilter =
+  | "all"
+  | "problematic"
+  | "invalid-time"
+  | "empty-text"
+  | "overlap"
+  | "short-duration"
+  | "long-duration";
+
+const MIN_DURATION_MS = 400;
+const MAX_DURATION_MS = 12000;
+
+function getCueProblems(cues: SubtitleCueDto[], index: number): string[] {
+  const cue = cues[index];
+  const nextCue = cues[index + 1];
+  const problems: string[] = [];
+
+  if (cue.startMs >= cue.endMs) {
+    problems.push("startMs >= endMs");
+  }
+
+  if (!cue.text.trim()) {
+    problems.push("texto vazio");
+  }
+
+  if (nextCue && cue.endMs > nextCue.startMs) {
+    problems.push(`overlap com próxima cue (#${nextCue.cueIndex})`);
+  }
+
+  const duration = cue.endMs - cue.startMs;
+  if (duration < MIN_DURATION_MS) {
+    problems.push(`duração curta (${duration}ms)`);
+  } else if (duration > MAX_DURATION_MS) {
+    problems.push(`duração longa (${duration}ms)`);
+  }
+
+  return problems;
+}
+
 export default function SubtitleFileViewPage() {
   const [subtitleFileId, setSubtitleFileId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<SubtitleFileResponse | null>(null);
+  const [filterMode, setFilterMode] = useState<ProblemFilter>("all");
+  const [exportSuccess, setExportSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("subtitleFileId");
@@ -38,6 +79,7 @@ export default function SubtitleFileViewPage() {
 
     setLoading(true);
     setError(null);
+    setExportSuccess(null);
     setData(null);
 
     try {
@@ -59,6 +101,64 @@ export default function SubtitleFileViewPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  const cueProblemsList = useMemo(
+    () =>
+      (data?.cues ?? []).map((cue, index) => ({
+        cue,
+        problems: getCueProblems(data?.cues ?? [], index),
+      })),
+    [data]
+  );
+
+  const problematicCount = useMemo(
+    () => cueProblemsList.filter((item) => item.problems.length > 0).length,
+    [cueProblemsList]
+  );
+
+  const visibleCueProblemsList = useMemo(
+    () =>
+      filterMode === "all"
+        ? cueProblemsList
+        : cueProblemsList.filter((item) => {
+            if (filterMode === "problematic") {
+              return item.problems.length > 0;
+            }
+            if (filterMode === "invalid-time") {
+              return item.problems.some((problem) => problem.startsWith("startMs >="));
+            }
+            if (filterMode === "empty-text") {
+              return item.problems.some((problem) => problem === "texto vazio");
+            }
+            if (filterMode === "overlap") {
+              return item.problems.some((problem) => problem.startsWith("overlap"));
+            }
+            if (filterMode === "short-duration") {
+              return item.problems.some((problem) => problem.startsWith("duração curta"));
+            }
+            if (filterMode === "long-duration") {
+              return item.problems.some((problem) => problem.startsWith("duração longa"));
+            }
+            return false;
+          }),
+    [cueProblemsList, filterMode]
+  );
+
+  const filterLabel = useMemo(() => {
+    if (filterMode === "all") return "todas";
+    if (filterMode === "problematic") return "somente problemáticas";
+    if (filterMode === "invalid-time") return "tempo inválido";
+    if (filterMode === "empty-text") return "texto vazio";
+    if (filterMode === "overlap") return "overlap";
+    if (filterMode === "short-duration") return "duração curta";
+    return "duração longa";
+  }, [filterMode]);
+
+  function handleExport() {
+    if (!data?.subtitleFileId) return;
+    window.open(`/api/subtitle-files/${encodeURIComponent(data.subtitleFileId)}/export`, "_blank");
+    setExportSuccess("Exportação iniciada. Verifique o download do navegador.");
   }
 
   return (
@@ -96,45 +196,132 @@ export default function SubtitleFileViewPage() {
         </pre>
       ) : null}
 
+      {exportSuccess ? (
+        <pre className="mt-4 whitespace-pre-wrap rounded border border-blue-200 bg-blue-50 p-3 font-mono text-sm text-blue-800">
+          {exportSuccess}
+        </pre>
+      ) : null}
+
       {data ? (
         <section className="mt-6 max-w-4xl space-y-3">
-          <div>
-            <p className="font-medium">filename</p>
-            <p className="font-mono text-sm">{data.filename}</p>
+          <section className="rounded border bg-white p-3">
+            <p className="text-sm font-semibold">Resumo do arquivo</p>
+            <div className="mt-2 space-y-1">
+              <p className="font-mono text-sm">
+                <span className="font-semibold">filename:</span> {data.filename}
+              </p>
+              <p className="font-mono text-sm">
+                <span className="font-semibold">subtitleFileId:</span> {data.subtitleFileId}
+              </p>
+              <p className="font-mono text-sm">
+                <span className="font-semibold">projectId:</span> {data.projectId}
+              </p>
+            </div>
+          </section>
+
+          <section className="rounded border bg-white p-3">
+            <p className="text-sm font-semibold">Ações rápidas</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <a
+                className="rounded border px-3 py-1 text-sm hover:bg-zinc-50"
+                href={`/subtitle-file-edit?subtitleFileId=${encodeURIComponent(data.subtitleFileId)}`}
+              >
+                Abrir no editor
+              </a>
+              <button
+                type="button"
+                className="rounded border px-3 py-1 text-sm hover:bg-zinc-50"
+                onClick={handleExport}
+              >
+                Exportar SRT
+              </button>
+            </div>
+          </section>
+
+          <div className="max-w-3xl rounded border bg-zinc-50 p-3 text-sm">
+            <p>
+              <span className="font-medium">Resumo:</span>{" "}
+              <span className="font-mono">total={data.cues.length}</span>{" "}
+              <span className="font-mono">problemáticas={problematicCount}</span>{" "}
+              <span className="font-mono">filtro={filterLabel}</span>
+            </p>
           </div>
 
-          <div>
-            <p className="font-medium">subtitleFileId</p>
-            <p className="font-mono text-sm">{data.subtitleFileId}</p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <a
-              className="rounded border px-3 py-1 text-sm hover:bg-zinc-50"
-              href={`/subtitle-file-edit?subtitleFileId=${encodeURIComponent(data.subtitleFileId)}`}
-            >
-              Abrir no editor
-            </a>
-          </div>
-
-          <div>
-            <p className="font-medium">projectId</p>
-            <p className="font-mono text-sm">{data.projectId}</p>
-          </div>
-
-          <div>
+          <section>
             <p className="font-medium">cues ({data.cues.length})</p>
+            <div className="mt-2 rounded border bg-zinc-50 p-3">
+              <p className="text-sm font-medium">
+                Cues problemáticas:{" "}
+                <span className="font-mono">
+                  {problematicCount} / {data.cues.length}
+                </span>
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  className={`rounded border px-3 py-1 text-sm ${
+                    filterMode === "all" ? "bg-black text-white" : "bg-white"
+                  }`}
+                  onClick={() => setFilterMode("all")}
+                >
+                  todas
+                </button>
+                <button
+                  type="button"
+                  className={`rounded border px-3 py-1 text-sm ${
+                    filterMode === "problematic" ? "bg-black text-white" : "bg-white"
+                  }`}
+                  onClick={() => setFilterMode("problematic")}
+                >
+                  somente problemáticas
+                </button>
+              </div>
+              <div className="mt-2">
+                <label className="text-sm">
+                  <span className="mr-2 font-medium">Tipo de problema:</span>
+                  <select
+                    className="rounded border bg-white px-2 py-1 text-sm"
+                    value={filterMode}
+                    onChange={(e) => setFilterMode(e.target.value as ProblemFilter)}
+                  >
+                    <option value="all">todas</option>
+                    <option value="problematic">somente problemáticas</option>
+                    <option value="invalid-time">tempo inválido</option>
+                    <option value="empty-text">texto vazio</option>
+                    <option value="overlap">overlap</option>
+                    <option value="short-duration">duração curta</option>
+                    <option value="long-duration">duração longa</option>
+                  </select>
+                </label>
+              </div>
+            </div>
             <div className="mt-2 space-y-2">
-              {data.cues.map((cue) => (
-                <div key={cue.id} className="rounded border bg-white p-3">
+              {visibleCueProblemsList.map(({ cue, problems }) => {
+                const hasProblems = problems.length > 0;
+
+                return (
+                <div
+                  key={cue.id}
+                  className={`rounded border p-3 ${
+                    hasProblems
+                      ? "border-amber-400 bg-amber-50"
+                      : "border-zinc-200 bg-white"
+                  }`}
+                >
                   <p className="font-mono text-sm">
                     #{cue.cueIndex} | {cue.startMs}ms - {cue.endMs}ms
                   </p>
+                  {hasProblems ? (
+                    <p className="mt-1 text-xs font-medium text-amber-900">
+                      Problemas: {problems.join(" | ")}
+                    </p>
+                  ) : null}
                   <p className="mt-1 whitespace-pre-wrap">{cue.text}</p>
                 </div>
-              ))}
+                );
+              })}
             </div>
-          </div>
+          </section>
         </section>
       ) : null}
     </main>
