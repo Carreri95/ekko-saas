@@ -1,0 +1,2 @@
+Rodar openclaw: npx openclaw gateway run --allow-unconfigured
+limpar chat: rm ~/.openclaw/agents/main/sessions/sessions.json

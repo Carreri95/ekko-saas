@@ -1,0 +1,184 @@
+Fase atual
+
+Você já tem um dataset v1 funcional.
+
+Eu não jogaria isso fora.
+Eu faria:
+
+1. congelar essa versão
+
+Considere isso sua base:
+
+dataset_v1_structure_ok
+
+2. não mexer mais no import nem no metadata
+
+Essas partes estão boas.
+
+3. melhorar só o build_training_pairs.py
+
+Porque o gargalo agora está nele.
+
+Próximos passos práticos
+Agora
+
+Você pode continuar populando a base com mais episódios sem medo.
+
+Fluxo:
+
+py 01_import_novels_to_dataset.py
+py build_dataset_metadata.py
+py build_training_pairs.py
+
+Isso já está operacional.
+
+Em paralelo
+
+A próxima melhoria deve ser uma v2 melhor do alinhador, com foco em:
+
+diminuir insert
+
+diminuir delete_text
+
+aumentar keep
+
+aumentar retime
+
+melhorar resegment
+
+O que ainda precisamos implementar
+Prioridade alta
+1. Validador de qualidade dos pares
+
+Script para gerar relatório por episódio:
+
+quantos keep
+
+quantos retime
+
+quantos insert
+
+quantos delete_text
+
+proporção de ruído
+
+Assim você acha episódios ruins automaticamente.
+
+2. Melhor alinhador
+
+Hoje ele usa matching local por grupos.
+Depois podemos melhorar com:
+
+janela temporal
+
+âncora por similaridade forte
+
+alinhamento dinâmico melhor
+
+regra especial para onomatopeia e blocos vazios
+
+3. Split de dataset
+
+Criar:
+
+train
+
+validation
+
+test
+
+Idealmente por novela, para não vazar padrão entre treino e validação.
+
+Prioridade média
+4. .bat com menu
+
+Para você não decorar comandos.
+
+5. README_DATASET.txt
+
+Com a ordem oficial de uso.
+
+6. Script de auditoria
+
+Detectar:
+
+episódio sem meta
+
+áudio sem duração
+
+Bruto.srt vazio
+
+Final.srt vazio
+
+episódios suspeitos
+
+Prioridade futura
+7. Modelo de timing
+
+Treinar algo para prever:
+
+shift inicial
+
+shift final
+
+split timing
+
+8. Modelo de limpeza
+
+Aprender:
+
+remover onomatopeia
+
+resegmentar
+
+sugerir merge/split
+
+9. Interface
+
+Aí sim faz sentido:
+
+desktop simples
+
+menu para importar / metadata / pairs / auditar
+
+Meu veredito
+Status atual
+
+Você já tem um dataset real e organizado.
+
+Nota por parte
+
+estrutura: 10/10
+
+importação: 10/10
+
+metadata/manifest: 9.5/10
+
+training pairs: 6.5/10
+
+pipeline de limpeza: 8/10
+
+Conclusão
+
+Você saiu do zero e já chegou num ponto profissional de organização.
+Agora o próximo salto de qualidade não está mais na estrutura, e sim no alinhamento dos pares.
+
+O que eu recomendo fazer agora mesmo
+Continue populando a base
+
+Pode subir para 200 episódios sem medo.
+
+E paralelamente
+
+No próximo passo, eu sugiro fazer um destes dois:
+
+Opção A: criar um audit_training_pairs.py para medir qualidade por episódio
+Opção B: melhorar o build_training_pairs.py para reduzir insert/delete_text
+
+A ordem mais inteligente é começar pela A.
+Primeiro medir, depois melhorar.
+
+py build_training_pairs.py
+py reconcile_training_pairs.py
+py audit_training_pairs.py
+py split_training_pairs_by_quality.py
