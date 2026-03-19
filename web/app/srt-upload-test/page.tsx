@@ -158,16 +158,25 @@ export default function SrtUploadTestPage() {
         </a>
       </nav>
 
-      <div className="mt-4 space-y-1">
-        <p className="font-medium">Project Demo</p>
-        {projectError ? (
-          <p className="text-red-700">{projectError}</p>
-        ) : (
-          <p className="font-mono text-sm">{projectId ?? "carregando..."}</p>
-        )}
-      </div>
+      <section className="mt-4 max-w-3xl rounded border bg-zinc-50 p-3 text-sm">
+        <p>
+          <span className="font-medium">Resumo:</span>{" "}
+          <span className="font-mono">projectDemo={projectId ? "ok" : "pendente"}</span>{" "}
+          <span className="font-mono">arquivo={filename.trim() ? "ok" : "pendente"}</span>{" "}
+          <span className="font-mono">conteúdo={srtContent.trim() ? "ok" : "pendente"}</span>
+        </p>
+      </section>
 
-      <div className="mt-6 space-y-4">
+      <section className="mt-3 max-w-3xl rounded border bg-white p-3">
+        <p className="text-sm font-semibold">Project Demo</p>
+        {projectError ? (
+          <p className="mt-2 text-sm text-red-700">{projectError}</p>
+        ) : (
+          <p className="mt-2 font-mono text-sm">{projectId ?? "carregando..."}</p>
+        )}
+      </section>
+
+      <section className="mt-4 space-y-4 rounded border bg-white p-4">
         <div className="space-y-1">
           <label className="block font-medium" htmlFor="srtFile">
             arquivo .srt
@@ -219,7 +228,7 @@ export default function SrtUploadTestPage() {
         >
           {loading ? "Enviando..." : "Enviar para /api/upload-srt"}
         </button>
-      </div>
+      </section>
 
       {submitError ? (
         <pre className="mt-4 whitespace-pre-wrap rounded border border-red-200 bg-red-50 p-3 font-mono text-sm text-red-800">
@@ -235,6 +244,7 @@ export default function SrtUploadTestPage() {
 
       {responseJson ? (
         <section className="mt-4 max-w-3xl space-y-3 rounded border bg-white p-3">
+          <p className="text-sm font-semibold">Retorno do upload</p>
           <div>
             <p className="text-sm font-semibold">subtitleFileId</p>
             <p className="font-mono text-sm">{responseJson.subtitleFileId}</p>

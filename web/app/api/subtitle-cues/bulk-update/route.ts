@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "../../../../src/lib/prisma";
+import { formatSrt } from "../../../../src/lib/srt/format-srt";
 
 type CueUpdateInput = {
-  id: string;
+  id?: string;
   startMs: number;
   endMs: number;
   text: string;
@@ -19,7 +20,7 @@ function isValidCuePayload(cue: unknown): cue is CueUpdateInput {
 
   const c = cue as Record<string, unknown>;
   return (
-    typeof c.id === "string" &&
+    (typeof c.id === "undefined" || typeof c.id === "string") &&
     Number.isFinite(c.startMs) &&
     Number.isFinite(c.endMs) &&
     typeof c.text === "string"
@@ -70,44 +71,110 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "SubtitleFile nao encontrado" }, { status: 404 });
   }
 
-  const cueIds = cues.map((c) => c.id);
+  const cueIds = cues
+    .map((c) => c.id)
+    .filter((id): id is string => typeof id === "string" && id.length > 0);
   const uniqueCueIds = new Set(cueIds);
   if (uniqueCueIds.size !== cueIds.length) {
     return NextResponse.json({ error: "IDs de cue duplicados no payload" }, { status: 400 });
   }
 
-  const ownedCount = await prisma.subtitleCue.count({
+  const existingCues = await prisma.subtitleCue.findMany({
     where: {
       subtitleFileId,
-      id: { in: cueIds },
     },
+    select: { id: true },
   });
 
-  if (ownedCount !== cueIds.length) {
+  const existingCueIds = new Set(existingCues.map((cue) => cue.id));
+  const hasUnknownCueId = cueIds.some((cueId) => !existingCueIds.has(cueId));
+  if (hasUnknownCueId) {
     return NextResponse.json(
       { error: "Um ou mais cues nao pertencem ao SubtitleFile informado" },
       { status: 400 }
     );
   }
 
-  if (cues.length > 0) {
-    await prisma.$transaction(
-      cues.map((cue) =>
-        prisma.subtitleCue.update({
-          where: { id: cue.id },
+  const result = await prisma.$transaction(async (tx) => {
+    if (cueIds.length > 0) {
+      await tx.subtitleCue.deleteMany({
+        where: {
+          subtitleFileId,
+          id: { notIn: cueIds },
+        },
+      });
+    } else {
+      await tx.subtitleCue.deleteMany({
+        where: { subtitleFileId },
+      });
+    }
+
+    await Promise.all(
+      cues.map((cue, index) => {
+        const data = {
+          cueIndex: index + 1,
+          startMs: Math.trunc(cue.startMs),
+          endMs: Math.trunc(cue.endMs),
+          text: cue.text,
+        };
+
+        if (cue.id && existingCueIds.has(cue.id)) {
+          return tx.subtitleCue.update({
+            where: { id: cue.id },
+            data,
+          });
+        }
+
+        return tx.subtitleCue.create({
           data: {
-            startMs: Math.trunc(cue.startMs),
-            endMs: Math.trunc(cue.endMs),
-            text: cue.text,
+            subtitleFileId,
+            ...data,
           },
-        })
-      )
+        });
+      })
     );
-  }
+
+    const currentCues = await tx.subtitleCue.findMany({
+      where: { subtitleFileId },
+      orderBy: { cueIndex: "asc" },
+      select: {
+        id: true,
+        cueIndex: true,
+        startMs: true,
+        endMs: true,
+        text: true,
+      },
+    });
+
+    const snapshotContent = formatSrt(currentCues);
+
+    const latestVersion = await tx.subtitleVersion.findFirst({
+      where: { subtitleFileId },
+      orderBy: { versionNumber: "desc" },
+      select: { versionNumber: true },
+    });
+
+    const nextVersionNumber = (latestVersion?.versionNumber ?? 0) + 1;
+
+    const version = await tx.subtitleVersion.create({
+      data: {
+        subtitleFileId,
+        versionNumber: nextVersionNumber,
+        srtContent: snapshotContent,
+      },
+      select: { id: true, versionNumber: true, createdAt: true },
+    });
+
+    return { version, currentCues };
+  });
 
   return NextResponse.json({
     subtitleFileId,
     updatedCount: cues.length,
+    versionId: result.version.id,
+    versionNumber: result.version.versionNumber,
+    versionCreatedAt: result.version.createdAt,
+    cues: result.currentCues,
   });
 }
 
