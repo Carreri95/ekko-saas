@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { autoBrText } from "../lib/cue-utils";
 
 type CueLike = {
   tempId: string;
@@ -37,8 +38,19 @@ export function CueTextEditor({
   const [localText, setLocalText] = useState(cue.text);
   const textRef = useRef<HTMLTextAreaElement | null>(null);
 
+  /** Ao abrir ou mudar de cue, foca o textarea e coloca o cursor no fim do texto. */
   useEffect(() => {
-    textRef.current?.focus();
+    const el = textRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.focus();
+      const len = el.value.length;
+      try {
+        el.setSelectionRange(len, len);
+      } catch {
+        /* ignore */
+      }
+    });
   }, [cue.tempId]);
 
   const metrics = useMemo(() => {
@@ -82,21 +94,19 @@ export function CueTextEditor({
   function handleAutoBr() {
     const flat = localText.split("\n").join(" ").replace(/\s+/g, " ").trim();
     if (!flat) return;
-    const mid = Math.floor(flat.length / 2);
-    let splitAt = mid;
-    for (let i = 0; i <= 12; i += 1) {
-      if (flat[mid - i] === " ") {
-        splitAt = mid - i;
-        break;
-      }
-      if (flat[mid + i] === " ") {
-        splitAt = mid + i;
-        break;
-      }
-    }
-    const result = `${flat.slice(0, splitAt)}\n${flat.slice(splitAt + 1)}`.trim();
+    const result = autoBrText(flat);
     setLocalText(result);
     onCommitText(cue.tempId, result);
+  }
+
+  const hasLineBreak = localText.includes("\n");
+
+  function handleToggleBreakMode() {
+    if (hasLineBreak) {
+      handleUnbreak();
+      return;
+    }
+    handleAutoBr();
   }
 
   return (
@@ -117,6 +127,14 @@ export function CueTextEditor({
           </span>
         </div>
         <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleToggleBreakMode}
+            className="rounded border border-zinc-700/80 bg-zinc-800/70 px-2.5 py-1 text-[11px] text-zinc-200 hover:bg-zinc-700/70"
+            title={hasLineBreak ? "Remover quebra de linha automática" : "Aplicar quebra automática"}
+          >
+            {hasLineBreak ? "Unbreak" : "Auto br"}
+          </button>
           <span className="font-mono text-[12px] tabular-nums">
             <span className={`font-semibold ${metrics.cpsTone}`}>{metrics.cps.toFixed(1)}</span>
             <span className="text-zinc-600"> c/s</span>
@@ -160,20 +178,6 @@ export function CueTextEditor({
 
       {/* Actions */}
       <div className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-[#1a1a1a] px-3 py-2">
-        <button
-          type="button"
-          onClick={handleUnbreak}
-          className="rounded border border-zinc-700/80 bg-zinc-800/70 px-2.5 py-1 text-[11px] text-zinc-200 hover:bg-zinc-700/70"
-        >
-          Unbreak
-        </button>
-        <button
-          type="button"
-          onClick={handleAutoBr}
-          className="rounded border border-zinc-700/80 bg-zinc-800/70 px-2.5 py-1 text-[11px] text-zinc-200 hover:bg-zinc-700/70"
-        >
-          Auto br
-        </button>
         <div className="flex-1" />
         <button
           type="button"

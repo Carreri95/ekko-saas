@@ -7,6 +7,8 @@ import type WaveSurfer from "wavesurfer.js";
 type UseMediaPlaybackControlsParams = {
   mediaElementRef: MutableRefObject<HTMLAudioElement | HTMLVideoElement | null>;
   waveSurferRef: MutableRefObject<WaveSurfer | null>;
+  /** Velocidade de reprodução (ex.: 1.0) — aplicada antes de `play()`. */
+  playbackRateRef: MutableRefObject<number>;
   isWaveformSeekingRef: MutableRefObject<boolean>;
   setCurrentPlaybackMs: Dispatch<SetStateAction<number>>;
   logBrowserError: (context: string, error: unknown) => void;
@@ -15,6 +17,7 @@ type UseMediaPlaybackControlsParams = {
 export function useMediaPlaybackControls({
   mediaElementRef,
   waveSurferRef,
+  playbackRateRef,
   isWaveformSeekingRef,
   setCurrentPlaybackMs,
   logBrowserError,
@@ -43,6 +46,10 @@ export function useMediaPlaybackControls({
     [mediaElementRef, waveSurferRef, isWaveformSeekingRef, setCurrentPlaybackMs],
   );
 
+  /**
+   * Mapeia clientX → tempo na mesma geometria que o desenho das cues (totalW + scroll).
+   * scrollLeft é obrigatório quando a waveform está scrollada horizontalmente.
+   */
   const seekPlaybackFromWaveClientX = useCallback(
     (clientX: number) => {
       const ws = waveSurferRef.current;
@@ -55,7 +62,6 @@ export function useMediaPlaybackControls({
       const viewportX = Math.max(0, Math.min(rect.width, clientX - rect.left));
       const totalW = Math.max(wrapper.scrollWidth, wrapper.offsetWidth);
       if (totalW <= 0) return;
-      // Usa scrollLeft real do wrapper para evitar desvio após mexer na scrollbar nativa.
       const absoluteX = wrapper.scrollLeft + viewportX;
       const ratio = Math.max(0, Math.min(1, absoluteX / totalW));
       seekPlaybackToTimeSec(ratio * durationSec);
@@ -72,6 +78,42 @@ export function useMediaPlaybackControls({
     [waveSurferRef],
   );
 
+  /**
+   * Mantém a barra do playhead dentro da área visível ao fazer seek (ex.: setas do teclado).
+   * Usa a mesma geometria que o clique na waveform (ratio × totalW).
+   */
+  const ensureWaveformPlayheadVisible = useCallback(
+    (timeSec: number) => {
+      const ws = waveSurferRef.current;
+      if (!ws || !Number.isFinite(timeSec)) return;
+      const durationSec = ws.getDuration();
+      if (!Number.isFinite(durationSec) || durationSec <= 0) return;
+      const wrapper = ws.getWrapper();
+      if (!wrapper) return;
+      const totalW = Math.max(wrapper.scrollWidth, wrapper.offsetWidth);
+      const viewW = ws.getWidth();
+      if (totalW <= 0 || viewW <= 0) return;
+      const maxScroll = Math.max(0, totalW - viewW);
+      if (maxScroll <= 0) return;
+
+      const clampedTime = Math.max(0, Math.min(durationSec, timeSec));
+      const playheadX = (clampedTime / durationSec) * totalW;
+      const margin = Math.min(56, Math.max(24, viewW * 0.12));
+      let scroll = ws.getScroll();
+
+      if (playheadX < scroll + margin) {
+        scroll = Math.max(0, playheadX - margin);
+      } else if (playheadX > scroll + viewW - margin) {
+        scroll = Math.min(maxScroll, playheadX - viewW + margin);
+      } else {
+        return;
+      }
+
+      ws.setScroll(scroll);
+    },
+    [waveSurferRef],
+  );
+
   const seekPlayerToCue = useCallback(
     (startMs: number) => {
       seekPlaybackToTimeSec(startMs / 1000);
@@ -82,13 +124,18 @@ export function useMediaPlaybackControls({
   const playMedia = useCallback(async () => {
     const media = mediaElementRef.current;
     if (!media) return;
+    const r = playbackRateRef.current;
+    if (typeof r === "number" && Number.isFinite(r) && r > 0) {
+      media.playbackRate = r;
+      media.defaultPlaybackRate = r;
+    }
     try {
       await media.play();
     } catch (error) {
       logBrowserError("playMedia media.play()", error);
       // Ignora bloqueio de autoplay sem quebrar o fluxo.
     }
-  }, [mediaElementRef, logBrowserError]);
+  }, [mediaElementRef, playbackRateRef, logBrowserError]);
 
   const pauseMedia = useCallback(() => {
     const media = mediaElementRef.current;
@@ -123,6 +170,7 @@ export function useMediaPlaybackControls({
     seekPlaybackToTimeSec,
     seekPlaybackFromWaveClientX,
     scrollWaveformToCueStart,
+    ensureWaveformPlayheadVisible,
     seekPlayerToCue,
     playMedia,
     pauseMedia,

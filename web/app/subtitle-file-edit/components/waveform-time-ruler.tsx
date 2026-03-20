@@ -38,14 +38,9 @@ function formatRulerLabel(seconds: number): string {
   return seconds.toFixed(1);
 }
 
-export function WaveformTimeRuler({
-  viewport,
-  durationSec,
-}: WaveformTimeRulerProps) {
+export function WaveformTimeRuler({ viewport, durationSec }: WaveformTimeRulerProps) {
   const ticks = useMemo<Tick[]>(() => {
-    if (!viewport || !durationSec || durationSec <= 0 || viewport.totalW <= 0) {
-      return [];
-    }
+    if (!viewport || !durationSec || durationSec <= 0 || viewport.totalW <= 0) return [];
     const startT = (viewport.scroll / viewport.totalW) * durationSec;
     const visibleDur = (viewport.viewW / viewport.totalW) * durationSec;
     if (visibleDur <= 0) return [];
@@ -63,11 +58,7 @@ export function WaveformTimeRuler({
       if (Math.abs(leftPx - lastLeftPx) < 1) continue;
       lastLeftPx = leftPx;
       const isMajor = Math.abs(t - Math.round(t)) < 0.001;
-      list.push({
-        leftPx,
-        isMajor,
-        label: isMajor ? formatRulerLabel(t) : "",
-      });
+      list.push({ leftPx, isMajor, label: isMajor ? formatRulerLabel(t) : "" });
     }
     return list;
   }, [viewport, durationSec]);
@@ -75,7 +66,7 @@ export function WaveformTimeRuler({
   if (!ticks.length) return null;
 
   return (
-    <div className="relative mb-0 h-[28px] w-full border-b border-zinc-700/60 bg-[#141414]">
+    <div className="relative h-[24px] w-full shrink-0 border-b border-zinc-800/80 bg-[#111111]">
       {ticks.map((tick, idx) => (
         <div
           key={`${tick.leftPx}-${idx}`}
@@ -83,16 +74,17 @@ export function WaveformTimeRuler({
           style={{ left: `${tick.leftPx}px` }}
           aria-hidden
         >
-          {/* Tick mark — major taller */}
+          {/* Tick mark */}
           <div
             className={`absolute bottom-0 w-px ${
               tick.isMajor
-                ? "h-[10px] bg-white/40"
-                : "h-[5px] bg-white/18"
+                ? "h-[8px] bg-zinc-500/70"
+                : "h-[4px] bg-zinc-700/60"
             }`}
           />
-          {tick.isMajor ? (
-            <span className="absolute bottom-[12px] left-1 font-mono text-[10px] leading-none text-white/50">
+          {/* Label — sits above the tick */}
+          {tick.isMajor && tick.label ? (
+            <span className="absolute bottom-[10px] left-1 font-mono text-[9px] leading-none tabular-nums text-zinc-500/80">
               {tick.label}
             </span>
           ) : null}

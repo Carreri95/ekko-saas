@@ -8,18 +8,11 @@ import type { LocalWaveformData } from "../types";
 type BindPanSeekHandlers = (params: {
   waveSurfer: WaveSurfer;
   suppressWaveformInteractionUntilRef: MutableRefObject<number>;
+  suppressPlayheadFollowUntilRef: MutableRefObject<number>;
   waveformEdgeDragRef: MutableRefObject<unknown>;
   waveformMoveDragRef: MutableRefObject<unknown>;
-  waveformPanDragRef: MutableRefObject<{
-    pointerId: number;
-    startClientX: number;
-    startScrollPx: number;
-    moved: boolean;
-  } | null>;
   waveformOverviewDragRef: MutableRefObject<{ pointerId: number } | null>;
-  setIsWaveformPanning: (next: boolean) => void;
   scheduleViewportRefresh: () => void;
-  seekPlaybackToTimeSec: (timeSec: number) => void;
 }) => () => void;
 
 type UseWaveformLifecycleParams = {
@@ -42,20 +35,14 @@ type UseWaveformLifecycleParams = {
     totalW: number;
   } | null>;
   scheduleViewportRefreshRef: MutableRefObject<(() => void) | null>;
-  waveformPanDragRef: MutableRefObject<{
-    pointerId: number;
-    startClientX: number;
-    startScrollPx: number;
-    moved: boolean;
-  } | null>;
   waveformOverviewDragRef: MutableRefObject<{ pointerId: number } | null>;
   waveformEdgeDragRef: MutableRefObject<unknown>;
   waveformMoveDragRef: MutableRefObject<unknown>;
   suppressWaveformInteractionUntilRef: MutableRefObject<number>;
+  suppressPlayheadFollowUntilRef: MutableRefObject<number>;
   audioRouteFallbackTriedRef: MutableRefObject<boolean>;
   setWaveformDurationSec: Dispatch<SetStateAction<number | null>>;
   setWaveformCueOverlayHostEl: Dispatch<SetStateAction<HTMLElement | null>>;
-  setIsWaveformPanning: Dispatch<SetStateAction<boolean>>;
   setWaveformViewport: Dispatch<
     SetStateAction<{
       scroll: number;
@@ -87,15 +74,14 @@ export function useWaveformLifecycle({
   waveformCueOverlayHostRef,
   waveformViewportLastRef,
   scheduleViewportRefreshRef,
-  waveformPanDragRef,
   waveformOverviewDragRef,
   waveformEdgeDragRef,
   waveformMoveDragRef,
   suppressWaveformInteractionUntilRef,
+  suppressPlayheadFollowUntilRef,
   audioRouteFallbackTriedRef,
   setWaveformDurationSec,
   setWaveformCueOverlayHostEl,
-  setIsWaveformPanning,
   setWaveformViewport,
   setError,
   setMediaSourceUrl,
@@ -203,15 +189,18 @@ export function useWaveformLifecycle({
 
     const waveBaseOptions = {
       container: waveformContainerRef.current,
-      waveColor: "rgba(148, 163, 184, 0.95)",
-      progressColor: "rgba(59, 130, 246, 0.98)",
-      cursorColor: "#facc15",
+      /** Barras nativas ocultas — overlay canvas em `use-waveform-canvas-overlay.ts`. */
+      waveColor: "rgba(0,0,0,0)",
+      progressColor: "rgba(0,0,0,0)",
+      cursorColor: "rgba(0,0,0,0)",
       cursorWidth: 1,
       barWidth: 2,
       barGap: 1,
       barRadius: 1,
-      barHeight: 1,
+      // Quanto maior, mais “cheia” a onda na altura (1 = máximo teórico; padding no container evita clipping).
+      barHeight: 0.88,
       barMinHeight: 1,
+      // Altura cheia; respiro vertical vem do padding no container (timeline-dock).
       height: waveformPx,
       minPxPerSec: waveformMinPxPerSec,
       fillParent: false,
@@ -221,7 +210,6 @@ export function useWaveformLifecycle({
       interact: false,
       autoScroll: false,
       autoCenter: false,
-      sampleRate: 44100,
       backend: "MediaElement" as const,
     };
 
@@ -348,13 +336,11 @@ export function useWaveformLifecycle({
       cleanupPanSeekHandlers = bindPanSeekHandlers({
         waveSurfer,
         suppressWaveformInteractionUntilRef,
+        suppressPlayheadFollowUntilRef,
         waveformEdgeDragRef,
         waveformMoveDragRef,
-        waveformPanDragRef,
         waveformOverviewDragRef,
-        setIsWaveformPanning,
         scheduleViewportRefresh,
-        seekPlaybackToTimeSec: seekPlaybackRef.current,
       });
       refreshWaveformViewport();
     });
@@ -427,9 +413,7 @@ export function useWaveformLifecycle({
     return () => {
       cleanupPanSeekHandlers?.();
       cleanupPanSeekHandlers = null;
-      waveformPanDragRef.current = null;
       waveformOverviewDragRef.current = null;
-      setIsWaveformPanning(false);
       if (rafViewportUi) cancelAnimationFrame(rafViewportUi);
       scheduleViewportRefreshRef.current = null;
       waveformViewportLastRef.current = null;

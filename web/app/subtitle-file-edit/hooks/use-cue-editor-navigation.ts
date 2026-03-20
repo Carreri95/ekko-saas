@@ -13,6 +13,8 @@ type UseCueEditorNavigationParams = {
     cueTempId: string,
     patch: Partial<Pick<CueDto, "startMs" | "endMs" | "text">>,
   ) => void;
+  /** Chamado imediatamente antes de gravar texto (undo). */
+  onBeforeCommitCueText?: (cueTempId: string) => void;
   seekPlayerToCue: (startMs: number) => void;
   scrollWaveformToCueStart: (startMs: number) => void;
   focusCueCardInList: (tempId: string) => void;
@@ -25,15 +27,17 @@ export function useCueEditorNavigation({
   setCueEditFocusTempId,
   setEditingCueTempId,
   updateCue,
+  onBeforeCommitCueText,
   seekPlayerToCue,
   scrollWaveformToCueStart,
   focusCueCardInList,
 }: UseCueEditorNavigationParams) {
   const handleEditorCommitText = useCallback(
     (cueTempId: string, text: string) => {
+      onBeforeCommitCueText?.(cueTempId);
       updateCue(cueTempId, { text });
     },
-    [updateCue],
+    [updateCue, onBeforeCommitCueText],
   );
 
   const handleEditorNavigate = useCallback(

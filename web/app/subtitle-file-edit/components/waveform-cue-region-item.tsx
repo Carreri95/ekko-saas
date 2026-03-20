@@ -37,6 +37,7 @@ type WaveformCueRegionItemProps = {
   onMovePointerEnd: (e: ReactPointerEvent<HTMLElement>) => void;
   onBodyClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onBodyDoubleClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onCueContextMenu: (e: React.MouseEvent, cue: CueLike) => void;
 };
 
 export function WaveformCueRegionItem({
@@ -61,11 +62,13 @@ export function WaveformCueRegionItem({
   onMovePointerEnd,
   onBodyClick,
   onBodyDoubleClick,
+  onCueContextMenu,
 }: WaveformCueRegionItemProps) {
   return (
     <div
       key={cue.tempId}
       data-editor-cue-sync="region"
+      data-cue-tempid={cue.tempId}
       data-editor-cue-warn={hasProblems ? "true" : "false"}
       data-editor-cue-playback={isPlaybackHere ? "true" : "false"}
       data-editor-cue-selected={isSelectedHere ? "true" : "false"}
@@ -83,6 +86,11 @@ export function WaveformCueRegionItem({
         width: `${widthPx}px`,
       }}
       title={`Cue ${cue.cueIndex} · ${formatPlaybackTime(cue.startMs)} → ${formatPlaybackTime(cue.endMs)}`}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onCueContextMenu(e, cue);
+      }}
     >
       <div
         className={`editor-waveform-cue-handle editor-waveform-cue-handle--start ${

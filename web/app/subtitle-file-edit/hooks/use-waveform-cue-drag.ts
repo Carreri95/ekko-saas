@@ -11,6 +11,7 @@ import type WaveSurfer from "wavesurfer.js";
 
 type CueLike = {
   tempId: string;
+  cueIndex: number;
   startMs: number;
   endMs: number;
 };
@@ -27,6 +28,10 @@ type UseWaveformCueDragParams<TCue extends CueLike> = {
     prevEndMs: number;
     nextStartMs: number;
   };
+  /** Snapshot profundo das cues no início do arrasto (pointerdown) — undo no pointerup. */
+  takeCuesSnapshotForUndo?: () => TCue[];
+  /** Grava no histórico o estado antes do arrasto de tempos (apenas no pointerup, uma vez). */
+  commitTimingUndo?: (snapshotBeforeDrag: TCue[], label: string) => void;
 };
 
 function logBrowserError(context: string, error: unknown): void {
@@ -42,6 +47,8 @@ export function useWaveformCueDrag<TCue extends CueLike>({
   suppressWaveformInteractionUntilRef,
   updateCue,
   getCueNeighborBounds,
+  takeCuesSnapshotForUndo,
+  commitTimingUndo,
 }: UseWaveformCueDragParams<TCue>) {
   const waveformEdgeDragRef = useRef<{
     tempId: string;
@@ -66,6 +73,14 @@ export function useWaveformCueDrag<TCue extends CueLike>({
     patch: Partial<Pick<TCue, "startMs" | "endMs">>;
   } | null>(null);
 
+  const edgeUndoSnapshotRef = useRef<TCue[] | null>(null);
+  const edgeUndoCueIndexRef = useRef(0);
+  const moveUndoSnapshotRef = useRef<TCue[] | null>(null);
+  const moveUndoCueIndexRef = useRef(0);
+  /** Acumula o último patch de tempos durante o drag (sobrevive quando o rAF já limpou `pending`). */
+  const edgeDragLastPatchRef = useRef<Partial<Pick<TCue, "startMs" | "endMs">>>({});
+  const moveDragLastPatchRef = useRef<Partial<Pick<TCue, "startMs" | "endMs">>>({});
+
   const [waveformEdgeDrag, setWaveformEdgeDrag] = useState<{
     tempId: string;
     edge: "start" | "end";
@@ -83,6 +98,14 @@ export function useWaveformCueDrag<TCue extends CueLike>({
       pending.patch = { ...pending.patch, ...patch };
     } else {
       cueDragPendingRef.current = { tempId: cueTempId, patch };
+    }
+    const edgeD = waveformEdgeDragRef.current;
+    if (edgeD && edgeD.tempId === cueTempId) {
+      edgeDragLastPatchRef.current = { ...edgeDragLastPatchRef.current, ...patch };
+    }
+    const moveD = waveformMoveDragRef.current;
+    if (moveD && moveD.tempId === cueTempId) {
+      moveDragLastPatchRef.current = { ...moveDragLastPatchRef.current, ...patch };
     }
     if (cueDragRafRef.current) return;
     cueDragRafRef.current = requestAnimationFrame(() => {
@@ -111,6 +134,13 @@ export function useWaveformCueDrag<TCue extends CueLike>({
       origStartMs: cue.startMs,
       origEndMs: cue.endMs,
     };
+    if (takeCuesSnapshotForUndo && commitTimingUndo) {
+      edgeUndoSnapshotRef.current = takeCuesSnapshotForUndo().map((c) => ({ ...c }));
+      edgeUndoCueIndexRef.current = cue.cueIndex;
+      edgeDragLastPatchRef.current = {};
+    } else {
+      edgeUndoSnapshotRef.current = null;
+    }
     suppressWaveformInteractionUntilRef.current = performance.now() + 200;
     setWaveformEdgeDrag({ tempId: cue.tempId, edge });
     try {
@@ -154,7 +184,8 @@ export function useWaveformCueDrag<TCue extends CueLike>({
   }
 
   function handleWaveformEdgePointerEnd(e: ReactPointerEvent<HTMLDivElement>) {
-    if (!waveformEdgeDragRef.current) return;
+    const drag = waveformEdgeDragRef.current;
+    if (!drag) return;
     if (cueDragRafRef.current) {
       cancelAnimationFrame(cueDragRafRef.current);
       cueDragRafRef.current = 0;
@@ -163,6 +194,24 @@ export function useWaveformCueDrag<TCue extends CueLike>({
     cueDragPendingRef.current = null;
     if (pending) {
       updateCue(pending.tempId, pending.patch);
+    }
+    const acc = edgeDragLastPatchRef.current;
+    edgeDragLastPatchRef.current = {};
+    const snap = edgeUndoSnapshotRef.current;
+    edgeUndoSnapshotRef.current = null;
+    if (snap && commitTimingUndo && takeCuesSnapshotForUndo) {
+      let finalStart = drag.origStartMs;
+      let finalEnd = drag.origEndMs;
+      if (acc.startMs != null) finalStart = acc.startMs as number;
+      if (acc.endMs != null) finalEnd = acc.endMs as number;
+      const changed =
+        finalStart !== drag.origStartMs || finalEnd !== drag.origEndMs;
+      if (changed) {
+        commitTimingUndo(
+          snap,
+          `Redimensionar cue #${edgeUndoCueIndexRef.current}`,
+        );
+      }
     }
     waveformEdgeDragRef.current = null;
     setWaveformEdgeDrag(null);
@@ -189,6 +238,13 @@ export function useWaveformCueDrag<TCue extends CueLike>({
       origEndMs: cue.endMs,
       moved: false,
     };
+    if (takeCuesSnapshotForUndo && commitTimingUndo) {
+      moveUndoSnapshotRef.current = takeCuesSnapshotForUndo().map((c) => ({ ...c }));
+      moveUndoCueIndexRef.current = cue.cueIndex;
+      moveDragLastPatchRef.current = {};
+    } else {
+      moveUndoSnapshotRef.current = null;
+    }
     suppressWaveformInteractionUntilRef.current = performance.now() + 200;
     setWaveformMoveDrag({ tempId: cue.tempId });
     try {
@@ -211,7 +267,7 @@ export function useWaveformCueDrag<TCue extends CueLike>({
     const cueDur = Math.max(1, drag.origEndMs - drag.origStartMs);
     const deltaMs = ((e.clientX - drag.startClientX) / w) * durSec * 1000;
     const { prevEndMs, nextStartMs } = getCueNeighborBounds(drag.tempId);
-    if (!drag.moved && Math.abs(e.clientX - drag.startClientX) > 4) {
+    if (!drag.moved && Math.abs(e.clientX - drag.startClientX) > 3) {
       drag.moved = true;
     }
     if (!drag.moved) return;
@@ -232,6 +288,7 @@ export function useWaveformCueDrag<TCue extends CueLike>({
   function handleWaveformMovePointerEnd(e: ReactPointerEvent<HTMLElement>) {
     const drag = waveformMoveDragRef.current;
     if (!drag || e.pointerId !== drag.pointerId) return;
+    const didMove = drag.moved;
     if (cueDragRafRef.current) {
       cancelAnimationFrame(cueDragRafRef.current);
       cueDragRafRef.current = 0;
@@ -241,10 +298,30 @@ export function useWaveformCueDrag<TCue extends CueLike>({
     if (pending) {
       updateCue(pending.tempId, pending.patch);
     }
+    const mAcc = moveDragLastPatchRef.current;
+    moveDragLastPatchRef.current = {};
+    const moveSnap = moveUndoSnapshotRef.current;
+    moveUndoSnapshotRef.current = null;
+    if (
+      moveSnap &&
+      commitTimingUndo &&
+      takeCuesSnapshotForUndo &&
+      didMove
+    ) {
+      const fs =
+        mAcc.startMs != null ? (mAcc.startMs as number) : drag.origStartMs;
+      const fe = mAcc.endMs != null ? (mAcc.endMs as number) : drag.origEndMs;
+      const changed = fs !== drag.origStartMs || fe !== drag.origEndMs;
+      if (changed) {
+        commitTimingUndo(moveSnap, `Mover cue #${moveUndoCueIndexRef.current}`);
+      }
+    }
     waveformMoveDragRef.current = null;
     setWaveformMoveDrag(null);
-    if (drag.moved) {
-      suppressWaveformInteractionUntilRef.current = performance.now() + 120;
+    /** Evita o `click` de compatibilidade no body da cue (que dispara seek via onClick). */
+    if (didMove) {
+      suppressWaveformInteractionUntilRef.current = performance.now() + 200;
+      e.preventDefault();
     }
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -271,11 +348,62 @@ export function useWaveformCueDrag<TCue extends CueLike>({
       if (pending) {
         updateCue(pending.tempId, pending.patch);
       }
+      const edgeDrag = waveformEdgeDragRef.current;
+      if (edgeDrag) {
+        const acc = edgeDragLastPatchRef.current;
+        edgeDragLastPatchRef.current = {};
+        const snap = edgeUndoSnapshotRef.current;
+        edgeUndoSnapshotRef.current = null;
+        if (snap && commitTimingUndo && takeCuesSnapshotForUndo) {
+          let finalStart = edgeDrag.origStartMs;
+          let finalEnd = edgeDrag.origEndMs;
+          if (acc.startMs != null) finalStart = acc.startMs as number;
+          if (acc.endMs != null) finalEnd = acc.endMs as number;
+          const changed =
+            finalStart !== edgeDrag.origStartMs ||
+            finalEnd !== edgeDrag.origEndMs;
+          if (changed) {
+            commitTimingUndo(
+              snap,
+              `Redimensionar cue #${edgeUndoCueIndexRef.current}`,
+            );
+          }
+        }
+      }
+      const moveDrag = waveformMoveDragRef.current;
+      let moveEndedWithMotion = false;
+      if (moveDrag) {
+        moveEndedWithMotion = moveDrag.moved;
+        const mAcc = moveDragLastPatchRef.current;
+        moveDragLastPatchRef.current = {};
+        const moveSnap = moveUndoSnapshotRef.current;
+        moveUndoSnapshotRef.current = null;
+        if (
+          moveSnap &&
+          commitTimingUndo &&
+          takeCuesSnapshotForUndo &&
+          moveDrag.moved
+        ) {
+          const fs =
+            mAcc.startMs != null ? (mAcc.startMs as number) : moveDrag.origStartMs;
+          const fe =
+            mAcc.endMs != null ? (mAcc.endMs as number) : moveDrag.origEndMs;
+          const changed =
+            fs !== moveDrag.origStartMs || fe !== moveDrag.origEndMs;
+          if (changed) {
+            commitTimingUndo(
+              moveSnap,
+              `Mover cue #${moveUndoCueIndexRef.current}`,
+            );
+          }
+        }
+      }
       waveformEdgeDragRef.current = null;
       waveformMoveDragRef.current = null;
       setWaveformEdgeDrag(null);
       setWaveformMoveDrag(null);
-      suppressWaveformInteractionUntilRef.current = performance.now() + 120;
+      suppressWaveformInteractionUntilRef.current =
+        performance.now() + (moveEndedWithMotion ? 200 : 120);
     }
     window.addEventListener("pointerup", endFromWindow);
     window.addEventListener("pointercancel", endFromWindow);
@@ -284,7 +412,14 @@ export function useWaveformCueDrag<TCue extends CueLike>({
       window.removeEventListener("pointerup", endFromWindow);
       window.removeEventListener("pointercancel", endFromWindow);
     };
-  }, [waveformEdgeDrag, waveformMoveDrag, suppressWaveformInteractionUntilRef, updateCue]);
+  }, [
+    waveformEdgeDrag,
+    waveformMoveDrag,
+    suppressWaveformInteractionUntilRef,
+    updateCue,
+    commitTimingUndo,
+    takeCuesSnapshotForUndo,
+  ]);
 
   useEffect(() => {
     return () => {

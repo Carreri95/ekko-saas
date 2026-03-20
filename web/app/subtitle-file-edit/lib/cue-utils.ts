@@ -38,6 +38,56 @@ export function validateCuesForSave(cues: CueDto[]): string | null {
   return null;
 }
 
+/**
+ * Insere uma quebra de linha próxima ao meio (mesma ideia do botão "Auto br" no editor).
+ * Textos muito curtos não são alterados.
+ */
+export function autoBrText(text: string): string {
+  if (!text || text.length < 10) return text;
+  const flat = text.trim();
+  if (!flat) return text;
+  const mid = Math.floor(flat.length / 2);
+  let splitAt = -1;
+  for (let i = 0; i <= 15; i++) {
+    const left = mid - i;
+    const right = mid + i;
+    if (left >= 0 && flat[left] === " ") {
+      splitAt = left;
+      break;
+    }
+    if (right < flat.length && flat[right] === " ") {
+      splitAt = right;
+      break;
+    }
+  }
+  if (splitAt < 0) return flat;
+  return `${flat.slice(0, splitAt)}\n${flat.slice(splitAt + 1)}`;
+}
+
+/**
+ * Divide o texto de uma cue em duas partes proporcionalmente ao instante do split no tempo.
+ * Usa palavras após flatten (whitespace); com 1 palavra só, tudo fica na primeira parte.
+ */
+export function splitCueTextAtTemporalRatio(
+  cue: Pick<CueDto, "startMs" | "endMs" | "text">,
+  splitMs: number,
+): { textA: string; textB: string } {
+  const raw = cue.text.trim();
+  if (!raw) return { textA: "", textB: "" };
+  const words = raw.split(/\s+/);
+  if (words.length <= 1) return { textA: raw, textB: "" };
+
+  const span = cue.endMs - cue.startMs;
+  const ratio = span > 0 ? (splitMs - cue.startMs) / span : 0;
+  const splitWordIndex = Math.max(
+    1,
+    Math.min(words.length - 1, Math.round(ratio * words.length)),
+  );
+  const textA = words.slice(0, splitWordIndex).join(" ");
+  const textB = words.slice(splitWordIndex).join(" ");
+  return { textA, textB };
+}
+
 export function normalizeCueCollisions(cues: CueDto[], minGapMs: number): CueDto[] {
   if (!cues.length) return cues;
   const ordered = [...cues].sort((a, b) => a.startMs - b.startMs);

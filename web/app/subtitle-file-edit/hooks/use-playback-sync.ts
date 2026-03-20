@@ -8,30 +8,35 @@ type UsePlaybackSyncParams = {
   mediaSourceUrl: string | null;
   mediaKind: "audio" | "video" | null;
   mediaElementRef: MutableRefObject<HTMLAudioElement | HTMLVideoElement | null>;
-  waveSurferRef: MutableRefObject<WaveSurfer | null>;
   isWaveformSeekingRef: MutableRefObject<boolean>;
-  suppressWaveformInteractionUntilRef: MutableRefObject<number>;
-  waveformPanDragRef: MutableRefObject<unknown | null>;
-  waveformOverviewDragRef: MutableRefObject<unknown | null>;
-  waveformEdgeDragRef: MutableRefObject<unknown | null>;
-  waveformMoveDragRef: MutableRefObject<unknown | null>;
-  scheduleViewportRefreshRef: MutableRefObject<(() => void) | null>;
   setCurrentPlaybackMs: Dispatch<SetStateAction<number>>;
+  waveSurferRef: MutableRefObject<WaveSurfer | null>;
+  scheduleViewportRefreshRef: MutableRefObject<(() => void) | null>;
+  waveformOverviewDragRef: MutableRefObject<{ pointerId: number } | null>;
+  waveformEdgeDragRef: MutableRefObject<unknown>;
+  waveformMoveDragRef: MutableRefObject<unknown>;
+  /** Opcional — pan horizontal na wave (se existir no projeto). */
+  waveformPanDragRef?: MutableRefObject<unknown>;
+  /**
+   * Timestamp (`performance.now()`): enquanto `now < valor`, não forçar scroll
+   * para seguir o playhead (evita lutar com scroll manual / overview).
+   */
+  suppressPlayheadFollowUntilRef: MutableRefObject<number>;
 };
 
 export function usePlaybackSync({
   mediaSourceUrl,
   mediaKind,
   mediaElementRef,
-  waveSurferRef,
   isWaveformSeekingRef,
-  suppressWaveformInteractionUntilRef,
-  waveformPanDragRef,
+  setCurrentPlaybackMs,
+  waveSurferRef,
+  scheduleViewportRefreshRef,
   waveformOverviewDragRef,
   waveformEdgeDragRef,
   waveformMoveDragRef,
-  scheduleViewportRefreshRef,
-  setCurrentPlaybackMs,
+  waveformPanDragRef,
+  suppressPlayheadFollowUntilRef,
 }: UsePlaybackSyncParams): void {
   useEffect(() => {
     if (!mediaSourceUrl || mediaKind !== "audio") return;
@@ -39,8 +44,6 @@ export function usePlaybackSync({
     let rafId = 0;
     let lastUiAt = 0;
     let lastFollowAt = 0;
-    const FOLLOW_MARGIN_RATIO = 0.1;
-    const FOLLOW_CURSOR_ANCHOR_RATIO = 0.5;
 
     function stopRaf() {
       if (rafId) cancelAnimationFrame(rafId);
@@ -50,49 +53,13 @@ export function usePlaybackSync({
     function tick() {
       if (cancelled) return;
       const media = mediaElementRef.current;
-      const ws = waveSurferRef.current;
-      if (!media || !ws || media.paused) {
+      if (!media || media.paused) {
         return;
       }
+
+      const t = media.currentTime;
+
       if (!isWaveformSeekingRef.current) {
-        const t = media.currentTime;
-        // Auto-follow opcional: mantém o playhead dentro da janela visível durante reprodução.
-        // Não força scroll enquanto o usuário estiver em interação manual.
-        if (
-          performance.now() >= suppressWaveformInteractionUntilRef.current &&
-          !waveformPanDragRef.current &&
-          !waveformOverviewDragRef.current &&
-          !waveformEdgeDragRef.current &&
-          !waveformMoveDragRef.current
-        ) {
-          const now = performance.now();
-          if (now - lastFollowAt >= 48) {
-            lastFollowAt = now;
-            const durationSec = ws.getDuration();
-            const wrapper = ws.getWrapper();
-            const viewW = ws.getWidth();
-            const totalW = Math.max(wrapper.scrollWidth, wrapper.offsetWidth);
-            const maxScroll = Math.max(0, totalW - viewW);
-            if (
-              Number.isFinite(durationSec) &&
-              durationSec > 0 &&
-              totalW > 0 &&
-              viewW > 0 &&
-              maxScroll > 0
-            ) {
-              const playX = (t / durationSec) * totalW;
-              const left = wrapper.scrollLeft;
-              const right = left + viewW;
-              const margin = Math.max(10, viewW * FOLLOW_MARGIN_RATIO);
-              if (playX < left + margin || playX > right - margin) {
-                const desired = playX - viewW * FOLLOW_CURSOR_ANCHOR_RATIO;
-                const next = Math.max(0, Math.min(maxScroll, desired));
-                ws.setScroll(next);
-                scheduleViewportRefreshRef.current?.();
-              }
-            }
-          }
-        }
         const now = performance.now();
         if (now - lastUiAt >= 32) {
           lastUiAt = now;
@@ -100,12 +67,58 @@ export function usePlaybackSync({
           setCurrentPlaybackMs((prev) => (prev === nextMs ? prev : nextMs));
         }
       }
+
+      const ws = waveSurferRef.current;
+      if (
+        ws &&
+        !isWaveformSeekingRef.current &&
+        performance.now() >= suppressPlayheadFollowUntilRef.current &&
+        !waveformPanDragRef?.current &&
+        !waveformOverviewDragRef.current &&
+        !waveformEdgeDragRef.current &&
+        !waveformMoveDragRef.current
+      ) {
+        const now = performance.now();
+        if (now - lastFollowAt >= 80) {
+          lastFollowAt = now;
+
+          const durationSec = ws.getDuration();
+          const wrapper = ws.getWrapper();
+          const viewW = ws.getWidth();
+          const totalW = Math.max(wrapper.scrollWidth, wrapper.offsetWidth);
+          const maxScroll = Math.max(0, totalW - viewW);
+
+          if (
+            Number.isFinite(durationSec) &&
+            durationSec > 0 &&
+            totalW > 0 &&
+            viewW > 0 &&
+            maxScroll > 0
+          ) {
+            const playX = (t / durationSec) * totalW;
+            const currentScroll = ws.getScroll();
+            const threshold = currentScroll + viewW * 0.82;
+
+            if (playX > threshold) {
+              const desired = playX - viewW * 0.15;
+              const next = Math.max(0, Math.min(maxScroll, desired));
+
+              if (Math.abs(next - currentScroll) > 2) {
+                ws.setScroll(next);
+                scheduleViewportRefreshRef.current?.();
+              }
+            }
+          }
+        }
+      }
+
       rafId = requestAnimationFrame(tick);
     }
 
     function onPlay() {
       stopRaf();
       lastUiAt = 0;
+      lastFollowAt = 0;
       rafId = requestAnimationFrame(tick);
     }
 
@@ -151,14 +164,14 @@ export function usePlaybackSync({
     mediaSourceUrl,
     mediaKind,
     mediaElementRef,
-    waveSurferRef,
     isWaveformSeekingRef,
-    suppressWaveformInteractionUntilRef,
-    waveformPanDragRef,
+    setCurrentPlaybackMs,
+    waveSurferRef,
+    scheduleViewportRefreshRef,
     waveformOverviewDragRef,
     waveformEdgeDragRef,
     waveformMoveDragRef,
-    scheduleViewportRefreshRef,
-    setCurrentPlaybackMs,
+    waveformPanDragRef,
+    suppressPlayheadFollowUntilRef,
   ]);
 }
