@@ -1,0 +1,80 @@
+SubtitleBot - Inventario de Componentes
+Atualizado em: 2026-03-19
+
+========================================
+1) Componentes globais (web/app/components)
+========================================
+- app-shell.tsx
+  - AppShell
+  - useAppSidebar
+- sidebar-nav.tsx
+  - SidebarNav
+- hash-scroll.tsx
+  - HashScroll
+
+Novos nesta rodada:
+- home-dashboard-header.tsx
+  - HomeDashboardHeader
+- home-quick-links.tsx
+  - HomeQuickLinks
+
+========================================
+2) Componentes da pagina subtitle-file-edit
+========================================
+Pasta: web/app/subtitle-file-edit/components
+
+Novos nesta rodada:
+- waveform-overview.tsx
+  - WaveformOverview
+- waveform-transport-controls.tsx
+  - WaveformTransportControls
+- waveform-zoom-toolbar.tsx
+  - WaveformZoomToolbar
+- cue-list-item.tsx
+  - CueListItem
+- waveform-cue-region-item.tsx
+  - WaveformCueRegionItem
+- versions-drawer.tsx
+  - VersionsDrawer
+- media-preview-panel.tsx
+  - MediaPreviewPanel
+
+Arquivos de estilo relacionados:
+- web/app/subtitle-file-edit/waveform-cue-shadow.css
+- web/app/subtitle-file-edit/waveformCueShadowStyles.ts
+
+========================================
+3) Paginas e onde componentes estao aplicados
+========================================
+- web/app/page.tsx
+  - Usa HomeDashboardHeader
+  - Usa HomeQuickLinks
+
+- web/app/layout.tsx
+  - Usa HashScroll
+  - Usa AppShell
+
+- web/app/subtitle-file-edit/page.tsx
+  - Usa WaveformOverview
+  - Usa WaveformTransportControls
+  - Usa WaveformZoomToolbar
+  - Usa CueListItem
+  - Usa WaveformCueRegionItem
+  - Usa VersionsDrawer
+  - Usa MediaPreviewPanel
+  - Mantem logica principal do editor (timeline, cues, acoes)
+
+========================================
+4) Proxima sequencia de compartimentizacao
+========================================
+Sequencia sugerida (incremental, sem quebrar fluxo):
+1. Isolar hooks de interacao da waveform:
+   - pan/seek
+   - edge-resize
+   - move cue
+2. Separar modulo de calculo de posicionamento temporal (timecode -> px).
+3. Extrair blocos de sessao/estado vazio para componentes de layout.
+
+Observacao:
+Esta estrategia reduz tamanho de page.tsx aos poucos e facilita manutencao sem
+fazer refatoracao gigante de uma vez.

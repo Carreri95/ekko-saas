@@ -4,4 +4,3 @@ export type SubtitleCue = {
   endMs: number;
   text: string;
 };
-
