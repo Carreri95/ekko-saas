@@ -18,6 +18,8 @@ export async function GET(_: Request, { params }: RouteParams) {
     select: {
       id: true,
       filename: true,
+      wavFilename: true,
+      wavPath: true,
       projectId: true,
       cues: {
         orderBy: { cueIndex: "asc" },
@@ -39,6 +41,8 @@ export async function GET(_: Request, { params }: RouteParams) {
   return NextResponse.json({
     subtitleFileId: subtitleFile.id,
     filename: subtitleFile.filename,
+    wavFilename: subtitleFile.wavFilename,
+    wavPath: subtitleFile.wavPath,
     projectId: subtitleFile.projectId,
     cues: subtitleFile.cues,
   });

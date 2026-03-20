@@ -32,6 +32,8 @@ model Project {
 model SubtitleFile {
   id          String             @id @default(cuid())
   filename    String
+  wavFilename String?
+  wavPath     String?
   language    String?
   sourceType  SubtitleSourceType @default(UPLOADED_SRT)
   createdAt   DateTime           @default(now())
