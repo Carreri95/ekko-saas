@@ -1,37 +1,81 @@
 "use client";
 
+import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useRef } from "react";
+import type { CueDto } from "../types";
 
 type UseKeyboardShortcutsParams = {
   mediaElementRef: React.MutableRefObject<HTMLAudioElement | HTMLVideoElement | null>;
   currentPlaybackMsRef: React.MutableRefObject<number>;
   seekPlaybackToTimeSec: (sec: number) => void;
+  /** Após seek com setas, mantém a barra do playhead na área visível da waveform. */
+  ensureWaveformPlayheadVisible: (timeSec: number) => void;
   logBrowserError: (context: string, error: unknown) => void;
   isSpaceReservedForFocusedElement: (target: EventTarget | null) => boolean;
   editingCueTempId: string | null;
   setEditingCueTempId: React.Dispatch<React.SetStateAction<string | null>>;
+  undo: (setCues: Dispatch<SetStateAction<CueDto[]>>) => boolean;
+  setCues: Dispatch<SetStateAction<CueDto[]>>;
+  setSelectedCueTempId: Dispatch<SetStateAction<string | null>>;
+  setCueEditFocusTempId: Dispatch<SetStateAction<string | null>>;
+  waveformEdgeDragRef: React.MutableRefObject<unknown>;
+  waveformMoveDragRef: React.MutableRefObject<unknown>;
+  setSaveSuccess: Dispatch<SetStateAction<string | null>>;
 };
 
 export function useKeyboardShortcuts({
   mediaElementRef,
   currentPlaybackMsRef,
   seekPlaybackToTimeSec,
+  ensureWaveformPlayheadVisible,
   logBrowserError,
   isSpaceReservedForFocusedElement,
   editingCueTempId,
   setEditingCueTempId,
+  undo,
+  setCues,
+  setSelectedCueTempId,
+  setCueEditFocusTempId,
+  waveformEdgeDragRef,
+  waveformMoveDragRef,
+  setSaveSuccess,
 }: UseKeyboardShortcutsParams): void {
   const seekRef = useRef(seekPlaybackToTimeSec);
+  const ensureVisibleRef = useRef(ensureWaveformPlayheadVisible);
   const logRef = useRef(logBrowserError);
   const spaceReserveRef = useRef(isSpaceReservedForFocusedElement);
+  const undoRef = useRef(undo);
+  const setCuesRef = useRef(setCues);
+  const setSelectedCueRef = useRef(setSelectedCueTempId);
+  const setCueEditFocusRef = useRef(setCueEditFocusTempId);
+  const setEditingCueRef = useRef(setEditingCueTempId);
+  const setSaveSuccessRef = useRef(setSaveSuccess);
 
   useEffect(() => {
     seekRef.current = seekPlaybackToTimeSec;
+    ensureVisibleRef.current = ensureWaveformPlayheadVisible;
     logRef.current = logBrowserError;
     spaceReserveRef.current = isSpaceReservedForFocusedElement;
-  }, [seekPlaybackToTimeSec, logBrowserError, isSpaceReservedForFocusedElement]);
+    undoRef.current = undo;
+    setCuesRef.current = setCues;
+    setSelectedCueRef.current = setSelectedCueTempId;
+    setCueEditFocusRef.current = setCueEditFocusTempId;
+    setEditingCueRef.current = setEditingCueTempId;
+    setSaveSuccessRef.current = setSaveSuccess;
+  }, [
+    seekPlaybackToTimeSec,
+    ensureWaveformPlayheadVisible,
+    logBrowserError,
+    isSpaceReservedForFocusedElement,
+    undo,
+    setCues,
+    setSelectedCueTempId,
+    setCueEditFocusTempId,
+    setEditingCueTempId,
+    setSaveSuccess,
+  ]);
 
-  /** Espaço = play/pause; setas = seek; não intercepta em inputs/textarea/editáveis. */
+  /** Espaço = play/pause; setas = seek; Ctrl+Z = undo; não intercepta em inputs/textarea/editáveis. */
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const media = mediaElementRef.current;
@@ -55,13 +99,41 @@ export function useKeyboardShortcuts({
         const deltaMs = e.shiftKey ? 100 : e.altKey ? 1000 : 500;
         const direction = e.code === "ArrowLeft" ? -1 : 1;
         const nextMs = Math.max(0, currentPlaybackMsRef.current + direction * deltaMs);
-        seekRef.current(nextMs / 1000);
+        const nextSec = nextMs / 1000;
+        seekRef.current(nextSec);
+        ensureVisibleRef.current(nextSec);
+        return;
+      }
+
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === "z" &&
+        !e.shiftKey
+      ) {
+        if (spaceReserveRef.current(e.target)) return;
+        if (waveformEdgeDragRef.current || waveformMoveDragRef.current) return;
+        e.preventDefault();
+        const didUndo = undoRef.current(setCuesRef.current);
+        if (didUndo) {
+          setSelectedCueRef.current(null);
+          setCueEditFocusRef.current(null);
+          setEditingCueRef.current(null);
+          setSaveSuccessRef.current("Ação desfeita");
+          window.setTimeout(() => {
+            setSaveSuccessRef.current(null);
+          }, 1500);
+        }
       }
     }
 
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [mediaElementRef, currentPlaybackMsRef]);
+  }, [
+    mediaElementRef,
+    currentPlaybackMsRef,
+    waveformEdgeDragRef,
+    waveformMoveDragRef,
+  ]);
 
   /** Esc fecha o editor de texto da cue quando aberto. */
   useEffect(() => {

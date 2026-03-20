@@ -17,11 +17,11 @@ web/app/subtitle-file-edit/
   components/
     cue-list-item.tsx
     cue-text-editor.tsx
-    episode-queue-screen.tsx
     media-preview-panel.tsx
     timeline-dock.tsx
     upload-screen.tsx
     versions-drawer.tsx
+    waveform-context-menu.tsx
     waveform-cue-region-item.tsx
     waveform-overview.tsx
     waveform-time-ruler.tsx
@@ -38,9 +38,6 @@ web/app/subtitle-file-edit/
     use-media-playback-controls.ts
     use-media-session-controls.ts
     use-playback-sync.ts
-    use-project-queue-intake.ts
-    use-queue-actions.ts
-    use-queue-auto-snapshot.ts
     use-version-history.ts
     use-waveform-cue-drag.ts
     use-waveform-lifecycle.ts
@@ -76,9 +73,9 @@ web/app/subtitle-file-edit/
   - sincronizacao playback <-> UI;
   - auto-save e snapshot local;
   - atalhos de teclado;
-  - intake por drag-and-drop (global e por pasta);
+  - intake por drag-and-drop (global);
   - controles de zoom e sessao de media;
-  - acoes de fila e navegacao de editor.
+  - navegacao de editor de texto entre cues.
 - Extracao do bloco de timeline para `components/timeline-dock.tsx`.
 - Remocao do wrapper residual `renderTimelineDock()` em `page.tsx`:
   - `TimelineDock` agora e renderizado diretamente no JSX.
@@ -87,7 +84,7 @@ web/app/subtitle-file-edit/
 
 - Nao ha pendencia estrutural obrigatoria mapeada no momento.
 - Melhorias futuras opcionais:
-  - adicionar cobertura de testes para hooks criticos (`use-waveform-lifecycle`, `use-cue-persistence`, `use-queue-actions`);
+  - adicionar cobertura de testes para hooks criticos (`use-waveform-lifecycle`, `use-cue-persistence`);
   - reduzir ainda mais props do `TimelineDock` caso surja necessidade de manutencao.
 
 ## Regras Arquiteturais
@@ -193,7 +190,6 @@ src/app/subtitle-file-edit/
 ├── components/                       ← Componentes puros (zero estado próprio)
 │   ├── cue-list-item.tsx
 │   ├── cue-text-editor.tsx
-│   ├── episode-queue-screen.tsx
 │   ├── media-preview-panel.tsx
 │   ├── upload-screen.tsx
 │   ├── versions-drawer.tsx
@@ -241,7 +237,6 @@ Blocos `useEffect` + lógica acoplada que devem virar hooks próprios:
 - `useWaveformLifecycle()` — Criação/destruição do WaveSurfer, `on("ready")`, `on("zoom")`, rAF sync
 - `usePlaybackSync()` — rAF loop que sincroniza `ws.setTime()` + `currentPlaybackMs` durante play
 - `useAutoSave()` — Debounce 700ms + `persistCuesToServer()` silencioso
-- `useQueueAutoSnapshot()` — Debounce 350ms + `saveQueueState()` ao editar cues no modo fila
 - `useCueListAutoScroll()` — Scroll automático da lista durante playback
 
 ## 2. MAPA COMPLETO DO ESTADO (`page.tsx`)
@@ -264,8 +259,6 @@ Todo estado vive em `page.tsx`. Componentes são 100% controlled — nunca têm 
 | `autoSaveTimerRef` | `number \| null` | Handle do `setTimeout` de debounce do auto-save (700ms). |
 | `autoSaveInFlightRef` | `boolean` | Flag: requisição de auto-save em voo. Evita chamadas paralelas. |
 | `lastSavedServerHashRef` | `string` | Hash JSON das cues salvas no servidor. Evita POST redundante. |
-| `queueSnapshotSyncTimerRef` | `number \| null` | Handle do `setTimeout` de snapshot da fila (350ms debounce). |
-| `lastQueueSnapshotKeyRef` | `string` | Chave `episodeId:hash` do último snapshot salvo. |
 | `audioRouteFallbackTriedRef` | `boolean` | Flag: fallback de URL de áudio já tentado. |
 | `waveformPanDragRef` | `PanDrag \| null` | Estado do drag de pan na waveform (pointer capture). |
 | `waveformOverviewDragRef` | `{ pointerId } \| null` | Estado do drag na minimap overview. |
@@ -303,9 +296,6 @@ Todo estado vive em `page.tsx`. Componentes são 100% controlled — nunca têm 
 | `isWaveformPanning` | `boolean` | `true` durante drag de pan — muda cursor e classe CSS. |
 | `srtDropActive` | `boolean` | Dropzone SRT com arquivo sobre ela. |
 | `audioDropActive` | `boolean` | Dropzone áudio com arquivo sobre ela. |
-| `screenMode` | `"upload"` \| `"queue"` \| `"editor"` | Tela ativa. Upload = inicial, Queue = lista episódios, Editor = principal. |
-| `localProject` | `Project \| null` | Projeto da fila local (modo sem servidor). |
-| `currentEpisodeId` | `string \| null` | Episódio aberto no editor (modo fila). |
 | `waveformViewport` | `Viewport \| null` | Scroll + largura atual da waveform para régua e minimap. |
 | `playerAspectRatio` | `AspectRatio` | Ratio do player de vídeo. Persistido no localStorage. |
 
@@ -455,11 +445,11 @@ Todos os componentes são 100% controlled — recebem props e callbacks, NUNCA g
 | `MediaPreviewPanel` | `mediaSourceUrl`, `mediaKind`, `mediaRef`, `activeSubtitleText`, `aspectRatio` → Player vídeo/áudio com legenda sobreposta, botões `16:9/9:16/1:1` |
 | `WaveformCueRegionItem` | `cue`, `leftPx`, `widthPx`, `isSelectedHere`, `isEditFocusHere`, `isPlaybackHere` + handlers → Região de cue na waveform: handles drag start/end (`ew-resize`), body com texto preview + meta (`#N`, `Xs`) |
 | `WaveformTimeRuler` | `viewport`, `durationSec` → Régua de tempo: ticks por `chooseStep()` baseado na duração visível. Major=inteiros, minor=frações |
-| `WaveformZoomToolbar` | `playbackLabel`, `zoomPx`, `onZoom*`, `canReplaceAudio`, `onReplaceAudio` → Toolbar: timecode, botões `−/⊡/+`, px/s label, Substituir áudio |
+| `TimelineDock` | Toolbar da waveform: timecode, velocidade de reprodução. Zoom horizontal fixo em código (`WAVEFORM_MIN_PX_PER_SEC`). |
 | `WaveformTransportControls` | `onPlay`, `onPause`, `onReset` → Botões `⏮ ▶ ‖` com `onMouseDown preventDefault` (evita blur do textarea) |
 | `WaveformOverview` | `viewport`, `thumbLeftPct`, `thumbWidthPct`, `onPointerDown` → Minimap: barra com thumb proporcional ao viewport atual |
-| `EpisodeQueueScreen` | `project`, `onOpenEpisode`, `onDownloadEpisode`, `onBackToUpload` → Tabela de episódios com status, barra de progresso, botões Abrir/Baixar/Continuar |
-| `UploadScreen` | `srtLoaded`, `srtFilename`, `srtCount`, `*DropActive`, `onPick*`, `onFolderDrop` → Tela inicial: dropzones SRT + áudio/vídeo, picker de pasta |
+| `UploadScreen` | `srtLoaded`, `srtFilename`, `srtCount`, `*DropActive`, `onPickSrt`, `onPickAudio` → Tela inicial: dropzones SRT + áudio/vídeo |
+| `WaveformContextMenu` | Portal em `document.body`: opção “Dividir aqui” na waveform (split de cue) |
 | `VersionsDrawer` | `open`, `loading`, `versions`, `onClose` → Drawer lateral com histórico de versões (read-only, sem rollback) |
 
 ## 6. HOOKS E LIBS
@@ -476,12 +466,11 @@ Gerencia drag de bordas (`start/end`) e drag de movimento (mover cue inteira) na
 
 ### 6.2 `use-waveform-pan-seek.ts`
 
-Bind de handlers de pan (arrastar a timeline) e seek (clicar no fundo) no wrapper do WaveSurfer.
+Bind de scroll horizontal da waveform via **roda** no elemento pai do wrapper.
 
 - Retorna `bindPanSeekHandlers()` — chamado dentro do `on("ready")` do WaveSurfer
-- Pan: `pointerdown` no fundo → pointer capture → `pointermove` calcula delta px → `ws.setScroll()`
-- Seek: `pointerup` sem movimento → `seekFromBackgroundClick()` usando `scrollLeft` real do wrapper
-- Wheel: `deltaX` ou `-deltaY` → `ws.setScroll()` com fator 1.15
+- Wheel: `deltaX` ou `-deltaY` → `ws.setScroll()` com fator 1.15 (não prolonga `suppressWaveformInteractionUntilRef` — scroll não é drag)
+- `click` em captura: suprime apenas cliques na **área vazia** da waveform enquanto `now < suppress` (pós-drag); **cliques em cues** (`[data-editor-cue-sync="region"]`) **nunca** são suprimidos (seek intencional)
 - Ignora eventos quando edge/move drag ou overview drag estão ativos
 
 ### 6.3 `lib/waveform-zoom.ts`
@@ -553,11 +542,10 @@ Para não quebrar o sistema ao refatorar, seguir esta ordem:
 1. Extrair funções puras para `lib/cue-utils.ts` (sem tocar em `page.tsx` além dos imports)
 2. Extrair `formatPlaybackTime` para `lib/format-time.ts`
 3. Extrair `useAutoSave()` para `hooks/use-auto-save.ts`
-4. Extrair `useQueueAutoSnapshot()` para `hooks/use-queue-auto-snapshot.ts`
-5. Extrair `usePlaybackSync()` (rAF loop) para `hooks/use-playback-sync.ts`
-6. Extrair `useWaveformLifecycle()` (maior e mais delicado — fazer por último)
-7. Extrair `renderTimelineDock()` para `components/timeline-dock.tsx`
-8. A cada extração: compilar, testar zoom + wave + autosave manualmente
+4. Extrair `usePlaybackSync()` (rAF loop) para `hooks/use-playback-sync.ts`
+5. Extrair `useWaveformLifecycle()` (maior e mais delicado — fazer por último)
+6. Extrair `renderTimelineDock()` para `components/timeline-dock.tsx`
+7. A cada extração: compilar, testar zoom + wave + autosave manualmente
 
 ## 9. GLOSSÁRIO
 
@@ -574,7 +562,5 @@ Para não quebrar o sistema ao refatorar, seguir esta ordem:
 | `stableFrames` | Contador de frames consecutivos sem mudança no `scrollWidth` do wrapper do WaveSurfer. Threshold=2 para restaurar scroll após zoom. |
 | `pointer capture` | `setPointerCapture()` — garante que eventos de `pointermove/up` cheguem ao elemento mesmo quando o ponteiro sai da área. Usado em todos os drags. |
 | `suppress interaction` | `suppressWaveformInteractionUntilRef`: timestamp futuro. Cliques/drags na waveform ignorados até esse momento (evita seek acidental pós-drag). |
-| `screenMode` | `"upload"` \| `"queue"` \| `"editor"`. Determina qual tela renderizar. Independente do estado do editor. |
-| `localProject` | Modo sem servidor: `Project` com episódios lidos de uma pasta local. Salvo no localStorage via `saveQueueState()`. |
 | `waveformGridStyle` | CSS custom props (`--wave-grid-major-step`, `--wave-grid-minor-step`) para grade visual na waveform. Calculado do `waveformZoomRef`, não do state. |
 

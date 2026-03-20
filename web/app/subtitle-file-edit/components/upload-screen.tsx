@@ -16,8 +16,6 @@ type UploadScreenProps = {
   onAudioDrop: (e: React.DragEvent) => void;
   onPickSrt: () => void;
   onPickAudio: () => void;
-  onPickFolder: () => void;
-  onFolderDrop: (e: React.DragEvent) => void;
 };
 
 export function UploadScreen({
@@ -36,8 +34,6 @@ export function UploadScreen({
   onAudioDrop,
   onPickSrt,
   onPickAudio,
-  onPickFolder,
-  onFolderDrop,
 }: UploadScreenProps) {
   const srtIsActive = !srtLoaded;
   const srtIsDone = srtLoaded;
@@ -48,23 +44,6 @@ export function UploadScreen({
     <section className="editor-desktop-workspace editor-desktop-workspace--stacked-no-session min-h-0 flex-1 overflow-hidden">
       <div className="editor-workspace-split-empty flex min-h-0 flex-1 flex-col border-b border-zinc-800/90 bg-zinc-950/90 px-4 py-6">
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center gap-6">
-          <div
-            className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 px-4 py-3 text-center"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={onFolderDrop}
-          >
-            <p className="text-xs text-zinc-300">
-              Fluxo local por episódios: arraste a pasta do projeto
-            </p>
-            <button
-              type="button"
-              onClick={onPickFolder}
-              className="mt-2 rounded bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500"
-            >
-              Escolher pasta (fila de episódios)
-            </button>
-          </div>
-
           <div className="text-center">
             <p className="text-[11px] font-semibold tracking-[0.08em] text-zinc-300">
               Arraste seus arquivos aqui

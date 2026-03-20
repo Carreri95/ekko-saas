@@ -5,6 +5,7 @@ import type { MutableRefObject, PointerEvent as ReactPointerEvent } from "react"
 import type WaveSurfer from "wavesurfer.js";
 
 type UseWaveformOverviewDragParams = {
+  suppressPlayheadFollowUntilRef: MutableRefObject<number>;
   waveSurferRef: MutableRefObject<WaveSurfer | null>;
   waveformViewport: {
     scroll: number;
@@ -14,17 +15,16 @@ type UseWaveformOverviewDragParams = {
   } | null;
   waveformEdgeDragRef: MutableRefObject<unknown>;
   waveformMoveDragRef: MutableRefObject<unknown>;
-  waveformPanDragRef: MutableRefObject<unknown>;
   waveformOverviewDragRef: MutableRefObject<{ pointerId: number } | null>;
   logBrowserError: (context: string, error: unknown) => void;
 };
 
 export function useWaveformOverviewDrag({
+  suppressPlayheadFollowUntilRef,
   waveSurferRef,
   waveformViewport,
   waveformEdgeDragRef,
   waveformMoveDragRef,
-  waveformPanDragRef,
   waveformOverviewDragRef,
   logBrowserError,
 }: UseWaveformOverviewDragParams) {
@@ -32,7 +32,7 @@ export function useWaveformOverviewDrag({
     (e: ReactPointerEvent<HTMLDivElement>) => {
       if (e.button !== 0) return;
       if (waveformEdgeDragRef.current || waveformMoveDragRef.current) return;
-      if (waveformPanDragRef.current || waveformOverviewDragRef.current) return;
+      if (waveformOverviewDragRef.current) return;
       const ws = waveSurferRef.current;
       const vp = waveformViewport;
       if (!ws || !vp || vp.maxScroll <= 0) return;
@@ -60,6 +60,7 @@ export function useWaveformOverviewDrag({
       const onUp = (ev: PointerEvent) => {
         const drag = waveformOverviewDragRef.current;
         if (!drag || ev.pointerId !== drag.pointerId) return;
+        suppressPlayheadFollowUntilRef.current = performance.now() + 3200;
         waveformOverviewDragRef.current = null;
         try {
           track.releasePointerCapture(ev.pointerId);
@@ -76,11 +77,11 @@ export function useWaveformOverviewDrag({
       window.addEventListener("pointercancel", onUp);
     },
     [
+      suppressPlayheadFollowUntilRef,
       waveSurferRef,
       waveformViewport,
       waveformEdgeDragRef,
       waveformMoveDragRef,
-      waveformPanDragRef,
       waveformOverviewDragRef,
       logBrowserError,
     ],

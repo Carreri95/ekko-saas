@@ -41,9 +41,10 @@ export function CueListItem({
   const hasProblems = problems.length > 0;
   const durationMs = cue.endMs - cue.startMs;
   const problemSummary = problems.join(" · ");
-  const cps = durationMs > 0 ? cue.text.replace(/\s+/g, "").length / (durationMs / 1000) : 0;
-  const cpsLevel =
-    cps > 21 ? "danger" : cps >= 17 ? "warning" : "ok";
+  const cps =
+    durationMs > 0
+      ? cue.text.replace(/\s+/g, "").length / (durationMs / 1000)
+      : 0;
   const gapMs =
     nextCueStartMs != null ? Math.max(0, nextCueStartMs - cue.endMs) : 0;
   const hasLongGap = gapMs > 2000;
@@ -57,41 +58,50 @@ export function CueListItem({
     return `${String(m).padStart(2, "0")}:${s.padStart(4, "0")}`;
   }
 
-  const qualityIndicators: Array<{ icon: string; title: string; tone: string }> = [];
-  if (cps > 21) {
-    qualityIndicators.push({
-      icon: "⚡",
-      title: `CPS alto (${cps.toFixed(1)})`,
-      tone: "text-red-400",
-    });
-  }
-  if (hasLongGap) {
-    qualityIndicators.push({
-      icon: "⏎",
-      title: `Gap longo para próxima cue (${gapMs}ms)`,
-      tone: "text-amber-300",
-    });
-  }
-  if (hasEmptyText) {
-    qualityIndicators.push({
-      icon: "!",
-      title: "Texto vazio",
-      tone: "text-orange-300",
-    });
-  }
-  if (hasOverlap) {
-    qualityIndicators.push({
-      icon: "⚠",
-      title: "Overlap com próxima cue",
-      tone: "text-red-400",
-    });
-  }
+  /** bg + border-l (2px) — precedência: playback+selecionado → selecionado → edit focus → playback → problema → neutro */
+  const rowState = (() => {
+    if (isSelectedCue && isPlaybackCue) {
+      return "bg-blue-950/50 border-l-blue-400";
+    }
+    if (isSelectedCue) {
+      return "bg-blue-950/40 border-l-blue-500";
+    }
+    if (isEditFocusCue) {
+      return "bg-cyan-950/30 border-l-cyan-500";
+    }
+    if (isPlaybackCue) {
+      return "bg-amber-950/20 border-l-amber-500";
+    }
+    if (hasProblems) {
+      return "bg-transparent border-l-orange-600/60";
+    }
+    return "bg-transparent border-l-transparent";
+  })();
+
+  const timeRowOpacity =
+    isSelectedCue || isEditFocusCue ? "opacity-100" : "opacity-70";
+
+  const bodyTextClass = hasProblems
+    ? "text-orange-200/90"
+    : isPlaybackCue && !isSelectedCue
+      ? "text-amber-100"
+      : "text-zinc-100";
+
+  const cpsClass =
+    cps > 21
+      ? "text-red-400"
+      : cps >= 17
+        ? "text-amber-300"
+        : "text-zinc-600";
+
+  const rowPad =
+    isSelectedCue || isEditFocusCue ? "py-2.5" : "py-2";
+
+  const showTimingInputs = isSelectedCue || isEditFocusCue;
 
   return (
     <article
-      ref={(element) => {
-        assignCueRef(cue.tempId, element);
-      }}
+      ref={(el) => assignCueRef(cue.tempId, el)}
       tabIndex={-1}
       role="listitem"
       data-editor-cue-sync="row"
@@ -99,112 +109,115 @@ export function CueListItem({
       data-editor-cue-playback={isPlaybackCue ? "true" : "false"}
       data-editor-cue-warn={hasProblems ? "true" : "false"}
       data-editor-cue-edit-focus={isEditFocusCue ? "true" : "false"}
-      className={`editor-cue-panel-row editor-cue-line editor-cue-strip editor-cue-row group grid min-w-0 cursor-pointer grid-cols-[40px_200px_minmax(0,1fr)_56px] items-center border-b border-zinc-800/40 font-mono transition-colors hover:bg-zinc-900/25 ${
-        hasProblems ? "mvp-cue-card--warn" : ""
-      } ${isPlaybackCue ? "editor-cue-card--playback" : ""} ${isSelectedCue ? "editor-cue-card--selected" : ""} ${
-        isEditFocusCue ? "editor-cue-card--edit-focus" : ""
-      } ${isSelectedCue ? "border-l-[3px] border-l-blue-500/90 bg-blue-500/15" : "border-l-[3px] border-l-transparent"}`}
-      onClick={(event) => {
-        if (shouldIgnoreCueClick(event.target)) return;
-        if (event.detail >= 2) {
+      className={`group relative grid min-w-0 cursor-pointer grid-cols-[32px_minmax(0,1fr)_48px] items-stretch border-b border-zinc-900/80 border-l-2 transition-colors hover:bg-zinc-900/30 ${rowPad} ${rowState}`}
+      onClick={(e) => {
+        if (shouldIgnoreCueClick(e.target)) return;
+        if (e.detail >= 2) {
           onSelectDouble(cue);
           return;
         }
-        if (event.detail === 1) {
-          onSelectSingle(cue);
-        }
+        if (e.detail === 1) onSelectSingle(cue);
       }}
       title={hasProblems ? `Problemas: ${problemSummary}` : undefined}
     >
-      {/* Index */}
+      {/* Coluna índice — 32px */}
       <div
-        className={`flex h-full items-center justify-center px-1 text-center text-[11px] tabular-nums leading-none ${
-          isSelectedCue ? "text-blue-300" : "text-zinc-500/70"
+        className={`flex h-full min-h-0 w-8 shrink-0 items-center justify-center font-mono text-[11px] tabular-nums leading-none ${
+          isSelectedCue
+            ? "text-blue-400"
+            : isPlaybackCue && !isSelectedCue
+              ? "text-amber-400"
+              : "text-zinc-600"
         }`}
       >
-        {cue.cueIndex}
+        {isSelectedCue ? (
+          cue.cueIndex
+        ) : isPlaybackCue ? (
+          <span className="text-amber-400" aria-hidden>
+            ▶
+          </span>
+        ) : (
+          cue.cueIndex
+        )}
       </div>
 
-      {/* Time column */}
-      <div className="min-w-0 px-1.5 py-1.5">
-        <div className="text-[12px] tabular-nums leading-snug text-zinc-300/90">
-          <span className="text-zinc-200/90">{formatShort(cue.startMs)}</span>
-          <span className="mx-1 text-zinc-600">→</span>
-          <span className="text-zinc-400/90">{formatShort(cue.endMs)}</span>
-        </div>
-        <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] leading-none">
-          <span className="text-zinc-600">{durationMs}ms</span>
-          {qualityIndicators.map((indicator) => (
-            <span
-              key={indicator.icon + indicator.title}
-              className={`${indicator.tone} text-[10px]`}
-              title={indicator.title}
-            >
-              {indicator.icon}
-            </span>
-          ))}
-        </div>
-        {isSelectedCue || isEditFocusCue ? (
-          <div className="mt-1 flex min-w-0 items-center gap-1">
-            <label className="inline-flex items-center gap-0.5">
-              <span className="text-[9px] text-zinc-600">in</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                className="editor-cue-ms-input h-4 w-[3.5rem] rounded border border-zinc-700/60 bg-zinc-900 py-0 px-1 text-[10px] tabular-nums text-zinc-300 outline-none focus:border-blue-500/60"
-                value={cue.startMs}
-                onChange={(e) => {
-                  const parsed = Number.parseInt(e.target.value, 10);
-                  if (!Number.isFinite(parsed)) return;
-                  onUpdateCue(cue.tempId, { startMs: parsed });
-                }}
-              />
-            </label>
-            <label className="inline-flex items-center gap-0.5">
-              <span className="text-[9px] text-zinc-600">out</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                className="editor-cue-ms-input h-4 w-[3.5rem] rounded border border-zinc-700/60 bg-zinc-900 py-0 px-1 text-[10px] tabular-nums text-zinc-300 outline-none focus:border-blue-500/60"
-                value={cue.endMs}
-                onChange={(e) => {
-                  const parsed = Number.parseInt(e.target.value, 10);
-                  if (!Number.isFinite(parsed)) return;
-                  onUpdateCue(cue.tempId, { endMs: parsed });
-                }}
-              />
-            </label>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Text column */}
-      <div className="min-w-0 px-2 py-1.5">
-        <p className="line-clamp-3 whitespace-pre-line break-words text-[13px] leading-[1.4] text-zinc-100">
-          {cue.text.trim() || <span className="text-zinc-600 italic">vazio</span>}
-        </p>
-        <span
-          className={`mt-0.5 inline-block rounded px-1.5 py-[1px] text-[10px] leading-none ${
-            cpsLevel === "danger"
-              ? "bg-red-500/10 text-red-400"
-              : cpsLevel === "warning"
-                ? "bg-amber-500/10 text-amber-300"
-                : "bg-emerald-500/10 text-emerald-300"
-          }`}
-          title={`Chars por segundo: ${cps.toFixed(1)}`}
+      {/* Conteúdo principal */}
+      <div className="min-w-0 pr-1">
+        {/* Linha 1 — timecodes */}
+        <div
+          className={`mb-1 flex flex-wrap items-baseline gap-x-1 gap-y-0 font-mono text-[11px] tabular-nums text-zinc-500 ${timeRowOpacity}`}
         >
-          {cps.toFixed(1)}cps
+          <span>{formatShort(cue.startMs)}</span>
+          <span className="text-[9px] text-zinc-700">▶</span>
+          <span>{formatShort(cue.endMs)}</span>
+          <span className="text-zinc-700">·</span>
+          <span className="text-[10px] text-zinc-600">{durationMs}ms</span>
+          {hasOverlap && (
+            <span className="text-[9px] text-red-400" title="Overlap">
+              ⚠
+            </span>
+          )}
+          {hasEmptyText && (
+            <span className="text-[9px] text-orange-400" title="Texto vazio">
+              !
+            </span>
+          )}
+          {hasLongGap && (
+            <span className="text-[9px] text-zinc-600" title={`Gap ${gapMs}ms`}>
+              ↓
+            </span>
+          )}
+        </div>
+
+        {/* Linha 2 — texto */}
+        <p
+          className={`line-clamp-2 whitespace-pre-line break-words text-[13px] leading-[1.4] ${bodyTextClass}`}
+        >
+          {cue.text.trim() || (
+            <span className="italic text-zinc-600">vazio</span>
+          )}
+        </p>
+
+        {/* Linha 3 — IN/OUT só quando selecionado ou edit focus */}
+        {showTimingInputs && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder="in"
+              aria-label="Início (ms)"
+              className="h-5 w-[60px] [appearance:textfield] rounded border border-zinc-700/70 bg-zinc-900 px-1.5 text-[10px] tabular-nums text-zinc-300 outline-none focus:border-blue-500/70 focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              value={cue.startMs}
+              onChange={(e) => {
+                const v = Number.parseInt(e.target.value, 10);
+                if (Number.isFinite(v)) onUpdateCue(cue.tempId, { startMs: v });
+              }}
+            />
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder="out"
+              aria-label="Fim (ms)"
+              className="h-5 w-[60px] [appearance:textfield] rounded border border-zinc-700/70 bg-zinc-900 px-1.5 text-[10px] tabular-nums text-zinc-300 outline-none focus:border-blue-500/70 focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              value={cue.endMs}
+              onChange={(e) => {
+                const v = Number.parseInt(e.target.value, 10);
+                if (Number.isFinite(v)) onUpdateCue(cue.tempId, { endMs: v });
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* CPS — 48px */}
+      <div className="flex w-12 shrink-0 items-start justify-end pt-0.5 pr-0">
+        <span
+          className={`font-mono text-[11px] tabular-nums leading-none ${cpsClass}`}
+          title={`${cps.toFixed(1)} caracteres/s`}
+        >
+          {cps.toFixed(1)}
         </span>
       </div>
-
-      {/* Actions column */}
-      <div
-        className={`editor-cue-line-actions flex h-full items-center justify-end gap-0.5 px-1 ${
-          isSelectedCue || isEditFocusCue
-            ? "opacity-100"
-            : "opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
-        }`}
-      />
     </article>
   );
 }

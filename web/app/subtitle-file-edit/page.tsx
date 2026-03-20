@@ -1,38 +1,38 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
 } from "react";
 import WaveSurfer from "wavesurfer.js";
 
 import { parseSrt } from "@/src/lib/srt/parse-srt";
-import { matchEpisodes } from "@/src/lib/project/match-episodes";
-import type { Episode, Project } from "@/src/types/project";
 import { CueListItem } from "./components/cue-list-item";
 import { CueTextEditor } from "./components/cue-text-editor";
-import { EpisodeQueueScreen } from "./components/episode-queue-screen";
 import { MediaPreviewPanel } from "./components/media-preview-panel";
 import { TimelineDock } from "./components/timeline-dock";
+import { WaveformContextMenu } from "./components/waveform-context-menu";
 import { UploadScreen } from "./components/upload-screen";
 import { VersionsDrawer } from "./components/versions-drawer";
 import { useWaveformCueDrag } from "./hooks/use-waveform-cue-drag";
 import { useWaveformPanSeek } from "./hooks/use-waveform-pan-seek";
 import { useAutoSave } from "./hooks/use-auto-save";
 import { usePlaybackSync } from "./hooks/use-playback-sync";
-import { useQueueAutoSnapshot } from "./hooks/use-queue-auto-snapshot";
 import { useCueListAutoScroll } from "./hooks/use-cue-list-auto-scroll";
 import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts";
+import { useUndoHistory } from "./hooks/use-undo-history";
 import { useWaveformLifecycle } from "./hooks/use-waveform-lifecycle";
 import { useCueEditorNavigation } from "./hooks/use-cue-editor-navigation";
 import { useMediaPlaybackControls } from "./hooks/use-media-playback-controls";
 import { useMediaSessionControls } from "./hooks/use-media-session-controls";
-import { useQueueActions } from "./hooks/use-queue-actions";
-import { useProjectQueueIntake } from "./hooks/use-project-queue-intake";
 import { useWaveformOverviewDrag } from "./hooks/use-waveform-overview-drag";
+import { useWaveformCanvasOverlay } from "./hooks/use-waveform-canvas-overlay";
+import { useWaveformCueCreate } from "./hooks/use-waveform-cue-create";
 import { useLocalMediaSrtIntake } from "./hooks/use-local-media-srt-intake";
 import { useVersionHistory } from "./hooks/use-version-history";
 import { useCuePersistence } from "./hooks/use-cue-persistence";
@@ -42,9 +42,12 @@ import {
   getCueProblems,
 } from "@/app/subtitle-file-edit/lib/cue-problems";
 import {
+  autoBrText,
   createTempId,
   getSaveCueHash,
   normalizeCueCollisions,
+  reindexCues,
+  splitCueTextAtTemporalRatio,
   toSaveCuePayload,
   validateCuesForSave,
 } from "@/app/subtitle-file-edit/lib/cue-utils";
@@ -52,7 +55,6 @@ import { formatPlaybackTime } from "@/app/subtitle-file-edit/lib/format-time";
 import {
   scrollCueIntoListPanel,
 } from "@/app/subtitle-file-edit/lib/dom-utils";
-import { inferProjectNameFromFiles } from "@/app/subtitle-file-edit/lib/project-utils";
 import type {
   AspectRatio,
   CueDto,
@@ -64,6 +66,8 @@ import { injectWaveformCueShadowStyles } from "./waveformCueShadowStyles";
 /** Duração mínima (ms) entre início e fim ao arrastar bordas na waveform. */
 const WAVEFORM_DRAG_MIN_GAP_MS = 40;
 const WAVEFORM_MIN_PX_PER_SEC = 48;
+
+const SPEED_STEPS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0] as const;
 
 function sanitizeSubtitleFileId(raw: string | null | undefined): string {
   const trimmed = String(raw ?? "").trim();
@@ -103,8 +107,6 @@ function isSpaceReservedForFocusedElement(target: EventTarget | null): boolean {
   );
 }
 
-const QUEUE_STATE_KEY = "subtitlebot-local-queue-v1";
-
 export default function SubtitleFileEditPage() {
   const mediaElementRef = useRef<HTMLAudioElement | HTMLVideoElement | null>(
     null,
@@ -113,23 +115,18 @@ export default function SubtitleFileEditPage() {
   const cueItemRefs = useRef<Record<string, HTMLElement | null>>({});
   const lastAutoScrollAtRef = useRef(0);
   const waveformContainerRef = useRef<HTMLDivElement | null>(null);
+  const waveformCanvasOverlayRef = useRef<HTMLCanvasElement | null>(null);
   const waveSurferRef = useRef<WaveSurfer | null>(null);
   const waveformCueOverlayHostRef = useRef<HTMLDivElement | null>(null);
   const waveformDurationSecRef = useRef<number | null>(null);
   const autoSaveTimerRef = useRef<number | null>(null);
   const autoSaveInFlightRef = useRef(false);
   const lastSavedServerHashRef = useRef("");
-  const queueSnapshotSyncTimerRef = useRef<number | null>(null);
-  const lastQueueSnapshotKeyRef = useRef("");
   const audioRouteFallbackTriedRef = useRef(false);
-  const waveformPanDragRef = useRef<{
-    pointerId: number;
-    startClientX: number;
-    startScrollPx: number;
-    moved: boolean;
-  } | null>(null);
   const waveformOverviewDragRef = useRef<{ pointerId: number } | null>(null);
   const suppressWaveformInteractionUntilRef = useRef(0);
+  /** Enquanto `performance.now()` < valor, não forçar scroll a seguir o playhead (scroll manual). */
+  const suppressPlayheadFollowUntilRef = useRef(0);
   const cueSingleClickTimerRef = useRef(0);
   const waveformViewportLastRef = useRef<{
     scroll: number;
@@ -145,6 +142,9 @@ export default function SubtitleFileEditPage() {
   const [wavFilename] = useState<string | null>(null);
   const [wavPath] = useState<string | null>(null);
   const [cues, setCues] = useState<CueDto[]>([]);
+  const cuesRef = useRef(cues);
+  cuesRef.current = cues;
+  const { pushHistory, undo } = useUndoHistory();
   const [loading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -159,6 +159,8 @@ export default function SubtitleFileEditPage() {
   const [mediaKind, setMediaKind] = useState<"video" | "audio" | null>(null);
   const [playerAspectRatio, setPlayerAspectRatio] = useState<AspectRatio>("16:9");
   const [currentPlaybackMs, setCurrentPlaybackMs] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1.0);
+  const playbackRateRef = useRef(1.0);
   /** Duração do ficheiro de áudio (s) — para desenhar cues na timeline da waveform. */
   const [waveformDurationSec, setWaveformDurationSec] = useState<number | null>(
     null,
@@ -175,17 +177,10 @@ export default function SubtitleFileEditPage() {
   /** Host DOM dentro do wrapper do WaveSurfer para alinhar regiões de cue ao zoom. */
   const [waveformCueOverlayHostEl, setWaveformCueOverlayHostEl] =
     useState<HTMLElement | null>(null);
-  const [isWaveformPanning, setIsWaveformPanning] = useState(false);
   const emptySrtInputRef = useRef<HTMLInputElement | null>(null);
   const emptyAudioInputRef = useRef<HTMLInputElement | null>(null);
-  const folderInputRef = useRef<HTMLInputElement | null>(null);
   const [srtDropActive, setSrtDropActive] = useState(false);
   const [audioDropActive, setAudioDropActive] = useState(false);
-  const [screenMode, setScreenMode] = useState<"upload" | "queue" | "editor">(
-    "upload",
-  );
-  const [localProject, setLocalProject] = useState<Project | null>(null);
-  const [currentEpisodeId, setCurrentEpisodeId] = useState<string | null>(null);
   /** Vista geral da faixa (scroll) — barra por baixo da waveform. */
   const [waveformViewport, setWaveformViewport] = useState<{
     scroll: number;
@@ -194,10 +189,20 @@ export default function SubtitleFileEditPage() {
     totalW: number;
   } | null>(null);
 
+  /** Menu de contexto na waveform (split) — portal em document.body. */
+  const [waveformContextMenu, setWaveformContextMenu] = useState<{
+    x: number;
+    y: number;
+    cue: CueDto;
+    /** Tempo de corte (ms) derivado do clique; usado no split (evita querySelector no shadow DOM). */
+    splitMs: number;
+    canSplit: boolean;
+    canAddText: boolean;
+  } | null>(null);
+
   const hasServerSubtitleFile = sanitizeSubtitleFileId(subtitleFileId) !== "";
-  const isQueueEpisodeContext = screenMode === "editor" && currentEpisodeId !== null;
   const isEditorReady =
-    hasServerSubtitleFile || (cues.length > 0 && (mediaSourceUrl !== null || isQueueEpisodeContext));
+    hasServerSubtitleFile || (cues.length > 0 && mediaSourceUrl !== null);
   const waveformEnabled = mediaKind === "audio" && mediaSourceUrl !== null && isEditorReady;
 
   useEffect(() => {
@@ -206,27 +211,6 @@ export default function SubtitleFileEditPage() {
   }, [error]);
 
   const { bindPanSeekHandlers } = useWaveformPanSeek();
-  const {
-    waveformEdgeDragRef,
-    waveformMoveDragRef,
-    waveformEdgeDrag,
-    waveformMoveDrag,
-    handleWaveformEdgePointerDown,
-    handleWaveformEdgePointerMove,
-    handleWaveformEdgePointerEnd,
-    handleWaveformMovePointerDown,
-    handleWaveformMovePointerMove,
-    handleWaveformMovePointerEnd,
-  } = useWaveformCueDrag<CueDto>({
-    waveformDurationSecRef,
-    waveSurferRef,
-    minGapMs: WAVEFORM_DRAG_MIN_GAP_MS,
-    setSelectedCueTempId,
-    setCueEditFocusTempId,
-    suppressWaveformInteractionUntilRef,
-    updateCue,
-    getCueNeighborBounds,
-  });
 
   useEffect(() => {
     const rawId = new URLSearchParams(window.location.search).get(
@@ -264,51 +248,6 @@ export default function SubtitleFileEditPage() {
       /* ignore localStorage errors */
     }
   }, [playerAspectRatio]);
-
-  function saveQueueState(nextProject: Project) {
-    try {
-      const serializable = {
-        name: nextProject.name,
-        episodes: nextProject.episodes.map((ep) => ({
-          name: ep.name,
-          status: ep.status,
-          editedCues: ep.editedCues,
-        })),
-      };
-      window.localStorage.setItem(QUEUE_STATE_KEY, JSON.stringify(serializable));
-    } catch (error) {
-      logBrowserError("saveQueueState localStorage.setItem", error);
-      /* ignore localStorage errors */
-    }
-  }
-
-  function restoreQueueProgress(episodes: Episode[]): Episode[] {
-    try {
-      const raw = window.localStorage.getItem(QUEUE_STATE_KEY);
-      if (!raw) return episodes;
-      const parsed = JSON.parse(raw) as {
-        name?: string;
-        episodes?: Array<{
-          name: string;
-          status: Episode["status"];
-          editedCues: Episode["editedCues"];
-        }>;
-      };
-      const map = new Map((parsed.episodes ?? []).map((ep) => [ep.name, ep]));
-      return episodes.map((ep) => {
-        const saved = map.get(ep.name);
-        if (!saved) return ep;
-        return {
-          ...ep,
-          status: saved.status ?? ep.status,
-          editedCues: saved.editedCues ?? ep.editedCues,
-        };
-      });
-    } catch (error) {
-      logBrowserError("restoreQueueProgress JSON/localStorage parse", error);
-      return episodes;
-    }
-  }
 
   useEffect(() => {
     currentPlaybackMsRef.current = currentPlaybackMs;
@@ -360,6 +299,7 @@ export default function SubtitleFileEditPage() {
     seekPlaybackToTimeSec,
     seekPlaybackFromWaveClientX,
     scrollWaveformToCueStart,
+    ensureWaveformPlayheadVisible,
     seekPlayerToCue,
     playMedia,
     pauseMedia,
@@ -368,67 +308,40 @@ export default function SubtitleFileEditPage() {
   } = useMediaPlaybackControls({
     mediaElementRef,
     waveSurferRef,
+    playbackRateRef,
     isWaveformSeekingRef,
     setCurrentPlaybackMs,
     logBrowserError,
   });
 
-  useKeyboardShortcuts({
-    mediaElementRef,
-    currentPlaybackMsRef,
-    seekPlaybackToTimeSec,
-    logBrowserError,
-    isSpaceReservedForFocusedElement,
-    editingCueTempId,
-    setEditingCueTempId,
-  });
+  const handleSpeedChange = useCallback((rate: number) => {
+    setPlaybackRate(rate);
+    playbackRateRef.current = rate;
+    const media = mediaElementRef.current;
+    if (!media) return;
+    media.playbackRate = rate;
+    media.defaultPlaybackRate = rate;
+  }, []);
 
-  useWaveformLifecycle({
-    waveformEnabled,
-    localWaveformData,
-    bindPanSeekHandlers,
-    mediaSourceUrl,
-    mediaKind,
-    wavPath,
-    waveformPx: WAVEFORM_PX,
+  useEffect(() => {
+    playbackRateRef.current = playbackRate;
+  }, [playbackRate]);
+
+  useEffect(() => {
+    const el = mediaElementRef.current;
+    if (!el || !mediaSourceUrl) return;
+    el.playbackRate = playbackRate;
+    el.defaultPlaybackRate = playbackRate;
+  }, [mediaSourceUrl, mediaKind, playbackRate]);
+
+  useWaveformCanvasOverlay({
+    canvasRef: waveformCanvasOverlayRef,
+    waveSurferRef,
     waveformContainerRef,
-    mediaElementRef,
-    waveSurferRef,
-    waveformMinPxPerSec: WAVEFORM_MIN_PX_PER_SEC,
-    waveformCueOverlayHostRef,
-    waveformViewportLastRef,
-    scheduleViewportRefreshRef,
-    waveformPanDragRef,
-    waveformOverviewDragRef,
-    waveformEdgeDragRef,
-    waveformMoveDragRef,
-    suppressWaveformInteractionUntilRef,
-    audioRouteFallbackTriedRef,
-    setWaveformDurationSec,
-    setWaveformCueOverlayHostEl,
-    setIsWaveformPanning,
-    setWaveformViewport,
-    setError,
-    setMediaSourceUrl,
-    seekPlaybackToTimeSec,
-    logBrowserError,
-    normalizeBrowserMediaPath,
-    injectWaveformCueShadowStyles,
-  });
-
-  usePlaybackSync({
-    mediaSourceUrl,
-    mediaKind,
-    mediaElementRef,
-    waveSurferRef,
-    isWaveformSeekingRef,
-    suppressWaveformInteractionUntilRef,
-    waveformPanDragRef,
-    waveformOverviewDragRef,
-    waveformEdgeDragRef,
-    waveformMoveDragRef,
-    scheduleViewportRefreshRef,
-    setCurrentPlaybackMs,
+    currentPlaybackMsRef,
+    waveformDurationSec,
+    waveformViewport,
+    enabled: waveformEnabled,
   });
 
   useEffect(() => {
@@ -557,14 +470,6 @@ export default function SubtitleFileEditPage() {
     [cues, editingCueTempId],
   );
   const editingCue = editingCueIndex >= 0 ? cues[editingCueIndex] : null;
-  const currentEpisodeIndex = useMemo(() => {
-    if (!localProject || !currentEpisodeId) return -1;
-    return localProject.episodes.findIndex((ep) => ep.id === currentEpisodeId);
-  }, [localProject, currentEpisodeId]);
-  const currentEpisode =
-    currentEpisodeIndex >= 0 && localProject
-      ? localProject.episodes[currentEpisodeIndex]
-      : null;
 
   /** Posição das cues na barra temporal da waveform (px), ancorada em timecode. */
   const cueWaveformRegions = useMemo(() => {
@@ -577,7 +482,6 @@ export default function SubtitleFileEditPage() {
   }, [cues, waveformDurationSec, waveformViewport]);
 
   const waveformGridStyle = useMemo(() => {
-    // Major = ~1s; minor = ~100ms (escala com o zoom em px/s).
     const minorStepPx = Math.max(6, Math.round(WAVEFORM_MIN_PX_PER_SEC / 10));
     const majorStepPx = minorStepPx * 10;
     return {
@@ -622,8 +526,8 @@ export default function SubtitleFileEditPage() {
     if (prevCount === 0 && cues.length > 0) {
       const firstCue = cues[0];
       setSelectedCueTempId(firstCue.tempId);
-      setCueEditFocusTempId(firstCue.tempId);
-      setEditingCueTempId(firstCue.tempId);
+      setCueEditFocusTempId(null);
+      setEditingCueTempId(null);
     }
     prevCueCountRef.current = cues.length;
   }, [cues]);
@@ -640,6 +544,119 @@ export default function SubtitleFileEditPage() {
       }, 320);
     });
   }
+
+  const handleWaveformCueContextMenu = useCallback(
+    (e: ReactMouseEvent, cue: CueDto) => {
+      e.preventDefault();
+      const clientX = e.clientX;
+      const regionEl = e.currentTarget as HTMLElement;
+      const rect = regionEl.getBoundingClientRect();
+      let splitMs = Math.round((cue.startMs + cue.endMs) / 2);
+      let canSplit = false;
+      if (rect.width > 0) {
+        const ratio = Math.max(
+          0,
+          Math.min(1, (clientX - rect.left) / rect.width),
+        );
+        splitMs = Math.round(
+          cue.startMs + ratio * (cue.endMs - cue.startMs),
+        );
+        canSplit =
+          splitMs - cue.startMs >= WAVEFORM_DRAG_MIN_GAP_MS &&
+          cue.endMs - splitMs >= WAVEFORM_DRAG_MIN_GAP_MS;
+      }
+      setWaveformContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        cue,
+        splitMs,
+        canSplit,
+        canAddText: cue.text.trim() === "",
+      });
+    },
+    [],
+  );
+
+  const handleWaveformAddTextToCue = useCallback((cue: CueDto) => {
+    setSelectedCueTempId(cue.tempId);
+    setCueEditFocusTempId(cue.tempId);
+    setEditingCueTempId(cue.tempId);
+    focusCueCardInList(cue.tempId);
+    setWaveformContextMenu(null);
+  }, []);
+
+  const handleWaveformSplitCue = useCallback(
+    (cue: CueDto, splitMs: number) => {
+      if (splitMs - cue.startMs < WAVEFORM_DRAG_MIN_GAP_MS) return;
+      if (cue.endMs - splitMs < WAVEFORM_DRAG_MIN_GAP_MS) return;
+      pushHistory(cuesRef.current.map((c) => ({ ...c })), `Split cue #${cue.cueIndex}`);
+      setCues((prev) => {
+        const idx = prev.findIndex((c) => c.tempId === cue.tempId);
+        if (idx < 0) return prev;
+        const next = [...prev];
+        const { textA, textB } = splitCueTextAtTemporalRatio(cue, splitMs);
+        const cueA: CueDto = {
+          ...cue,
+          endMs: splitMs,
+          text: autoBrText(textA),
+        };
+        const cueB: CueDto = {
+          ...cue,
+          startMs: splitMs,
+          tempId: createTempId(),
+          id: null,
+          text: autoBrText(textB),
+        };
+        next.splice(idx, 1, cueA, cueB);
+        return reindexCues(next);
+      });
+      setWaveformContextMenu(null);
+    },
+    [pushHistory],
+  );
+
+  const handleDeleteCueFromContext = useCallback(
+    (cue: CueDto) => {
+      pushHistory(
+        cuesRef.current.map((c) => ({ ...c })),
+        `Deletar cue #${cue.cueIndex}`,
+      );
+      setCues((prev) =>
+        reindexCues(prev.filter((c) => c.tempId !== cue.tempId)),
+      );
+      setSelectedCueTempId((prev) =>
+        prev === cue.tempId ? null : prev,
+      );
+      setCueEditFocusTempId((prev) =>
+        prev === cue.tempId ? null : prev,
+      );
+      setEditingCueTempId((prev) =>
+        prev === cue.tempId ? null : prev,
+      );
+      setWaveformContextMenu(null);
+    },
+    [pushHistory],
+  );
+
+  useEffect(() => {
+    if (!waveformContextMenu) return;
+    function onMouseDown(ev: globalThis.MouseEvent) {
+      const t = ev.target;
+      if (t instanceof Element && t.closest("[data-waveform-context-menu]")) {
+        return;
+      }
+      setWaveformContextMenu(null);
+    }
+    function onKeyDown(ev: globalThis.KeyboardEvent) {
+      if (ev.key === "Escape") setWaveformContextMenu(null);
+    }
+    document.addEventListener("mousedown", onMouseDown, true);
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown, true);
+      document.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, [waveformContextMenu]);
 
   useCueListAutoScroll({
     activeCueTempId,
@@ -707,6 +724,136 @@ export default function SubtitleFileEditPage() {
     });
   }
 
+  const takeCuesSnapshotForUndo = useCallback(
+    () => cuesRef.current.map((c) => ({ ...c })),
+    [],
+  );
+
+  const commitTimingUndo = useCallback(
+    (snapshot: CueDto[], label: string) => {
+      pushHistory(snapshot, label);
+    },
+    [pushHistory],
+  );
+
+  const {
+    waveformEdgeDragRef,
+    waveformMoveDragRef,
+    waveformEdgeDrag,
+    waveformMoveDrag,
+    handleWaveformEdgePointerDown,
+    handleWaveformEdgePointerMove,
+    handleWaveformEdgePointerEnd,
+    handleWaveformMovePointerDown,
+    handleWaveformMovePointerMove,
+    handleWaveformMovePointerEnd,
+  } = useWaveformCueDrag<CueDto>({
+    waveformDurationSecRef,
+    waveSurferRef,
+    minGapMs: WAVEFORM_DRAG_MIN_GAP_MS,
+    setSelectedCueTempId,
+    setCueEditFocusTempId,
+    suppressWaveformInteractionUntilRef,
+    updateCue,
+    getCueNeighborBounds,
+    takeCuesSnapshotForUndo,
+    commitTimingUndo,
+  });
+
+  usePlaybackSync({
+    mediaSourceUrl,
+    mediaKind,
+    mediaElementRef,
+    isWaveformSeekingRef,
+    setCurrentPlaybackMs,
+    waveSurferRef,
+    scheduleViewportRefreshRef,
+    waveformOverviewDragRef,
+    waveformEdgeDragRef,
+    waveformMoveDragRef,
+    suppressPlayheadFollowUntilRef,
+  });
+
+  const onUpdateCueFromList = useCallback(
+    (
+      cueTempId: string,
+      patch: Partial<Pick<CueDto, "startMs" | "endMs" | "text">>,
+    ) => {
+      const cue = cuesRef.current.find((c) => c.tempId === cueTempId);
+      if (cue && (patch.startMs != null || patch.endMs != null)) {
+        pushHistory(
+          cuesRef.current.map((c) => ({ ...c })),
+          `Editar tempos cue #${cue.cueIndex}`,
+        );
+      }
+      updateCue(cueTempId, patch);
+    },
+    [pushHistory, updateCue],
+  );
+
+  const onBeforeCommitCueText = useCallback(
+    (cueTempId: string) => {
+      const cue = cuesRef.current.find((c) => c.tempId === cueTempId);
+      if (cue) {
+        pushHistory(
+          cuesRef.current.map((c) => ({ ...c })),
+          `Editar texto cue #${cue.cueIndex}`,
+        );
+      }
+    },
+    [pushHistory],
+  );
+
+  useKeyboardShortcuts({
+    mediaElementRef,
+    currentPlaybackMsRef,
+    seekPlaybackToTimeSec,
+    ensureWaveformPlayheadVisible,
+    logBrowserError,
+    isSpaceReservedForFocusedElement,
+    editingCueTempId,
+    setEditingCueTempId,
+    undo,
+    setCues,
+    setSelectedCueTempId,
+    setCueEditFocusTempId,
+    waveformEdgeDragRef,
+    waveformMoveDragRef,
+    setSaveSuccess,
+  });
+
+  useWaveformLifecycle({
+    waveformEnabled,
+    localWaveformData,
+    bindPanSeekHandlers,
+    mediaSourceUrl,
+    mediaKind,
+    wavPath,
+    waveformPx: WAVEFORM_PX,
+    waveformContainerRef,
+    mediaElementRef,
+    waveSurferRef,
+    waveformMinPxPerSec: WAVEFORM_MIN_PX_PER_SEC,
+    waveformCueOverlayHostRef,
+    waveformViewportLastRef,
+    scheduleViewportRefreshRef,
+    waveformOverviewDragRef,
+    waveformEdgeDragRef,
+    waveformMoveDragRef,
+    suppressWaveformInteractionUntilRef,
+    suppressPlayheadFollowUntilRef,
+    audioRouteFallbackTriedRef,
+    setWaveformDurationSec,
+    setWaveformCueOverlayHostEl,
+    setWaveformViewport,
+    setError,
+    setMediaSourceUrl,
+    seekPlaybackToTimeSec,
+    logBrowserError,
+    normalizeBrowserMediaPath,
+    injectWaveformCueShadowStyles,
+  });
+
   const { persistCuesToServer } = useCuePersistence({
     subtitleFileId,
     cues,
@@ -736,25 +883,38 @@ export default function SubtitleFileEditPage() {
     persistCuesToServer,
   });
 
-  useQueueAutoSnapshot({
-    localProject,
-    currentEpisodeId,
-    cues,
-    queueSnapshotSyncTimerRef,
-    lastQueueSnapshotKeyRef,
-    setLocalProject,
-    saveQueueState,
-  });
+  const { clearMedia: clearMediaInner, resetPlaybackToStart: resetPlaybackInner } =
+    useMediaSessionControls({
+      mediaElementRef,
+      waveSurferRef,
+      scheduleViewportRefreshRef,
+      setLocalWaveformData,
+      setMediaSourceUrl,
+      setMediaKind,
+      setCurrentPlaybackMs,
+    });
 
-  const { clearMedia, resetPlaybackToStart } = useMediaSessionControls({
-    mediaElementRef,
-    waveSurferRef,
-    scheduleViewportRefreshRef,
-    setLocalWaveformData,
-    setMediaSourceUrl,
-    setMediaKind,
-    setCurrentPlaybackMs,
-  });
+  const clearMedia = useCallback(() => {
+    setPlaybackRate(1);
+    playbackRateRef.current = 1;
+    const m = mediaElementRef.current;
+    if (m) {
+      m.playbackRate = 1;
+      m.defaultPlaybackRate = 1;
+    }
+    clearMediaInner();
+  }, [clearMediaInner]);
+
+  const resetPlaybackToStart = useCallback(() => {
+    setPlaybackRate(1);
+    playbackRateRef.current = 1;
+    const m = mediaElementRef.current;
+    if (m) {
+      m.playbackRate = 1;
+      m.defaultPlaybackRate = 1;
+    }
+    resetPlaybackInner();
+  }, [resetPlaybackInner]);
 
   function toCueDtoListFromSrtText(text: string): CueDto[] {
     const parsed = parseSrt(text);
@@ -769,22 +929,6 @@ export default function SubtitleFileEditPage() {
       })),
       WAVEFORM_DRAG_MIN_GAP_MS,
     );
-  }
-
-  async function buildEpisodeCues(episode: Episode): Promise<CueDto[]> {
-    if (!episode.srtFile) {
-      throw new Error("Episódio sem ficheiro SRT.");
-    }
-    const text = await episode.srtFile.text();
-    return episode.editedCues && episode.editedCues.length > 0
-      ? normalizeCueCollisions(
-          episode.editedCues.map((cue) => ({
-            ...cue,
-            tempId: cue.tempId || createTempId(),
-          })),
-          WAVEFORM_DRAG_MIN_GAP_MS,
-        )
-      : toCueDtoListFromSrtText(text);
   }
 
   const {
@@ -821,45 +965,6 @@ export default function SubtitleFileEditPage() {
     queueLocalMediaFromFiles,
   });
 
-  const {
-    openEpisodeById,
-    handleDownloadEpisodeById,
-    saveAndStayQueueEpisode,
-    saveAndNextQueueEpisode,
-  } = useQueueActions({
-    localProject,
-    currentEpisodeId,
-    cues,
-    setLocalProject,
-    setCurrentEpisodeId,
-    setScreenMode,
-    setSaveSuccess,
-    setError,
-    setCues,
-    setFilename,
-    setSubtitleFileId,
-    setSelectedCueTempId,
-    setCueEditFocusTempId,
-    setEditingCueTempId,
-    saveQueueState,
-    buildEpisodeCues,
-    resetPlaybackToStart,
-    applyLocalMediaFile,
-    clearMedia,
-    logBrowserError,
-  });
-
-  const { handleFolderInputChange, handleFolderDrop } = useProjectQueueIntake({
-    restoreQueueProgress,
-    matchEpisodes,
-    inferProjectNameFromFiles,
-    saveQueueState,
-    setLocalProject,
-    setCurrentEpisodeId,
-    setScreenMode,
-    setError,
-  });
-
   function shouldIgnoreCueClick(target: EventTarget | null): boolean {
     if (!(target instanceof Element)) return false;
     return Boolean(target.closest("input, textarea, button, select, label, a"));
@@ -872,20 +977,37 @@ export default function SubtitleFileEditPage() {
     setCueEditFocusTempId,
     setEditingCueTempId,
     updateCue,
+    onBeforeCommitCueText: onBeforeCommitCueText,
     seekPlayerToCue,
     scrollWaveformToCueStart,
     focusCueCardInList,
   });
 
   const { handleWaveformOverviewPointerDown } = useWaveformOverviewDrag({
+    suppressPlayheadFollowUntilRef,
     waveSurferRef,
     waveformViewport,
     waveformEdgeDragRef,
     waveformMoveDragRef,
-    waveformPanDragRef,
     waveformOverviewDragRef,
     logBrowserError,
   });
+
+  const { cueCreatePreviewRect, onWaveformShellPointerDownCapture } =
+    useWaveformCueCreate({
+      waveSurferRef,
+      waveformDurationSec,
+      waveformTotalWidthPx: waveformViewport?.totalW ?? null,
+      cues,
+      setCues,
+      setSelectedCueTempId,
+      minGapMs: WAVEFORM_DRAG_MIN_GAP_MS,
+      seekPlaybackFromWaveClientX,
+      waveformEdgeDragRef,
+      waveformMoveDragRef,
+      waveformOverviewDragRef,
+      pushHistory,
+    });
 
   const hasEditorContent =
     hasServerSubtitleFile || cues.length > 0 || mediaSourceUrl !== null;
@@ -914,49 +1036,7 @@ export default function SubtitleFileEditPage() {
   return (
     <main className="mvp-page editor-desktop-page">
       <div className="editor-desktop-shell flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-hidden">
-        {screenMode === "queue" && localProject ? (
-          <EpisodeQueueScreen
-            project={localProject}
-            onBackToUpload={() => setScreenMode("upload")}
-            onOpenEpisode={openEpisodeById}
-            onDownloadEpisode={handleDownloadEpisodeById}
-          />
-        ) : (
-          <>
-            {currentEpisode && localProject ? (
-              <div className="flex shrink-0 items-center gap-2 border-b border-zinc-800/70 bg-zinc-900/70 px-3 py-1 text-[11px]">
-                <button
-                  type="button"
-                  className="rounded border border-zinc-700 px-2 py-0.5 text-zinc-300 hover:border-zinc-500 hover:text-zinc-100"
-                  onClick={() => {
-                    saveAndStayQueueEpisode();
-                    setScreenMode("queue");
-                  }}
-                >
-                  ← Fila
-                </button>
-                <span className="text-zinc-600">|</span>
-                <span className="font-medium text-zinc-100">{currentEpisode.name}</span>
-                <span className="text-zinc-400">
-                  {currentEpisodeIndex + 1} / {localProject.episodes.length}
-                </span>
-                <div className="flex-1" />
-                <button
-                  type="button"
-                  className="rounded border border-zinc-700 px-2 py-0.5 text-zinc-300 hover:border-zinc-500 hover:text-zinc-100"
-                  onClick={saveAndStayQueueEpisode}
-                >
-                  Salvar
-                </button>
-                <button
-                  type="button"
-                  className="rounded bg-emerald-600 px-2.5 py-0.5 font-semibold text-white hover:bg-emerald-500"
-                  onClick={() => void saveAndNextQueueEpisode()}
-                >
-                  ✓ Salvar e próximo →
-                </button>
-              </div>
-            ) : null}
+        <>
         <div className="editor-desktop-toolbar shrink-0 border-b border-zinc-800/90 bg-zinc-950/80 px-2 py-1.5">
           <div className="flex flex-wrap items-end gap-2">
             <div className="min-w-0 flex-1">
@@ -1030,38 +1110,21 @@ export default function SubtitleFileEditPage() {
                 <div className={`editor-panel-cues editor-cue-track-column editor-cue-track-layout flex min-h-0 w-full min-w-0 flex-1 flex-col gap-0 lg:min-h-0 ${cuePanelRatioClass}`}>
                   {cues.length > 0 ? (
                     <>
-                      <div className="editor-cue-rail-head shrink-0 border-b border-zinc-800/80 bg-zinc-950 px-1 py-0.5">
-                        <p className="text-[9px] leading-tight text-zinc-600">
-                          <span className="tabular-nums text-zinc-500">
-                            {cues.length}
-                          </span>
-                          {problematicCount > 0 ? (
-                            <span className="text-amber-200/80">
-                              {" "}
-                              · {problematicCount}!
-                            </span>
-                          ) : null}
-                        </p>
-                      </div>
-
                       <div
                         ref={cueListScrollRef}
                         className="editor-cue-panel-list editor-cue-list-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden border-r border-zinc-800/50 bg-[rgba(9,9,11,0.75)]"
                         role="list"
                         aria-label="Lista de cues (ligada à timeline)"
                       >
-                        <div className="cue-list-header sticky top-0 z-10 grid grid-cols-[48px_180px_minmax(0,1fr)_72px] border-b border-zinc-700/60 bg-zinc-950/95 px-0 py-1 backdrop-blur-[1px]">
-                          <span className="px-1 text-center text-[10px] uppercase tracking-[0.08em] text-zinc-600">
+                        <div className="sticky top-0 z-10 flex items-center border-b border-zinc-800/60 bg-zinc-950/95 px-2 py-1 backdrop-blur-sm">
+                          <span className="w-8 text-center font-mono text-[9px] uppercase tracking-widest text-zinc-700">
                             #
                           </span>
-                          <span className="px-1.5 text-[10px] uppercase tracking-[0.08em] text-zinc-600">
-                            Tempo
+                          <span className="flex-1 px-2 font-mono text-[9px] uppercase tracking-widest text-zinc-700">
+                            legenda
                           </span>
-                          <span className="px-2 text-[10px] uppercase tracking-[0.08em] text-zinc-600">
-                            Texto
-                          </span>
-                          <span className="px-1 text-right text-[10px] uppercase tracking-[0.08em] text-zinc-600">
-                            Ações
+                          <span className="w-12 text-right font-mono text-[9px] uppercase tracking-widest text-zinc-700">
+                            c/s
                           </span>
                         </div>
                         {visibleCueProblemsList.map(({ cue, problems }, index) => (
@@ -1084,9 +1147,6 @@ export default function SubtitleFileEditPage() {
                             onSelectSingle={(itemCue) => {
                               setSelectedCueTempId(itemCue.tempId);
                               setCueEditFocusTempId(null);
-                              setEditingCueTempId((prev) =>
-                                prev ? itemCue.tempId : prev,
-                              );
                               if (mediaSourceUrl) {
                                 seekPlayerToCue(itemCue.startMs);
                                 scrollWaveformToCueStart(itemCue.startMs);
@@ -1111,7 +1171,7 @@ export default function SubtitleFileEditPage() {
                                 });
                               });
                             }}
-                            onUpdateCue={updateCue}
+                            onUpdateCue={onUpdateCueFromList}
                           />
                         ))}
                         {visibleCueProblemsList.length === 0 ? (
@@ -1120,20 +1180,34 @@ export default function SubtitleFileEditPage() {
                           </div>
                         ) : null}
                       </div>
-                      <div className="flex h-12 shrink-0 items-center gap-2 border-r border-t border-zinc-800/50 bg-[#141414] px-3">
-                        <span className="text-[11px] text-white/30">
-                          {cues.length} legendas
+                      <div className="flex h-8 shrink-0 items-center gap-2 border-r border-t border-zinc-800/50 bg-zinc-950 px-3">
+                        <span className="font-mono text-[10px] text-zinc-600">
+                          {cues.length} cues
                         </span>
-                        <span className="text-[11px] text-white/20">·</span>
                         {highCpsCount > 0 ? (
-                          <span className="text-[11px] text-amber-300/90">
-                            ⚠ {highCpsCount} com CPS alto
-                          </span>
-                        ) : (
-                          <span className="text-[11px] text-emerald-300/90">
-                            ✓ Todos ok
-                          </span>
-                        )}
+                          <>
+                            <span className="text-zinc-800">·</span>
+                            <span className="text-[10px] text-amber-400/80">
+                              ⚠ {highCpsCount} CPS alto
+                            </span>
+                          </>
+                        ) : null}
+                        {problematicCount > 0 ? (
+                          <>
+                            <span className="text-zinc-800">·</span>
+                            <span className="text-[10px] text-orange-400/80">
+                              {problematicCount} com problemas
+                            </span>
+                          </>
+                        ) : null}
+                        {highCpsCount === 0 && problematicCount === 0 ? (
+                          <>
+                            <span className="text-zinc-800">·</span>
+                            <span className="text-[10px] text-emerald-500/70">
+                              ✓ tudo ok
+                            </span>
+                          </>
+                        ) : null}
                         <div className="flex-1" />
                       </div>
                     </>
@@ -1191,12 +1265,14 @@ export default function SubtitleFileEditPage() {
                       mediaSourceUrl={mediaSourceUrl}
                       mediaKind={mediaKind}
                       currentPlaybackMs={currentPlaybackMs}
-                      canReplaceAudio={Boolean(mediaSourceUrl && cues.length > 0)}
-                      onReplaceAudio={clearMedia}
                       waveformViewport={waveformViewport}
                       waveformDurationSec={waveformDurationSec}
                       waveformContainerRef={waveformContainerRef}
-                      isWaveformPanning={isWaveformPanning}
+                      waveformCanvasOverlayRef={waveformCanvasOverlayRef}
+                      cueCreatePreviewRect={cueCreatePreviewRect}
+                      onWaveformShellPointerDownCapture={
+                        onWaveformShellPointerDownCapture
+                      }
                       waveformCueOverlayHostEl={waveformCueOverlayHostEl}
                       cueWaveformRegions={cueWaveformRegions}
                       activeCueTempId={activeCueTempId}
@@ -1224,6 +1300,11 @@ export default function SubtitleFileEditPage() {
                       onResetMediaToStart={resetMediaToStart}
                       waveformPx={WAVEFORM_PX}
                       waveformGridStyle={waveformGridStyle}
+                      onCueContextMenu={handleWaveformCueContextMenu}
+                      formatToolbarTime={formatPlaybackTime}
+                      playbackRate={playbackRate}
+                      speedSteps={SPEED_STEPS}
+                      onPlaybackRateChange={handleSpeedChange}
                     />
                   </div>
                 </div>
@@ -1259,8 +1340,6 @@ export default function SubtitleFileEditPage() {
                 onAudioDrop={handleEmptyAudioDrop}
                 onPickSrt={() => emptySrtInputRef.current?.click()}
                 onPickAudio={() => emptyAudioInputRef.current?.click()}
-                onPickFolder={() => folderInputRef.current?.click()}
-                onFolderDrop={handleFolderDrop}
               />
               <input
                 ref={emptySrtInputRef}
@@ -1287,19 +1366,10 @@ export default function SubtitleFileEditPage() {
                   e.target.value = "";
                 }}
               />
-              <input
-                ref={folderInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={handleFolderInputChange}
-                {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
-              />
             </div>
           )}
         </div>
-          </>
-        )}
+        </>
       </div>
 
       <VersionsDrawer
@@ -1308,6 +1378,27 @@ export default function SubtitleFileEditPage() {
         versions={versions}
         onClose={() => setVersionsDrawerOpen(false)}
       />
+
+      {waveformContextMenu ? (
+        <WaveformContextMenu
+          x={waveformContextMenu.x}
+          y={waveformContextMenu.y}
+          canAddText={waveformContextMenu.canAddText}
+          canSplit={waveformContextMenu.canSplit}
+          onAddText={() =>
+            handleWaveformAddTextToCue(waveformContextMenu.cue)
+          }
+          onSplit={() =>
+            handleWaveformSplitCue(
+              waveformContextMenu.cue,
+              waveformContextMenu.splitMs,
+            )
+          }
+          onDelete={() =>
+            handleDeleteCueFromContext(waveformContextMenu.cue)
+          }
+        />
+      ) : null}
     </main>
   );
 }
