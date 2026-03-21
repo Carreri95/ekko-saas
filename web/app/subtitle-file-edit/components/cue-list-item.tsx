@@ -13,7 +13,6 @@ export function CueListItem({
   shouldIgnoreCueClick,
   onSelectSingle,
   onSelectDouble,
-  onUpdateCue,
 }: CueListItemProps) {
   const hasProblems = problems.length > 0;
   const durationMs = cue.endMs - cue.startMs;
@@ -72,9 +71,7 @@ export function CueListItem({
         : "text-zinc-600";
 
   const rowPad =
-    isSelectedCue || isEditFocusCue ? "py-2.5" : "py-2";
-
-  const showTimingInputs = isSelectedCue || isEditFocusCue;
+    isSelectedCue || isEditFocusCue ? "py-3.5" : "py-3";
 
   return (
     <article
@@ -86,7 +83,7 @@ export function CueListItem({
       data-editor-cue-playback={isPlaybackCue ? "true" : "false"}
       data-editor-cue-warn={hasProblems ? "true" : "false"}
       data-editor-cue-edit-focus={isEditFocusCue ? "true" : "false"}
-      className={`group relative grid min-w-0 cursor-pointer grid-cols-[32px_minmax(0,1fr)_48px] items-stretch border-b border-zinc-900/80 border-l-2 transition-colors hover:bg-zinc-900/30 ${rowPad} ${rowState}`}
+      className={`editor-cue-list-row group relative grid min-w-0 cursor-pointer items-start border-b border-zinc-900/80 border-l-2 transition-colors hover:bg-zinc-900/30 ${rowPad} ${rowState}`}
       onClick={(e) => {
         if (shouldIgnoreCueClick(e.target)) return;
         if (e.detail >= 2) {
@@ -97,9 +94,9 @@ export function CueListItem({
       }}
       title={hasProblems ? `Problemas: ${problemSummary}` : undefined}
     >
-      {/* Coluna índice — 32px */}
+      {/* Coluna índice */}
       <div
-        className={`flex h-full min-h-0 w-8 shrink-0 items-center justify-center font-mono text-[11px] tabular-nums leading-none ${
+        className={`flex min-h-[2.75rem] w-10 shrink-0 items-start justify-center pt-0.5 font-mono text-[11px] tabular-nums leading-none ${
           isSelectedCue
             ? "text-blue-400"
             : isPlaybackCue && !isSelectedCue
@@ -119,16 +116,16 @@ export function CueListItem({
       </div>
 
       {/* Conteúdo principal */}
-      <div className="min-w-0 pr-1">
+      <div className="min-w-0 pr-2">
         {/* Linha 1 — timecodes */}
         <div
-          className={`mb-1 flex flex-wrap items-baseline gap-x-1 gap-y-0 font-mono text-[11px] tabular-nums text-zinc-500 ${timeRowOpacity}`}
+          className={`mb-2 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 font-mono text-[11px] tabular-nums leading-snug text-zinc-500 ${timeRowOpacity}`}
         >
           <span>{formatShort(cue.startMs)}</span>
-          <span className="text-[9px] text-zinc-700">▶</span>
+          <span className="text-[10px] text-zinc-600">▶</span>
           <span>{formatShort(cue.endMs)}</span>
-          <span className="text-zinc-700">·</span>
-          <span className="text-[10px] text-zinc-600">{durationMs}ms</span>
+          <span className="text-zinc-600">·</span>
+          <span className="text-[10px] text-zinc-500">{durationMs}ms</span>
           {hasOverlap && (
             <span className="text-[9px] text-red-400" title="Overlap">
               ⚠
@@ -148,48 +145,18 @@ export function CueListItem({
 
         {/* Linha 2 — texto */}
         <p
-          className={`line-clamp-2 whitespace-pre-line break-words text-[13px] leading-[1.4] ${bodyTextClass}`}
+          className={`line-clamp-2 whitespace-pre-line break-words text-[14px] leading-[1.5] ${bodyTextClass}`}
         >
           {cue.text.trim() || (
             <span className="italic text-zinc-600">vazio</span>
           )}
         </p>
-
-        {/* Linha 3 — IN/OUT só quando selecionado ou edit focus */}
-        {showTimingInputs && (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="in"
-              aria-label="Início (ms)"
-              className="h-5 w-[60px] [appearance:textfield] rounded border border-zinc-700/70 bg-zinc-900 px-1.5 text-[10px] tabular-nums text-zinc-300 outline-none focus:border-blue-500/70 focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-              value={cue.startMs}
-              onChange={(e) => {
-                const v = Number.parseInt(e.target.value, 10);
-                if (Number.isFinite(v)) onUpdateCue(cue.tempId, { startMs: v });
-              }}
-            />
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="out"
-              aria-label="Fim (ms)"
-              className="h-5 w-[60px] [appearance:textfield] rounded border border-zinc-700/70 bg-zinc-900 px-1.5 text-[10px] tabular-nums text-zinc-300 outline-none focus:border-blue-500/70 focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-              value={cue.endMs}
-              onChange={(e) => {
-                const v = Number.parseInt(e.target.value, 10);
-                if (Number.isFinite(v)) onUpdateCue(cue.tempId, { endMs: v });
-              }}
-            />
-          </div>
-        )}
       </div>
 
-      {/* CPS — 48px */}
-      <div className="flex w-12 shrink-0 items-start justify-end pt-0.5 pr-0">
+      {/* CPS */}
+      <div className="flex min-h-[2.75rem] w-full shrink-0 items-start justify-end pt-1 pr-0.5">
         <span
-          className={`font-mono text-[11px] tabular-nums leading-none ${cpsClass}`}
+          className={`font-mono text-[11px] tabular-nums leading-tight ${cpsClass}`}
           title={`${cps.toFixed(1)} caracteres/s`}
         >
           {cps.toFixed(1)}

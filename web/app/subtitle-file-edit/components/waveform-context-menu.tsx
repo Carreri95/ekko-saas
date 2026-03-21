@@ -40,14 +40,10 @@ export function WaveformContextMenu({
     <div
       ref={menuRef}
       data-waveform-context-menu
-      className="fixed z-[200] min-w-[160px] select-none py-0.5"
+      className="context-menu fixed select-none"
       style={{
         left: pos.left,
         top: pos.top,
-        background: "#1a1a1a",
-        border: "1px solid rgba(255,255,255,0.1)",
-        borderRadius: 6,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
       }}
       role="menu"
       onContextMenu={(e) => e.preventDefault()}
@@ -56,7 +52,7 @@ export function WaveformContextMenu({
         <button
           type="button"
           role="menuitem"
-          className="w-full cursor-pointer rounded-[5px] px-[14px] py-[6px] text-left text-[12px] text-zinc-100 transition-colors hover:bg-zinc-800"
+          className="context-menu-item w-full"
           onClick={() => onAddText()}
         >
           Adicionar texto
@@ -66,10 +62,8 @@ export function WaveformContextMenu({
         type="button"
         role="menuitem"
         disabled={!canSplit}
-        className={`w-full rounded-[5px] px-[14px] py-[6px] text-left text-[12px] text-zinc-100 transition-colors ${
-          canSplit
-            ? "cursor-pointer hover:bg-zinc-800"
-            : "cursor-not-allowed opacity-40"
+        className={`context-menu-item w-full ${
+          canSplit ? "" : "cursor-not-allowed opacity-40"
         }`}
         onClick={() => {
           if (!canSplit) return;
@@ -78,32 +72,11 @@ export function WaveformContextMenu({
       >
         Dividir aqui
       </button>
-      <div
-        style={{
-          borderTop: "1px solid rgba(255,255,255,0.07)",
-          margin: "3px 0",
-        }}
-      />
+      <div className="context-menu-sep" />
       <button
         type="button"
         role="menuitem"
-        style={{
-          display: "block",
-          width: "100%",
-          padding: "6px 14px",
-          fontSize: "12px",
-          textAlign: "left",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          color: "rgba(248, 113, 113, 0.9)",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(239,68,68,0.12)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "transparent";
-        }}
+        className="context-menu-item danger w-full"
         onClick={() => onDelete()}
       >
         Deletar cue

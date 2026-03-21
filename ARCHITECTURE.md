@@ -1,5 +1,7 @@
 # SubtitleBot — Arquitetura Inicial
 
+> **Transcrição automática (Whisper, jobs, storage, endpoints):** ver **[PIPELINE-TRANSCRICAO.md](./PIPELINE-TRANSCRICAO.md)** — estado do MVP, checklist, gaps (fila, auth avançada, ProjectRepository) e roadmap. Matriz pedido × feito × falta e desenho do **gerador em lote** (vs editor): **[PIPELINE-STATUS-ATUALIZADO.md](./PIPELINE-STATUS-ATUALIZADO.md)**.
+
 ## Estrutura macro atual
 ```txt
 SubtitleBot/

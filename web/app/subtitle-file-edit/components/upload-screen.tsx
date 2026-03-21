@@ -19,62 +19,70 @@ export function UploadScreen({
   onPickSrt,
   onPickAudio,
 }: UploadScreenProps) {
-  const srtIsActive = !srtLoaded;
   const srtIsDone = srtLoaded;
-  const audioIsActive = srtLoaded;
-  const audioIsInactive = !srtLoaded;
+  /** Com legenda em memória mas sem média — destacar zona de áudio. */
+  const nudgeAudioAfterSrt = srtLoaded;
+
+  const dropBase =
+    "flex min-h-[12rem] flex-col items-center justify-center gap-5 rounded-[var(--radius-lg)] border-[0.5px] border-dashed px-6 py-8 text-center transition-colors";
+  const dropBg = "bg-[var(--bg-surface)]";
+  const zoneIdle =
+    "border-[var(--border-strong)] hover:border-[var(--border-mid)]";
+  const zoneFromDrag = (dropActive: boolean) =>
+    dropActive
+      ? "border-[var(--accent)] bg-[var(--bg-selected)]"
+      : zoneIdle;
+
+  const srtZoneClass = `${dropBase} ${dropBg} ${zoneFromDrag(srtDropActive)}`;
+  const audioZoneClass = `${dropBase} ${dropBg} ${zoneFromDrag(audioDropActive)}`;
 
   return (
-    <section className="editor-desktop-workspace editor-desktop-workspace--stacked-no-session min-h-0 flex-1 overflow-hidden">
-      <div className="editor-workspace-split-empty flex min-h-0 flex-1 flex-col border-b border-zinc-800/90 bg-zinc-950/90 px-4 py-6">
-        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center gap-6">
-          <div className="text-center">
-            <p className="text-[11px] font-semibold tracking-[0.08em] text-zinc-300">
-              Arraste seus arquivos aqui
-            </p>
-          </div>
+    <section className="editor-upload-screen flex min-h-0 flex-1 flex-col overflow-auto">
+      <div className="flex min-h-[min(100%,32rem)] flex-1 flex-col items-center justify-center px-4 py-10">
+        <div className="w-full max-w-2xl">
+          <h1 className="mb-10 text-center text-[var(--fs-base)] font-semibold leading-snug tracking-wide text-[var(--text-secondary)]">
+            Arraste seus ficheiros aqui
+          </h1>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid w-full gap-4 sm:grid-cols-2">
             {srtIsDone ? (
-              <div className="flex min-h-[11rem] flex-col items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/5 px-4 py-5 text-center opacity-75">
-                <span className="text-xl text-emerald-400">✓</span>
-                <p className="mt-1 text-sm font-semibold text-zinc-200">
+              <div
+                className={`${dropBase} ${dropBg} border-[var(--accent-hover)] opacity-95`}
+              >
+                <span className="text-xl text-[var(--accent-text)]">✓</span>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">
                   {srtFilename ?? "Legenda carregada"}
                 </p>
-                <p className="mt-1 text-[11px] text-zinc-500">
+                <p className="text-[11px] leading-relaxed text-[var(--text-muted)]">
                   {srtCount} legendas prontas
                 </p>
                 <button
                   type="button"
-                  className="mt-3 rounded border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-[11px] font-medium text-zinc-300 hover:bg-zinc-800"
+                  className="btn btn-sm"
                   onClick={onPickSrt}
                 >
-                  Trocar arquivo
+                  Trocar ficheiro
                 </button>
               </div>
             ) : (
               <div
-                className={`editor-entry-dropzone editor-entry-dropzone--srt ${
-                  srtIsActive ? "editor-upload-audio-pulse" : ""
-                } flex min-h-[11rem] flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-5 text-center transition-colors ${
-                  srtDropActive
-                    ? "border-sky-400/80 bg-sky-950/30"
-                    : "border-sky-500/85 bg-sky-500/10 hover:border-sky-400"
+                className={`${srtZoneClass} ${
+                  !srtLoaded ? "editor-upload-accent-pulse" : ""
                 }`}
                 onDragEnter={onSrtDragEnter}
                 onDragLeave={onSrtDragLeave}
                 onDragOver={onSrtDragOver}
                 onDrop={onSrtDrop}
               >
-                <p className="text-sm font-semibold text-zinc-200">
+                <p className="text-sm font-semibold leading-snug text-[var(--text-primary)]">
                   Legenda .srt
                 </p>
-                <p className="mt-1 max-w-[14rem] text-[11px] leading-snug text-zinc-500">
+                <p className="max-w-[15rem] text-[11px] leading-[1.65] text-[var(--text-muted)]">
                   Arraste o ficheiro para esta área ou escolha no disco.
                 </p>
                 <button
                   type="button"
-                  className="mt-3 rounded border border-sky-400/80 bg-sky-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-sky-500"
+                  className="btn btn-primary btn-sm"
                   onClick={onPickSrt}
                 >
                   Escolher .srt
@@ -83,42 +91,23 @@ export function UploadScreen({
             )}
 
             <div
-              className={`editor-entry-dropzone editor-entry-dropzone--audio ${
-                audioIsActive ? "editor-upload-audio-pulse" : ""
-              } flex min-h-[11rem] flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-5 text-center transition-colors ${
-                audioIsInactive
-                  ? "pointer-events-none opacity-45 border-zinc-700/40 bg-transparent"
-                  : audioDropActive
-                    ? "border-sky-400/90 bg-sky-950/35"
-                    : "border-sky-500/80 bg-sky-500/10 hover:border-sky-400"
+              className={`${audioZoneClass} ${
+                nudgeAudioAfterSrt ? "editor-upload-accent-pulse" : ""
               }`}
-              onDragEnter={audioIsInactive ? undefined : onAudioDragEnter}
-              onDragLeave={audioIsInactive ? undefined : onAudioDragLeave}
-              onDragOver={audioIsInactive ? undefined : onAudioDragOver}
-              onDrop={audioIsInactive ? undefined : onAudioDrop}
+              onDragEnter={onAudioDragEnter}
+              onDragLeave={onAudioDragLeave}
+              onDragOver={onAudioDragOver}
+              onDrop={onAudioDrop}
             >
-              <p
-                className={`text-sm font-semibold ${
-                  audioIsInactive ? "text-zinc-500/80" : "text-zinc-100"
-                }`}
-              >
-                Áudio / Vídeo
+              <p className="text-sm font-semibold leading-snug text-[var(--text-primary)]">
+                Áudio / vídeo
               </p>
-              <p
-                className={`mt-1 max-w-[14rem] text-[11px] leading-snug ${
-                  audioIsInactive ? "text-zinc-600/80" : "text-zinc-400"
-                }`}
-              >
+              <p className="max-w-[15rem] text-[11px] leading-[1.65] text-[var(--text-muted)]">
                 WAV, MP3 ou vídeo para referência.
               </p>
               <button
                 type="button"
-                disabled={audioIsInactive}
-                className={`mt-3 rounded px-3 py-1.5 text-[11px] font-semibold ${
-                  audioIsInactive
-                    ? "cursor-not-allowed border border-white/15 bg-transparent text-white/30"
-                    : "border border-sky-400/80 bg-sky-600 text-white hover:bg-sky-500"
-                }`}
+                className="btn btn-primary btn-sm"
                 onClick={onPickAudio}
               >
                 Escolher áudio

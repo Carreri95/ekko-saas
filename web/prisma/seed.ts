@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import { prisma } from "../src/lib/prisma";
+import { isDatabaseConnectionError } from "../src/server/prisma-errors";
 
 const DEMO_EMAIL = "demo@subtitlestudio.local";
 const DEMO_NAME = "Demo User";
@@ -23,6 +24,15 @@ async function main() {
 
 main()
   .catch((e) => {
+    if (isDatabaseConnectionError(e)) {
+      // eslint-disable-next-line no-console
+      console.error(`
+[seed] Não foi possível ligar ao PostgreSQL.
+- Na raiz do repositório: docker compose up -d
+- Em web/: copie .env.example para .env e confira DATABASE_URL
+- Depois: npm run db:migrate (ou db:deploy) e volte a executar o seed.
+`);
+    }
     // eslint-disable-next-line no-console
     console.error("Falha ao executar seed:", e);
     process.exit(1);

@@ -304,10 +304,6 @@ export type CueListItemProps = {
   shouldIgnoreCueClick: (target: EventTarget | null) => boolean;
   onSelectSingle: (cue: CueCardFields) => void;
   onSelectDouble: (cue: CueCardFields) => void;
-  onUpdateCue: (
-    tempId: string,
-    patch: Partial<Pick<CueCardFields, "startMs" | "endMs">>,
-  ) => void;
 };
 
 export type UploadScreenProps = {

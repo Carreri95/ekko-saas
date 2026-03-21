@@ -58,10 +58,12 @@ import type {
   CueDto,
   LocalWaveformData,
   ProblemFilter,
+  SubtitleFileResponse,
   WaveformContextMenuOpenState,
   WaveformOverviewDragRefState,
   WaveformViewport,
 } from "./types";
+import { useSidebarDisplay } from "@/app/components/sidebar-display-context";
 import { injectWaveformCueShadowStyles } from "./waveformCueShadowStyles";
 
 /** Duração mínima (ms) entre início e fim ao arrastar bordas na waveform. */
@@ -135,13 +137,14 @@ export default function SubtitleFileEditPage() {
   const currentPlaybackMsRef = useRef(0);
   const [subtitleFileId, setSubtitleFileId] = useState("");
   const [filename, setFilename] = useState<string | null>(null);
-  const [wavFilename] = useState<string | null>(null);
-  const [wavPath] = useState<string | null>(null);
+  const { setEditorFilename } = useSidebarDisplay();
+  const [wavFilename, setWavFilename] = useState<string | null>(null);
+  const [wavPath, setWavPath] = useState<string | null>(null);
   const [cues, setCues] = useState<CueDto[]>([]);
   const cuesRef = useRef(cues);
   cuesRef.current = cues;
   const { pushHistory, undo } = useUndoHistory();
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
@@ -216,6 +219,68 @@ export default function SubtitleFileEditPage() {
       );
     }
   }, []);
+
+  /** Carrega legenda e metadados do servidor quando há `?subtitleFileId=` na URL. */
+  useEffect(() => {
+    const id = sanitizeSubtitleFileId(subtitleFileId);
+    if (!id) return;
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    void (async () => {
+      try {
+        const res = await fetch(`/api/subtitle-files/${encodeURIComponent(id)}`);
+        const json = (await res.json()) as SubtitleFileResponse & { error?: string };
+        if (!res.ok) {
+          throw new Error(json.error ?? `Erro ${res.status}`);
+        }
+        if (cancelled) return;
+
+        const mapped: CueDto[] = json.cues.map((c) => {
+          const sid = c.id ?? createTempId();
+          return {
+            id: c.id,
+            tempId: sid,
+            cueIndex: c.cueIndex,
+            startMs: c.startMs,
+            endMs: c.endMs,
+            text: c.text,
+          };
+        });
+        const normalized = normalizeCueCollisions(mapped, WAVEFORM_DRAG_MIN_GAP_MS);
+        setCues(normalized);
+        setFilename(json.filename);
+        setWavFilename(json.wavFilename);
+        setWavPath(json.wavPath);
+        setMediaSourceUrl(`/api/subtitle-files/${encodeURIComponent(id)}/audio`);
+        setMediaKind("audio");
+        setLocalWaveformData(null);
+        lastSavedServerHashRef.current = getSaveCueHash(normalized);
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [subtitleFileId]);
+
+  useEffect(() => {
+    setEditorFilename(filename);
+  }, [filename, setEditorFilename]);
+
+  useEffect(() => {
+    return () => setEditorFilename(null);
+  }, [setEditorFilename]);
 
   useEffect(() => {
     try {
@@ -755,23 +820,6 @@ export default function SubtitleFileEditPage() {
     suppressPlayheadFollowUntilRef,
   });
 
-  const onUpdateCueFromList = useCallback(
-    (
-      cueTempId: string,
-      patch: Partial<Pick<CueDto, "startMs" | "endMs" | "text">>,
-    ) => {
-      const cue = cuesRef.current.find((c) => c.tempId === cueTempId);
-      if (cue && (patch.startMs != null || patch.endMs != null)) {
-        pushHistory(
-          cuesRef.current.map((c) => ({ ...c })),
-          `Editar tempos cue #${cue.cueIndex}`,
-        );
-      }
-      updateCue(cueTempId, patch);
-    },
-    [pushHistory, updateCue],
-  );
-
   const onBeforeCommitCueText = useCallback(
     (cueTempId: string) => {
       if (textEditUndoBaselineTempIdRef.current === cueTempId) return;
@@ -1019,16 +1067,17 @@ export default function SubtitleFileEditPage() {
     <main className="mvp-page editor-desktop-page">
       <div className="editor-desktop-shell flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-hidden">
         <>
-        <div className="editor-desktop-toolbar shrink-0 border-b border-zinc-800/90 bg-zinc-950/80 px-2 py-1.5">
+        {hasEditorContent || loading ? (
+        <div className="editor-desktop-toolbar shrink-0 border-b border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2">
           <div className="flex flex-wrap items-end gap-2">
             <div className="min-w-0 flex-1">
               <p
-                className="truncate text-xs font-medium text-zinc-200"
+                className="truncate text-xs font-medium text-[var(--text-primary)]"
                 title={filename ?? undefined}
               >
                 {filename ?? "—"}
               </p>
-              <p className="mt-0.5 truncate font-mono text-[10px] text-zinc-600">
+              <p className="mt-0.5 truncate font-mono text-[11px] text-[var(--text-muted)]">
                 {cues.length} cues
                 {wavFilename ? ` · ${wavFilename}` : ""}
               </p>
@@ -1062,6 +1111,7 @@ export default function SubtitleFileEditPage() {
             ) : null}
           </div>
         </div>
+        ) : null}
 
         {error ? (
           <pre className="mvp-feedback-error max-h-28 shrink-0 overflow-auto whitespace-pre-wrap font-mono text-xs shadow-sm">
@@ -1085,27 +1135,29 @@ export default function SubtitleFileEditPage() {
         <div className="editor-desktop-body flex min-h-0 flex-1 flex-col overflow-hidden">
           {isEditorReady ? (
             <section
-              className="editor-desktop-workspace editor-desktop-workspace--stacked min-h-0 min-w-0 flex-1 overflow-hidden"
+              className="editor-desktop-workspace editor-desktop-workspace--stacked min-h-0 min-w-0 flex-1 gap-3 overflow-hidden bg-[var(--bg-page)] p-2"
               data-editor-workspace-mode={editorWorkspaceMode}
             >
-              <div className="editor-workspace-split flex min-h-0 min-w-0 flex-col overflow-hidden border-b border-zinc-800/90 lg:flex-row">
-                <div className={`editor-panel-cues editor-cue-track-column editor-cue-track-layout flex min-h-0 w-full min-w-0 flex-1 flex-col gap-0 lg:min-h-0 ${cuePanelRatioClass}`}>
+              <div className="editor-workspace-split flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden lg:flex-row">
+                <div
+                  className={`editor-panel-cues editor-cue-track-column editor-cue-track-layout box-border flex min-h-0 w-full min-w-0 flex-1 flex-col gap-0 rounded-[var(--radius-lg)] border border-zinc-800/60 bg-[var(--bg-surface)] p-2 lg:min-h-0 ${cuePanelRatioClass}`}
+                >
                   {cues.length > 0 ? (
                     <>
                       <div
                         ref={cueListScrollRef}
-                        className="editor-cue-panel-list editor-cue-list-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden border-r border-zinc-800/50 bg-[rgba(9,9,11,0.75)]"
+                        className="editor-cue-panel-list editor-cue-list-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-[var(--radius-md)] bg-[rgba(9,9,11,0.75)]"
                         role="list"
                         aria-label="Lista de cues (ligada à timeline)"
                       >
-                        <div className="sticky top-0 z-10 flex items-center border-b border-zinc-800/60 bg-zinc-950/95 px-2 py-1 backdrop-blur-sm">
-                          <span className="w-8 text-center font-mono text-[9px] uppercase tracking-widest text-zinc-700">
+                        <div className="sticky top-0 z-10 flex items-center border-b border-zinc-800/60 bg-zinc-950/95 px-3 py-2 backdrop-blur-sm">
+                          <span className="w-10 shrink-0 text-center font-mono text-[10px] uppercase tracking-widest text-zinc-600">
                             #
                           </span>
-                          <span className="flex-1 px-2 font-mono text-[9px] uppercase tracking-widest text-zinc-700">
+                          <span className="min-w-0 flex-1 px-3 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
                             legenda
                           </span>
-                          <span className="w-12 text-right font-mono text-[9px] uppercase tracking-widest text-zinc-700">
+                          <span className="w-[3.25rem] shrink-0 text-right font-mono text-[10px] uppercase tracking-widest text-zinc-600">
                             c/s
                           </span>
                         </div>
@@ -1153,7 +1205,6 @@ export default function SubtitleFileEditPage() {
                                 });
                               });
                             }}
-                            onUpdateCue={onUpdateCueFromList}
                           />
                         ))}
                         {visibleCueProblemsList.length === 0 ? (
@@ -1162,7 +1213,7 @@ export default function SubtitleFileEditPage() {
                           </div>
                         ) : null}
                       </div>
-                      <div className="flex h-8 shrink-0 items-center gap-2 border-r border-t border-zinc-800/50 bg-zinc-950 px-3">
+                      <div className="flex min-h-[2.25rem] shrink-0 items-center gap-2 rounded-b-[var(--radius-md)] border-t border-zinc-800/50 bg-zinc-950 px-3 py-2">
                         <span className="font-mono text-[10px] text-zinc-600">
                           {cues.length} cues
                         </span>
@@ -1209,7 +1260,7 @@ export default function SubtitleFileEditPage() {
                 </div>
 
                 <aside
-                  className={`editor-rail-context editor-panel-rail mvp-workspace-rail flex min-h-0 w-full flex-1 flex-col overflow-hidden border-t border-zinc-800/90 bg-zinc-950/30 py-1 pl-1.5 pr-1 ${previewPanelRatioClass} lg:border-l lg:border-t-0 lg:border-zinc-800/90`}
+                  className={`editor-rail-context editor-panel-rail mvp-workspace-rail box-border flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-zinc-800/60 bg-zinc-950/30 p-2 ${previewPanelRatioClass}`}
                   data-editor-rail-mode={editorWorkspaceMode}
                 >
                   <MediaPreviewPanel
@@ -1224,8 +1275,8 @@ export default function SubtitleFileEditPage() {
                 </aside>
               </div>
               <div className="editor-timeline-dock min-h-0 min-w-0">
-                <div className="flex h-[380px] min-w-0 flex-row border-t-2 border-zinc-800/90">
-                  <aside className="flex min-w-[380px] flex-[0_0_38%] flex-col border-r border-zinc-800/90 bg-[#161616]">
+                <div className="flex h-[380px] min-w-0 flex-row gap-3">
+                  <aside className="box-border flex min-w-[380px] flex-[0_0_38%] flex-col rounded-[var(--radius-lg)] border border-zinc-800/60 bg-[#161616] p-2">
                     {editingCue ? (
                       <CueTextEditor
                         key={editingCue.tempId}
@@ -1242,7 +1293,7 @@ export default function SubtitleFileEditPage() {
                       </div>
                     )}
                   </aside>
-                  <div className="min-w-0 flex-1">
+                  <div className="box-border flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-zinc-800/60 bg-[var(--bg-surface)] p-2">
                     <TimelineDock
                       mediaSourceUrl={mediaSourceUrl}
                       mediaKind={mediaKind}
@@ -1293,7 +1344,7 @@ export default function SubtitleFileEditPage() {
               </div>
             </section>
           ) : (
-            <div className="min-h-0 flex-1 overflow-hidden transition-opacity duration-300 ease-out">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden transition-opacity duration-300 ease-out">
               <UploadScreen
                 srtLoaded={srtLoadedOnly}
                 srtFilename={filename}
