@@ -5,40 +5,14 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
-  type RefObject,
 } from "react";
-import type WaveSurfer from "wavesurfer.js";
-
-type CueLike = {
-  tempId: string;
-  cueIndex: number;
-  startMs: number;
-  endMs: number;
-};
-
-type UseWaveformCueDragParams<TCue extends CueLike> = {
-  waveformDurationSecRef: RefObject<number | null>;
-  waveSurferRef: RefObject<WaveSurfer | null>;
-  minGapMs: number;
-  setSelectedCueTempId: (tempId: string) => void;
-  setCueEditFocusTempId: (updater: (prev: string | null) => string | null) => void;
-  suppressWaveformInteractionUntilRef: RefObject<number>;
-  updateCue: (cueTempId: string, patch: Partial<Pick<TCue, "startMs" | "endMs">>) => void;
-  getCueNeighborBounds: (cueTempId: string) => {
-    prevEndMs: number;
-    nextStartMs: number;
-  };
-  /** Snapshot profundo das cues no início do arrasto (pointerdown) — undo no pointerup. */
-  takeCuesSnapshotForUndo?: () => TCue[];
-  /** Grava no histórico o estado antes do arrasto de tempos (apenas no pointerup, uma vez). */
-  commitTimingUndo?: (snapshotBeforeDrag: TCue[], label: string) => void;
-};
+import type { CueWaveformDragCue, UseWaveformCueDragParams } from "../types";
 
 function logBrowserError(context: string, error: unknown): void {
   console.error(`[subtitle-file-edit][waveform-cue-drag] ${context}`, error);
 }
 
-export function useWaveformCueDrag<TCue extends CueLike>({
+export function useWaveformCueDrag<TCue extends CueWaveformDragCue>({
   waveformDurationSecRef,
   waveSurferRef,
   minGapMs,

@@ -1,19 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { Dispatch, MutableRefObject, SetStateAction } from "react";
-import type WaveSurfer from "wavesurfer.js";
-import type { LocalWaveformData } from "../types";
-
-type UseMediaSessionControlsParams = {
-  mediaElementRef: MutableRefObject<HTMLAudioElement | HTMLVideoElement | null>;
-  waveSurferRef: MutableRefObject<WaveSurfer | null>;
-  scheduleViewportRefreshRef: MutableRefObject<(() => void) | null>;
-  setLocalWaveformData: Dispatch<SetStateAction<LocalWaveformData | null>>;
-  setMediaSourceUrl: Dispatch<SetStateAction<string | null>>;
-  setMediaKind: Dispatch<SetStateAction<"video" | "audio" | null>>;
-  setCurrentPlaybackMs: Dispatch<SetStateAction<number>>;
-};
+import type { UseMediaSessionControlsParams } from "../types";
 
 export function useMediaSessionControls({
   mediaElementRef,

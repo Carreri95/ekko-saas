@@ -2,12 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { CueDto } from "../types";
-
-export type HistoryEntry = {
-  cues: CueDto[];
-  label: string;
-};
+import type { CueDto, HistoryEntry } from "../types";
 
 function cloneCues(cues: CueDto[]): CueDto[] {
   return cues.map((c) => ({ ...c }));

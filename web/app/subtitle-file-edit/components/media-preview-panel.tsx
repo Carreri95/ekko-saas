@@ -7,17 +7,7 @@ import {
   useState,
   type RefObject,
 } from "react";
-import type { AspectRatio } from "../types";
-
-type MediaPreviewPanelProps = {
-  mediaSourceUrl: string | null;
-  mediaKind: "audio" | "video" | null;
-  mediaRef: RefObject<HTMLAudioElement | HTMLVideoElement | null>;
-  activeSubtitleText: string;
-  onTimeUpdate: (currentTimeSec: number) => void;
-  aspectRatio: AspectRatio;
-  onAspectRatioChange: (ratio: AspectRatio) => void;
-};
+import type { AspectRatio, MediaPreviewPanelProps } from "../types";
 
 const RATIOS: Array<{ value: AspectRatio; label: string }> = [
   { value: "16:9", label: "16:9" },

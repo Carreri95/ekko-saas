@@ -1,12 +1,6 @@
 "use client";
 
-type WaveformTransportControlsProps = {
-  onPlay: () => void;
-  onPause: () => void;
-  onReset: () => void;
-  currentPlaybackMs: number;
-  durationMs: number | null;
-};
+import type { WaveformTransportControlsProps } from "../types";
 
 function formatTime(ms: number): string {
   const totalSec = Math.max(0, ms / 1000);

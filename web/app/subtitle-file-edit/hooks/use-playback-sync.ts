@@ -1,28 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { Dispatch, MutableRefObject, SetStateAction } from "react";
-import type WaveSurfer from "wavesurfer.js";
-
-type UsePlaybackSyncParams = {
-  mediaSourceUrl: string | null;
-  mediaKind: "audio" | "video" | null;
-  mediaElementRef: MutableRefObject<HTMLAudioElement | HTMLVideoElement | null>;
-  isWaveformSeekingRef: MutableRefObject<boolean>;
-  setCurrentPlaybackMs: Dispatch<SetStateAction<number>>;
-  waveSurferRef: MutableRefObject<WaveSurfer | null>;
-  scheduleViewportRefreshRef: MutableRefObject<(() => void) | null>;
-  waveformOverviewDragRef: MutableRefObject<{ pointerId: number } | null>;
-  waveformEdgeDragRef: MutableRefObject<unknown>;
-  waveformMoveDragRef: MutableRefObject<unknown>;
-  /** Opcional — pan horizontal na wave (se existir no projeto). */
-  waveformPanDragRef?: MutableRefObject<unknown>;
-  /**
-   * Timestamp (`performance.now()`): enquanto `now < valor`, não forçar scroll
-   * para seguir o playhead (evita lutar com scroll manual / overview).
-   */
-  suppressPlayheadFollowUntilRef: MutableRefObject<number>;
-};
+import type { UsePlaybackSyncParams } from "../types";
 
 export function usePlaybackSync({
   mediaSourceUrl,

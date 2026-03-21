@@ -18,7 +18,6 @@ import { MediaPreviewPanel } from "./components/media-preview-panel";
 import { TimelineDock } from "./components/timeline-dock";
 import { WaveformContextMenu } from "./components/waveform-context-menu";
 import { UploadScreen } from "./components/upload-screen";
-import { VersionsDrawer } from "./components/versions-drawer";
 import { useWaveformCueDrag } from "./hooks/use-waveform-cue-drag";
 import { useWaveformPanSeek } from "./hooks/use-waveform-pan-seek";
 import { useAutoSave } from "./hooks/use-auto-save";
@@ -34,7 +33,6 @@ import { useWaveformOverviewDrag } from "./hooks/use-waveform-overview-drag";
 import { useWaveformCanvasOverlay } from "./hooks/use-waveform-canvas-overlay";
 import { useWaveformCueCreate } from "./hooks/use-waveform-cue-create";
 import { useLocalMediaSrtIntake } from "./hooks/use-local-media-srt-intake";
-import { useVersionHistory } from "./hooks/use-version-history";
 import { useCuePersistence } from "./hooks/use-cue-persistence";
 import { useGlobalDropIntake } from "./hooks/use-global-drop-intake";
 import { buildCueWaveformRegions } from "./lib/waveform-time";
@@ -60,6 +58,9 @@ import type {
   CueDto,
   LocalWaveformData,
   ProblemFilter,
+  WaveformContextMenuOpenState,
+  WaveformOverviewDragRefState,
+  WaveformViewport,
 } from "./types";
 import { injectWaveformCueShadowStyles } from "./waveformCueShadowStyles";
 
@@ -123,17 +124,12 @@ export default function SubtitleFileEditPage() {
   const autoSaveInFlightRef = useRef(false);
   const lastSavedServerHashRef = useRef("");
   const audioRouteFallbackTriedRef = useRef(false);
-  const waveformOverviewDragRef = useRef<{ pointerId: number } | null>(null);
+  const waveformOverviewDragRef = useRef<WaveformOverviewDragRefState>(null);
   const suppressWaveformInteractionUntilRef = useRef(0);
   /** Enquanto `performance.now()` < valor, não forçar scroll a seguir o playhead (scroll manual). */
   const suppressPlayheadFollowUntilRef = useRef(0);
   const cueSingleClickTimerRef = useRef(0);
-  const waveformViewportLastRef = useRef<{
-    scroll: number;
-    maxScroll: number;
-    viewW: number;
-    totalW: number;
-  } | null>(null);
+  const waveformViewportLastRef = useRef<WaveformViewport>(null);
   const scheduleViewportRefreshRef = useRef<(() => void) | null>(null);
   const isWaveformSeekingRef = useRef(false);
   const currentPlaybackMsRef = useRef(0);
@@ -150,7 +146,6 @@ export default function SubtitleFileEditPage() {
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [exporting] = useState(false);
-  /** Painel lateral do histórico de versões (drawer — não compete com a área de revisão). */
   const [filterMode] = useState<ProblemFilter>("all");
   const [localWaveformData, setLocalWaveformData] = useState<LocalWaveformData | null>(
     null,
@@ -174,6 +169,11 @@ export default function SubtitleFileEditPage() {
     null,
   );
   const [editingCueTempId, setEditingCueTempId] = useState<string | null>(null);
+  /** Evita `pushHistory` em cada tecla quando o texto é atualizado em tempo real no editor. */
+  const textEditUndoBaselineTempIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    textEditUndoBaselineTempIdRef.current = null;
+  }, [editingCueTempId]);
   /** Host DOM dentro do wrapper do WaveSurfer para alinhar regiões de cue ao zoom. */
   const [waveformCueOverlayHostEl, setWaveformCueOverlayHostEl] =
     useState<HTMLElement | null>(null);
@@ -182,23 +182,12 @@ export default function SubtitleFileEditPage() {
   const [srtDropActive, setSrtDropActive] = useState(false);
   const [audioDropActive, setAudioDropActive] = useState(false);
   /** Vista geral da faixa (scroll) — barra por baixo da waveform. */
-  const [waveformViewport, setWaveformViewport] = useState<{
-    scroll: number;
-    maxScroll: number;
-    viewW: number;
-    totalW: number;
-  } | null>(null);
+  const [waveformViewport, setWaveformViewport] = useState<WaveformViewport>(null);
 
   /** Menu de contexto na waveform (split) — portal em document.body. */
-  const [waveformContextMenu, setWaveformContextMenu] = useState<{
-    x: number;
-    y: number;
-    cue: CueDto;
-    /** Tempo de corte (ms) derivado do clique; usado no split (evita querySelector no shadow DOM). */
-    splitMs: number;
-    canSplit: boolean;
-    canAddText: boolean;
-  } | null>(null);
+  const [waveformContextMenu, setWaveformContextMenu] = useState<
+    WaveformContextMenuOpenState | null
+  >(null);
 
   const hasServerSubtitleFile = sanitizeSubtitleFileId(subtitleFileId) !== "";
   const isEditorReady =
@@ -262,15 +251,7 @@ export default function SubtitleFileEditPage() {
     };
   }, []);
 
-  const {
-    versions,
-    versionsLoading,
-    versionsDrawerOpen,
-    setVersionsDrawerOpen,
-    loadVersions,
-  } = useVersionHistory({ logBrowserError });
-
-  /** Reaplica scroll para #âncora quando o painel lateral monta (ex.: histórico após carregar). */
+  /** Reaplica scroll para #âncora quando o conteúdo carrega. */
   useEffect(() => {
     if (typeof window === "undefined") return;
     const id = window.location.hash.replace(/^#/, "");
@@ -281,7 +262,7 @@ export default function SubtitleFileEditPage() {
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
     return () => window.clearTimeout(t);
-  }, [subtitleFileId, cues.length, versionsLoading, loading]);
+  }, [subtitleFileId, cues.length, loading]);
 
   useEffect(() => {
     return () => {
@@ -793,6 +774,8 @@ export default function SubtitleFileEditPage() {
 
   const onBeforeCommitCueText = useCallback(
     (cueTempId: string) => {
+      if (textEditUndoBaselineTempIdRef.current === cueTempId) return;
+      textEditUndoBaselineTempIdRef.current = cueTempId;
       const cue = cuesRef.current.find((c) => c.tempId === cueTempId);
       if (cue) {
         pushHistory(
@@ -865,7 +848,6 @@ export default function SubtitleFileEditPage() {
     toSaveCuePayload,
     normalizeCueCollisions,
     getSaveCueHash,
-    loadVersions,
     logBrowserError,
     setSaving,
     setError,
@@ -1371,13 +1353,6 @@ export default function SubtitleFileEditPage() {
         </div>
         </>
       </div>
-
-      <VersionsDrawer
-        open={versionsDrawerOpen}
-        loading={versionsLoading}
-        versions={versions}
-        onClose={() => setVersionsDrawerOpen(false)}
-      />
 
       {waveformContextMenu ? (
         <WaveformContextMenu

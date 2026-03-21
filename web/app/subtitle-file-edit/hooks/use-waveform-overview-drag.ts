@@ -1,23 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
-import type { MutableRefObject, PointerEvent as ReactPointerEvent } from "react";
-import type WaveSurfer from "wavesurfer.js";
-
-type UseWaveformOverviewDragParams = {
-  suppressPlayheadFollowUntilRef: MutableRefObject<number>;
-  waveSurferRef: MutableRefObject<WaveSurfer | null>;
-  waveformViewport: {
-    scroll: number;
-    maxScroll: number;
-    viewW: number;
-    totalW: number;
-  } | null;
-  waveformEdgeDragRef: MutableRefObject<unknown>;
-  waveformMoveDragRef: MutableRefObject<unknown>;
-  waveformOverviewDragRef: MutableRefObject<{ pointerId: number } | null>;
-  logBrowserError: (context: string, error: unknown) => void;
-};
+import type { PointerEvent as ReactPointerEvent } from "react";
+import type { UseWaveformOverviewDragParams } from "../types";
 
 export function useWaveformOverviewDrag({
   suppressPlayheadFollowUntilRef,

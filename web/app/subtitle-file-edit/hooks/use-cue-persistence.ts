@@ -1,37 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { Dispatch, MutableRefObject, SetStateAction } from "react";
-import type { CueDto, SaveResponse } from "../types";
-
-type PersistOptions = {
-  showSuccess: boolean;
-  syncServerResponseToUi: boolean;
-};
-
-type UseCuePersistenceParams = {
-  subtitleFileId: string;
-  cues: CueDto[];
-  minGapMs: number;
-  autoSaveInFlightRef: MutableRefObject<boolean>;
-  lastSavedServerHashRef: MutableRefObject<string>;
-  sanitizeSubtitleFileId: (raw: string | null | undefined) => string;
-  validateCuesForSave: (cues: CueDto[]) => string | null;
-  toSaveCuePayload: (cues: CueDto[]) => Array<{
-    id?: string;
-    startMs: number;
-    endMs: number;
-    text: string;
-  }>;
-  normalizeCueCollisions: (cues: CueDto[], minGapMs: number) => CueDto[];
-  getSaveCueHash: (cues: CueDto[]) => string;
-  loadVersions: (id: string) => Promise<void>;
-  logBrowserError: (context: string, error: unknown) => void;
-  setSaving: Dispatch<SetStateAction<boolean>>;
-  setError: Dispatch<SetStateAction<string | null>>;
-  setSaveSuccess: Dispatch<SetStateAction<string | null>>;
-  setCues: Dispatch<SetStateAction<CueDto[]>>;
-};
+import type { PersistOptions, SaveResponse, UseCuePersistenceParams } from "../types";
 
 export function useCuePersistence({
   subtitleFileId,
@@ -44,7 +14,6 @@ export function useCuePersistence({
   toSaveCuePayload,
   normalizeCueCollisions,
   getSaveCueHash,
-  loadVersions,
   logBrowserError,
   setSaving,
   setError,
@@ -114,9 +83,6 @@ export function useCuePersistence({
         if (options.showSuccess) {
           setSaveSuccess("Revisão gravada com sucesso.");
         }
-        if (options.syncServerResponseToUi) {
-          void loadVersions(id);
-        }
         return true;
       } catch (error) {
         logBrowserError("persistCuesToServer", error);
@@ -142,7 +108,6 @@ export function useCuePersistence({
       toSaveCuePayload,
       normalizeCueCollisions,
       getSaveCueHash,
-      loadVersions,
       logBrowserError,
       setSaving,
       setError,

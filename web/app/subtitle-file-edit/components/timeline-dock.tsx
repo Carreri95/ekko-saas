@@ -1,81 +1,12 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import type {
-  CSSProperties,
-  MutableRefObject,
-  MouseEvent,
-  PointerEvent as ReactPointerEvent,
-} from "react";
 import { WaveformTimeRuler } from "./waveform-time-ruler";
 import { WaveformCueRegionItem } from "./waveform-cue-region-item";
 import { WaveformOverview } from "./waveform-overview";
 import { WaveformTransportControls } from "./waveform-transport-controls";
 import { computeOverviewMetrics } from "../lib/waveform-time";
-import type { CueDto } from "../types";
-
-type TimelineDockProps = {
-  mediaSourceUrl: string | null;
-  mediaKind: "audio" | "video" | null;
-  currentPlaybackMs: number;
-  waveformViewport: {
-    scroll: number;
-    maxScroll: number;
-    viewW: number;
-    totalW: number;
-  } | null;
-  waveformDurationSec: number | null;
-  waveformContainerRef: MutableRefObject<HTMLDivElement | null>;
-  waveformCanvasOverlayRef: MutableRefObject<HTMLCanvasElement | null>;
-  cueCreatePreviewRect: { leftPx: number; widthPx: number } | null;
-  onWaveformShellPointerDownCapture: (
-    e: ReactPointerEvent<HTMLDivElement>,
-  ) => void;
-  waveformCueOverlayHostEl: HTMLElement | null;
-  cueWaveformRegions: Array<{
-    cue: CueDto;
-    leftPx: number;
-    widthPx: number;
-    hasProblems: boolean;
-  }>;
-  activeCueTempId: string | null;
-  selectedCueTempId: string | null;
-  cueEditFocusTempId: string | null;
-  waveformEdgeDrag: { tempId: string; edge: "start" | "end" } | null;
-  waveformMoveDrag: { tempId: string } | null;
-  minGapMs: number;
-  formatPlaybackTime: (ms: number) => string;
-  onEdgePointerDown: (
-    e: ReactPointerEvent<HTMLDivElement>,
-    cue: CueDto,
-    edge: "start" | "end",
-  ) => void;
-  onEdgePointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
-  onEdgePointerEnd: (e: ReactPointerEvent<HTMLDivElement>) => void;
-  onMovePointerDown: (
-    e: ReactPointerEvent<HTMLElement>,
-    cue: CueDto,
-  ) => void;
-  onMovePointerMove: (e: ReactPointerEvent<HTMLElement>) => void;
-  onMovePointerEnd: (e: ReactPointerEvent<HTMLElement>) => void;
-  setSelectedCueTempId: React.Dispatch<React.SetStateAction<string | null>>;
-  setCueEditFocusTempId: React.Dispatch<React.SetStateAction<string | null>>;
-  setEditingCueTempId: React.Dispatch<React.SetStateAction<string | null>>;
-  cueSingleClickTimerRef: MutableRefObject<number>;
-  seekPlaybackFromWaveClientX: (clientX: number) => void;
-  focusCueCardInList: (tempId: string) => void;
-  onOverviewPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => void;
-  onPlayMedia: () => void;
-  onPauseMedia: () => void;
-  onResetMediaToStart: () => void;
-  waveformPx: number;
-  waveformGridStyle: CSSProperties;
-  onCueContextMenu: (e: MouseEvent, cue: CueDto) => void;
-  formatToolbarTime: (ms: number) => string;
-  playbackRate: number;
-  speedSteps: readonly number[];
-  onPlaybackRateChange: (rate: number) => void;
-};
+import type { TimelineDockProps } from "../types";
 
 export function TimelineDock({
   mediaSourceUrl,

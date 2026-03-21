@@ -1,18 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { Dispatch, MutableRefObject, SetStateAction } from "react";
-import type WaveSurfer from "wavesurfer.js";
-
-type UseMediaPlaybackControlsParams = {
-  mediaElementRef: MutableRefObject<HTMLAudioElement | HTMLVideoElement | null>;
-  waveSurferRef: MutableRefObject<WaveSurfer | null>;
-  /** Velocidade de reprodução (ex.: 1.0) — aplicada antes de `play()`. */
-  playbackRateRef: MutableRefObject<number>;
-  isWaveformSeekingRef: MutableRefObject<boolean>;
-  setCurrentPlaybackMs: Dispatch<SetStateAction<number>>;
-  logBrowserError: (context: string, error: unknown) => void;
-};
+import type { UseMediaPlaybackControlsParams } from "../types";
 
 export function useMediaPlaybackControls({
   mediaElementRef,

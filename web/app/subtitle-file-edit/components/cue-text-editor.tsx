@@ -2,23 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { autoBrText } from "../lib/cue-utils";
-
-type CueLike = {
-  tempId: string;
-  cueIndex: number;
-  startMs: number;
-  endMs: number;
-  text: string;
-};
-
-type CueTextEditorProps = {
-  cue: CueLike;
-  cueIndex: number;
-  totalCues: number;
-  onClose: () => void;
-  onCommitText: (cueTempId: string, text: string) => void;
-  onNavigate: (direction: "prev" | "next") => void;
-};
+import type { CueTextEditorProps } from "../types";
 
 function formatShort(ms: number): string {
   const totalSec = Math.max(0, ms / 1000);
@@ -164,7 +148,11 @@ export function CueTextEditor({
         value={localText}
         rows={6}
         spellCheck={false}
-        onChange={(e) => setLocalText(e.target.value)}
+        onChange={(e) => {
+          const v = e.target.value;
+          setLocalText(v);
+          onCommitText(cue.tempId, v);
+        }}
         onBlur={commitText}
         onKeyDown={(e) => {
           if (e.key === "Escape") {

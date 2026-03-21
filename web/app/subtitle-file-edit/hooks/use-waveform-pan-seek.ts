@@ -1,18 +1,7 @@
 "use client";
 
-import { useCallback, type RefObject } from "react";
-import type WaveSurfer from "wavesurfer.js";
-
-type BindPanSeekParams = {
-  waveSurfer: WaveSurfer;
-  suppressWaveformInteractionUntilRef: RefObject<number>;
-  /** Após scroll manual com a roda — não forçar seguimento ao playhead por alguns segundos. */
-  suppressPlayheadFollowUntilRef: RefObject<number>;
-  waveformEdgeDragRef: RefObject<unknown>;
-  waveformMoveDragRef: RefObject<unknown>;
-  waveformOverviewDragRef: RefObject<{ pointerId: number } | null>;
-  scheduleViewportRefresh: () => void;
-};
+import { useCallback } from "react";
+import type { BindPanSeekParams } from "../types";
 
 /**
  * Scroll horizontal da waveform via roda do rato (não pan por arrastar — ver use-waveform-cue-create).

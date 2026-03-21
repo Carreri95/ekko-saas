@@ -1,29 +1,6 @@
 "use client";
 
-type CueListItemCue = {
-  tempId: string;
-  cueIndex: number;
-  startMs: number;
-  endMs: number;
-  text: string;
-};
-
-type CueListItemProps = {
-  cue: CueListItemCue;
-  problems: string[];
-  isPlaybackCue: boolean;
-  isSelectedCue: boolean;
-  isEditFocusCue: boolean;
-  nextCueStartMs: number | null;
-  assignCueRef: (tempId: string, element: HTMLElement | null) => void;
-  shouldIgnoreCueClick: (target: EventTarget | null) => boolean;
-  onSelectSingle: (cue: CueListItemCue) => void;
-  onSelectDouble: (cue: CueListItemCue) => void;
-  onUpdateCue: (
-    tempId: string,
-    patch: Partial<Pick<CueListItemCue, "startMs" | "endMs">>,
-  ) => void;
-};
+import type { CueListItemProps } from "../types";
 
 export function CueListItem({
   cue,

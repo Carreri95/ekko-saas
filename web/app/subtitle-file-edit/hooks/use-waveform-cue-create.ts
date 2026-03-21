@@ -1,10 +1,14 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import type { Dispatch, MutableRefObject, PointerEvent as ReactPointerEvent, SetStateAction } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import type WaveSurfer from "wavesurfer.js";
 import { createTempId, reindexCues } from "../lib/cue-utils";
-import type { CueDto } from "../types";
+import type {
+  CueCreateDragState,
+  CueDto,
+  UseWaveformCueCreateParams,
+} from "../types";
 
 const MOVE_THRESHOLD_PX = 6;
 
@@ -100,31 +104,6 @@ function clampCreatePointerMs(
   );
   return Math.max(leftBoundMs, Math.min(hi, ms));
 }
-
-export type CueCreateDragState = {
-  startX: number;
-  startMs: number;
-  currentX: number;
-  pointerId: number;
-  leftBoundMs: number;
-  rightBoundMs: number;
-};
-
-export type UseWaveformCueCreateParams = {
-  waveSurferRef: MutableRefObject<WaveSurfer | null>;
-  waveformDurationSec: number | null;
-  waveformTotalWidthPx: number | null;
-  cues: CueDto[];
-  setCues: Dispatch<SetStateAction<CueDto[]>>;
-  setSelectedCueTempId: Dispatch<SetStateAction<string | null>>;
-  minGapMs: number;
-  seekPlaybackFromWaveClientX: (clientX: number) => void;
-  waveformEdgeDragRef: MutableRefObject<unknown>;
-  waveformMoveDragRef: MutableRefObject<unknown>;
-  waveformOverviewDragRef: MutableRefObject<{ pointerId: number } | null>;
-  /** Grava estado antes de criar cue (pointerup). */
-  pushHistory?: (cuesSnapshot: CueDto[], label: string) => void;
-};
 
 export function useWaveformCueCreate({
   waveSurferRef,

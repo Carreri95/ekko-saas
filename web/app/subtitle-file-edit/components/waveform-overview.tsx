@@ -1,20 +1,6 @@
 "use client";
 
-import type { PointerEvent as ReactPointerEvent } from "react";
-
-type WaveformViewport = {
-  scroll: number;
-  maxScroll: number;
-  viewW: number;
-  totalW: number;
-} | null;
-
-type WaveformOverviewProps = {
-  viewport: WaveformViewport;
-  thumbLeftPct: number;
-  thumbWidthPct: number;
-  onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => void;
-};
+import type { WaveformOverviewProps } from "../types";
 
 export function WaveformOverview({
   viewport,

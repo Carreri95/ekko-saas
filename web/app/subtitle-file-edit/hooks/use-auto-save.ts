@@ -1,23 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { CueDto } from "../types";
+import type { UseAutoSaveParams } from "../types";
 import { getSaveCueHash, validateCuesForSave } from "../lib/cue-utils";
-
-type PersistCuesToServerFn = (options: {
-  showSuccess: boolean;
-  syncServerResponseToUi: boolean;
-}) => Promise<boolean | void>;
-
-type UseAutoSaveParams = {
-  subtitleFileId: string;
-  cues: CueDto[];
-  loading: boolean;
-  autoSaveTimerRef: React.MutableRefObject<number | null>;
-  autoSaveInFlightRef: React.MutableRefObject<boolean>;
-  lastSavedServerHashRef: React.MutableRefObject<string>;
-  persistCuesToServer: PersistCuesToServerFn;
-};
 
 export function useAutoSave({
   subtitleFileId,
@@ -28,7 +13,7 @@ export function useAutoSave({
   lastSavedServerHashRef,
   persistCuesToServer,
 }: UseAutoSaveParams): void {
-  const persistRef = useRef<PersistCuesToServerFn>(persistCuesToServer);
+  const persistRef = useRef(persistCuesToServer);
 
   useEffect(() => {
     persistRef.current = persistCuesToServer;

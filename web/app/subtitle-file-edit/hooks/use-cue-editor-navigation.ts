@@ -1,24 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { CueDto } from "../types";
-
-type UseCueEditorNavigationParams = {
-  cues: CueDto[];
-  editingCueIndex: number;
-  setSelectedCueTempId: React.Dispatch<React.SetStateAction<string | null>>;
-  setCueEditFocusTempId: React.Dispatch<React.SetStateAction<string | null>>;
-  setEditingCueTempId: React.Dispatch<React.SetStateAction<string | null>>;
-  updateCue: (
-    cueTempId: string,
-    patch: Partial<Pick<CueDto, "startMs" | "endMs" | "text">>,
-  ) => void;
-  /** Chamado imediatamente antes de gravar texto (undo). */
-  onBeforeCommitCueText?: (cueTempId: string) => void;
-  seekPlayerToCue: (startMs: number) => void;
-  scrollWaveformToCueStart: (startMs: number) => void;
-  focusCueCardInList: (tempId: string) => void;
-};
+import type { UseCueEditorNavigationParams } from "../types";
 
 export function useCueEditorNavigation({
   cues,

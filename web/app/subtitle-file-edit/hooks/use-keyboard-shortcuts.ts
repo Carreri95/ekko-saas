@@ -1,27 +1,7 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useRef } from "react";
-import type { CueDto } from "../types";
-
-type UseKeyboardShortcutsParams = {
-  mediaElementRef: React.MutableRefObject<HTMLAudioElement | HTMLVideoElement | null>;
-  currentPlaybackMsRef: React.MutableRefObject<number>;
-  seekPlaybackToTimeSec: (sec: number) => void;
-  /** Após seek com setas, mantém a barra do playhead na área visível da waveform. */
-  ensureWaveformPlayheadVisible: (timeSec: number) => void;
-  logBrowserError: (context: string, error: unknown) => void;
-  isSpaceReservedForFocusedElement: (target: EventTarget | null) => boolean;
-  editingCueTempId: string | null;
-  setEditingCueTempId: React.Dispatch<React.SetStateAction<string | null>>;
-  undo: (setCues: Dispatch<SetStateAction<CueDto[]>>) => boolean;
-  setCues: Dispatch<SetStateAction<CueDto[]>>;
-  setSelectedCueTempId: Dispatch<SetStateAction<string | null>>;
-  setCueEditFocusTempId: Dispatch<SetStateAction<string | null>>;
-  waveformEdgeDragRef: React.MutableRefObject<unknown>;
-  waveformMoveDragRef: React.MutableRefObject<unknown>;
-  setSaveSuccess: Dispatch<SetStateAction<string | null>>;
-};
+import type { UseKeyboardShortcutsParams } from "../types";
 
 export function useKeyboardShortcuts({
   mediaElementRef,

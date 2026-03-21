@@ -1,17 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import type { MutableRefObject } from "react";
 import { isCueVisibleInListPanel, scrollCueIntoListPanel } from "../lib/dom-utils";
-
-type UseCueListAutoScrollParams = {
-  activeCueTempId: string | null;
-  selectedCueTempId: string | null;
-  mediaElementRef: MutableRefObject<HTMLAudioElement | HTMLVideoElement | null>;
-  lastAutoScrollAtRef: MutableRefObject<number>;
-  cueItemRefs: MutableRefObject<Record<string, HTMLElement | null>>;
-  cueListScrollRef: MutableRefObject<HTMLDivElement | null>;
-};
+import type { UseCueListAutoScrollParams } from "../types";
 
 export function useCueListAutoScroll({
   activeCueTempId,

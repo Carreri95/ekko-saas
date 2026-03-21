@@ -1,15 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-
-type UseGlobalDropIntakeParams = {
-  subtitleFileId: string;
-  cuesLength: number;
-  mediaSourceUrl: string | null;
-  sanitizeSubtitleFileId: (raw: string | null | undefined) => string;
-  applyDroppedSrtFile: (file: File) => Promise<void>;
-  queueLocalMediaFromFiles: (files: File[]) => boolean;
-};
+import type { UseGlobalDropIntakeParams } from "../types";
 
 export function useGlobalDropIntake({
   subtitleFileId,

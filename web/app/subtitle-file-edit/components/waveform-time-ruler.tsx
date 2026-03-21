@@ -1,24 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-
-type WaveformViewport = {
-  scroll: number;
-  maxScroll: number;
-  viewW: number;
-  totalW: number;
-} | null;
-
-type WaveformTimeRulerProps = {
-  viewport: WaveformViewport;
-  durationSec: number | null;
-};
-
-type Tick = {
-  leftPx: number;
-  isMajor: boolean;
-  label: string;
-};
+import type { WaveformTimeRulerProps, WaveformTimeRulerTick } from "../types";
 
 function chooseStep(visibleDur: number): number {
   if (visibleDur < 2) return 0.25;
@@ -39,14 +22,14 @@ function formatRulerLabel(seconds: number): string {
 }
 
 export function WaveformTimeRuler({ viewport, durationSec }: WaveformTimeRulerProps) {
-  const ticks = useMemo<Tick[]>(() => {
+  const ticks = useMemo<WaveformTimeRulerTick[]>(() => {
     if (!viewport || !durationSec || durationSec <= 0 || viewport.totalW <= 0) return [];
     const startT = (viewport.scroll / viewport.totalW) * durationSec;
     const visibleDur = (viewport.viewW / viewport.totalW) * durationSec;
     if (visibleDur <= 0) return [];
     const endT = Math.min(durationSec, startT + visibleDur);
     const step = chooseStep(visibleDur);
-    const list: Tick[] = [];
+    const list: WaveformTimeRulerTick[] = [];
     const firstIndex = Math.ceil(startT / step);
     let lastLeftPx = Number.NEGATIVE_INFINITY;
     for (let idx = firstIndex; ; idx += 1) {

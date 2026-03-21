@@ -1,44 +1,6 @@
 "use client";
 
-import type { PointerEvent as ReactPointerEvent } from "react";
-
-type CueLike = {
-  id: string | null;
-  tempId: string;
-  cueIndex: number;
-  startMs: number;
-  endMs: number;
-  text: string;
-};
-
-type WaveformCueRegionItemProps = {
-  cue: CueLike;
-  leftPx: number;
-  widthPx: number;
-  hasProblems: boolean;
-  isPlaybackHere: boolean;
-  isSelectedHere: boolean;
-  isEditFocusHere: boolean;
-  isEdgeDragging: boolean;
-  isMoveDragging: boolean;
-  dragEdge: "start" | "end" | null;
-  waveformDurationSec: number | null;
-  minGapMs: number;
-  formatPlaybackTime: (ms: number) => string;
-  onEdgePointerDown: (
-    e: ReactPointerEvent<HTMLDivElement>,
-    cue: CueLike,
-    edge: "start" | "end",
-  ) => void;
-  onEdgePointerMove: (e: ReactPointerEvent<HTMLDivElement>) => void;
-  onEdgePointerEnd: (e: ReactPointerEvent<HTMLDivElement>) => void;
-  onMovePointerDown: (e: ReactPointerEvent<HTMLElement>, cue: CueLike) => void;
-  onMovePointerMove: (e: ReactPointerEvent<HTMLElement>) => void;
-  onMovePointerEnd: (e: ReactPointerEvent<HTMLElement>) => void;
-  onBodyClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  onBodyDoubleClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  onCueContextMenu: (e: React.MouseEvent, cue: CueLike) => void;
-};
+import type { WaveformCueRegionItemProps } from "../types";
 
 export function WaveformCueRegionItem({
   cue,

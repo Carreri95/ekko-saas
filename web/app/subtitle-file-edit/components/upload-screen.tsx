@@ -1,22 +1,6 @@
 "use client";
 
-type UploadScreenProps = {
-  srtLoaded: boolean;
-  srtFilename: string | null;
-  srtCount: number;
-  srtDropActive: boolean;
-  audioDropActive: boolean;
-  onSrtDragEnter: (e: React.DragEvent) => void;
-  onSrtDragLeave: () => void;
-  onSrtDragOver: (e: React.DragEvent) => void;
-  onSrtDrop: (e: React.DragEvent) => void;
-  onAudioDragEnter: (e: React.DragEvent) => void;
-  onAudioDragLeave: () => void;
-  onAudioDragOver: (e: React.DragEvent) => void;
-  onAudioDrop: (e: React.DragEvent) => void;
-  onPickSrt: () => void;
-  onPickAudio: () => void;
-};
+import type { UploadScreenProps } from "../types";
 
 export function UploadScreen({
   srtLoaded,

@@ -1,24 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { MutableRefObject } from "react";
 import type WaveSurfer from "wavesurfer.js";
-
-type UseWaveformCanvasOverlayParams = {
-  canvasRef: MutableRefObject<HTMLCanvasElement | null>;
-  waveSurferRef: MutableRefObject<WaveSurfer | null>;
-  waveformContainerRef: MutableRefObject<HTMLDivElement | null>;
-  /** Atualizado no pai a cada frame de playback — evita re-disparar o effect. */
-  currentPlaybackMsRef: MutableRefObject<number>;
-  waveformDurationSec: number | null;
-  waveformViewport: {
-    scroll: number;
-    maxScroll: number;
-    viewW: number;
-    totalW: number;
-  } | null;
-  enabled: boolean;
-};
+import type { UseWaveformCanvasOverlayParams } from "../types";
 
 const COLOR_WAVE = [56, 130, 246] as const;
 const COLOR_PROGRESS = [147, 197, 253] as const;

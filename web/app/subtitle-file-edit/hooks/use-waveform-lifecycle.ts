@@ -1,63 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import WaveSurfer from "wavesurfer.js";
-import type { LocalWaveformData } from "../types";
-
-type BindPanSeekHandlers = (params: {
-  waveSurfer: WaveSurfer;
-  suppressWaveformInteractionUntilRef: MutableRefObject<number>;
-  suppressPlayheadFollowUntilRef: MutableRefObject<number>;
-  waveformEdgeDragRef: MutableRefObject<unknown>;
-  waveformMoveDragRef: MutableRefObject<unknown>;
-  waveformOverviewDragRef: MutableRefObject<{ pointerId: number } | null>;
-  scheduleViewportRefresh: () => void;
-}) => () => void;
-
-type UseWaveformLifecycleParams = {
-  waveformEnabled: boolean;
-  localWaveformData: LocalWaveformData | null;
-  bindPanSeekHandlers: BindPanSeekHandlers;
-  mediaSourceUrl: string | null;
-  mediaKind: "audio" | "video" | null;
-  wavPath: string | null;
-  waveformPx: number;
-  waveformMinPxPerSec: number;
-  waveformContainerRef: MutableRefObject<HTMLDivElement | null>;
-  mediaElementRef: MutableRefObject<HTMLAudioElement | HTMLVideoElement | null>;
-  waveSurferRef: MutableRefObject<WaveSurfer | null>;
-  waveformCueOverlayHostRef: MutableRefObject<HTMLDivElement | null>;
-  waveformViewportLastRef: MutableRefObject<{
-    scroll: number;
-    maxScroll: number;
-    viewW: number;
-    totalW: number;
-  } | null>;
-  scheduleViewportRefreshRef: MutableRefObject<(() => void) | null>;
-  waveformOverviewDragRef: MutableRefObject<{ pointerId: number } | null>;
-  waveformEdgeDragRef: MutableRefObject<unknown>;
-  waveformMoveDragRef: MutableRefObject<unknown>;
-  suppressWaveformInteractionUntilRef: MutableRefObject<number>;
-  suppressPlayheadFollowUntilRef: MutableRefObject<number>;
-  audioRouteFallbackTriedRef: MutableRefObject<boolean>;
-  setWaveformDurationSec: Dispatch<SetStateAction<number | null>>;
-  setWaveformCueOverlayHostEl: Dispatch<SetStateAction<HTMLElement | null>>;
-  setWaveformViewport: Dispatch<
-    SetStateAction<{
-      scroll: number;
-      maxScroll: number;
-      viewW: number;
-      totalW: number;
-    } | null>
-  >;
-  setError: Dispatch<SetStateAction<string | null>>;
-  setMediaSourceUrl: Dispatch<SetStateAction<string | null>>;
-  seekPlaybackToTimeSec: (nextTimeSec: number) => void;
-  logBrowserError: (context: string, error: unknown) => void;
-  normalizeBrowserMediaPath: (raw: string | null | undefined) => string | null;
-  injectWaveformCueShadowStyles: (rootNode: Node) => void;
-};
+import type { UseWaveformLifecycleParams } from "../types";
 
 export function useWaveformLifecycle({
   waveformEnabled,

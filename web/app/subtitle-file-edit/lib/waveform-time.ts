@@ -1,14 +1,4 @@
-type CueTimeLike = {
-  startMs: number;
-  endMs: number;
-};
-
-type CueRegionResult<TCue extends CueTimeLike> = {
-  cue: TCue;
-  leftPx: number;
-  widthPx: number;
-  hasProblems: boolean;
-};
+import type { CueRegionResult, CueTimeLike, WaveformViewportMetrics } from "../types";
 
 export function buildCueWaveformRegions<TCue extends CueTimeLike>(
   cues: TCue[],
@@ -44,14 +34,7 @@ export function buildCueWaveformRegions<TCue extends CueTimeLike>(
 }
 
 export function computeOverviewMetrics(
-  viewport:
-    | {
-        scroll: number;
-        maxScroll: number;
-        viewW: number;
-        totalW: number;
-      }
-    | null,
+  viewport: WaveformViewportMetrics | null,
   waveformDurationSec: number | null,
 ): {
   thumbWidthPct: number;

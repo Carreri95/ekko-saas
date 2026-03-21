@@ -1,27 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { Dispatch, SetStateAction } from "react";
-import type { CueDto, LocalWaveformData } from "../types";
-
-type UseLocalMediaSrtIntakeParams = {
-  setLocalWaveformData: Dispatch<SetStateAction<LocalWaveformData | null>>;
-  setMediaSourceUrl: Dispatch<SetStateAction<string | null>>;
-  setMediaKind: Dispatch<SetStateAction<"video" | "audio" | null>>;
-  setCurrentPlaybackMs: Dispatch<SetStateAction<number>>;
-  setError: Dispatch<SetStateAction<string | null>>;
-  setSaveSuccess: Dispatch<SetStateAction<string | null>>;
-  setCues: Dispatch<SetStateAction<CueDto[]>>;
-  setFilename: Dispatch<SetStateAction<string | null>>;
-  setSelectedCueTempId: Dispatch<SetStateAction<string | null>>;
-  setCueEditFocusTempId: Dispatch<SetStateAction<string | null>>;
-  setEditingCueTempId: Dispatch<SetStateAction<string | null>>;
-  setSrtDropActive: Dispatch<SetStateAction<boolean>>;
-  setAudioDropActive: Dispatch<SetStateAction<boolean>>;
-  toCueDtoListFromSrtText: (text: string) => CueDto[];
-  resetPlaybackToStart: () => void;
-  logBrowserError: (context: string, error: unknown) => void;
-};
+import type { LocalWaveformData, UseLocalMediaSrtIntakeParams } from "../types";
 
 export function useLocalMediaSrtIntake({
   setLocalWaveformData,

@@ -2,16 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
-export type WaveformContextMenuProps = {
-  x: number;
-  y: number;
-  canAddText: boolean;
-  canSplit: boolean;
-  onAddText: () => void;
-  onSplit: () => void;
-  onDelete: () => void;
-};
+import type { WaveformContextMenuProps } from "../types";
 
 export function WaveformContextMenu({
   x,
