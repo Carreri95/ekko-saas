@@ -25,15 +25,15 @@ export function WaveformTransportControls({
     durationMs != null ? Math.max(0, durationMs - currentPlaybackMs) : null;
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex h-full w-full flex-col gap-2.5 px-4 py-2.5 sm:px-5">
       {/* Controls row */}
-      <div className="flex h-9 shrink-0 items-center gap-2 bg-zinc-950 px-3">
+      <div className="flex min-h-[2.25rem] shrink-0 items-center gap-3 bg-zinc-950">
         {/* Reset */}
         <button
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={onReset}
-          className="flex h-6 w-6 items-center justify-center rounded-sm border border-zinc-800 bg-zinc-900 text-zinc-500 transition-colors hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-200 active:scale-95"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-500 transition-colors hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-200 active:scale-95"
           title="Voltar ao início"
         >
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -47,7 +47,7 @@ export function WaveformTransportControls({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={onPlay}
-          className="flex h-7 w-7 items-center justify-center rounded-sm bg-blue-600 text-white transition-all hover:bg-blue-500 active:scale-95 active:bg-blue-700"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white transition-all hover:bg-blue-500 active:scale-95 active:bg-blue-700"
           title="Play (Espaço)"
         >
           <svg width="11" height="12" viewBox="0 0 11 12" fill="none">
@@ -60,7 +60,7 @@ export function WaveformTransportControls({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={onPause}
-          className="flex h-7 w-7 items-center justify-center rounded-sm border border-zinc-700/80 bg-zinc-900 text-zinc-400 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-100 active:scale-95"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-700/80 bg-zinc-900 text-zinc-400 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-100 active:scale-95"
           title="Pausar (Espaço)"
         >
           <svg width="10" height="12" viewBox="0 0 10 12" fill="none">
@@ -69,15 +69,15 @@ export function WaveformTransportControls({
           </svg>
         </button>
 
-        <div className="mx-1 h-4 w-px bg-zinc-800" />
+        <div className="mx-1 h-5 w-px shrink-0 bg-zinc-800" aria-hidden />
 
         {/* Timecode */}
-        <span className="font-mono text-[13px] tabular-nums tracking-tight text-zinc-100">
+        <span className="min-w-0 pl-1 font-mono text-[13px] tabular-nums tracking-tight text-zinc-100">
           {formatTime(currentPlaybackMs)}
         </span>
 
         {durationMs != null && (
-          <span className="font-mono text-[11px] tabular-nums text-zinc-600">
+          <span className="ml-0.5 font-mono text-[11px] tabular-nums text-zinc-600">
             / {formatTime(durationMs)}
           </span>
         )}
@@ -85,14 +85,14 @@ export function WaveformTransportControls({
         <div className="flex-1" />
 
         {remainingMs != null && remainingMs > 100 && (
-          <span className="font-mono text-[11px] tabular-nums text-zinc-600">
+          <span className="shrink-0 pl-2 font-mono text-[11px] tabular-nums text-zinc-600">
             -{formatTime(remainingMs)}
           </span>
         )}
       </div>
 
       {/* Progress strip — thin bar showing exact playhead position */}
-      <div className="relative h-[3px] w-full shrink-0 overflow-hidden bg-zinc-900">
+      <div className="relative mt-0.5 h-[3px] w-full shrink-0 overflow-hidden rounded-full bg-zinc-900">
         <div
           className="absolute left-0 top-0 h-full bg-blue-500/60"
           style={{ width: `${progressPct}%`, transition: "none" }}

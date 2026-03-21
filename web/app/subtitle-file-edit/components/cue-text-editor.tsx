@@ -1,5 +1,6 @@
 "use client";
 
+import "./cue-text-editor.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { autoBrText } from "../lib/cue-utils";
 import type { CueTextEditorProps } from "../types";
@@ -44,6 +45,12 @@ export function CueTextEditor({
     const durationSec = Math.max(0.001, (cue.endMs - cue.startMs) / 1000);
     const cps = totalLength / durationSec;
     const durationMs = cue.endMs - cue.startMs;
+    const cpsBarBg =
+      cps > 21
+        ? "var(--error-dot)"
+        : cps > 17
+          ? "var(--warn-text)"
+          : "var(--success-dot)";
     return {
       longestLine,
       totalLength,
@@ -53,8 +60,7 @@ export function CueTextEditor({
       cpsTone:
         cps > 21 ? "text-red-400" : cps > 17 ? "text-amber-300" : "text-emerald-300",
       cpsBarWidth: Math.min(100, (cps / 25) * 100),
-      cpsBarColor:
-        cps > 21 ? "bg-red-500" : cps > 17 ? "bg-amber-400" : "bg-emerald-500",
+      cpsBarBg,
     };
   }, [cue.endMs, cue.startMs, localText]);
 
@@ -94,39 +100,38 @@ export function CueTextEditor({
   }
 
   return (
-    <section className="mt-0 flex h-full min-h-0 flex-col border border-zinc-800/90 bg-[#161616]">
-      {/* Header */}
-      <div className="flex h-10 shrink-0 items-center justify-between border-b border-white/10 bg-[#1a1a1a] px-3 py-1.5">
-        <div className="flex items-center gap-2">
-          <span className="rounded bg-blue-600/20 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-blue-400">
+    <section className="editor-container mt-0 flex h-full min-h-0 flex-col px-2 pb-2 pt-2 sm:px-3 sm:pb-3 sm:pt-3">
+      <div className="editor-header flex min-h-[3.25rem] shrink-0 items-center justify-between gap-4 border-b border-white/10 bg-[#1a1a1a] px-4 py-3 sm:px-5 sm:py-3.5">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5 sm:gap-x-4">
+          <span className="editor-cue-id-badge shrink-0 rounded-md bg-blue-600/20 px-3 py-1 font-mono text-[11px] font-semibold leading-none text-blue-400">
             #{cue.cueIndex}
           </span>
-          <span className="font-mono text-[10px] text-zinc-600">
+          <span className="shrink-0 font-mono text-[10px] leading-snug text-zinc-500">
             {formatShort(cue.startMs)}
-            <span className="mx-1 text-zinc-700">→</span>
+            <span className="mx-1.5 text-zinc-600">→</span>
             {formatShort(cue.endMs)}
           </span>
-          <span className="text-[10px] text-zinc-700">
+          <span className="shrink-0 text-[10px] leading-snug text-zinc-600">
             {metrics.durationMs}ms
           </span>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
             onClick={handleToggleBreakMode}
-            className="rounded border border-zinc-700/80 bg-zinc-800/70 px-2.5 py-1 text-[11px] text-zinc-200 hover:bg-zinc-700/70"
+            className="editor-auto-br-btn inline-flex min-h-[2rem] min-w-[5.25rem] shrink-0 items-center justify-center whitespace-nowrap rounded-md border border-zinc-600/90 bg-zinc-800/90 px-3 py-2 text-center text-[12px] font-medium leading-none tracking-tight text-zinc-100 shadow-sm hover:border-zinc-500 hover:bg-zinc-700/80"
             title={hasLineBreak ? "Remover quebra de linha automática" : "Aplicar quebra automática"}
           >
             {hasLineBreak ? "Unbreak" : "Auto br"}
           </button>
           <span className="font-mono text-[12px] tabular-nums">
             <span className={`font-semibold ${metrics.cpsTone}`}>{metrics.cps.toFixed(1)}</span>
-            <span className="text-zinc-600"> c/s</span>
+            <span className="text-zinc-500"> c/s</span>
           </span>
           <button
             type="button"
             onClick={handleEscapeClose}
-            className="rounded px-1.5 py-0.5 text-[14px] leading-none text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-lg leading-none text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
             title="Fechar (Esc)"
           >
             ×
@@ -134,15 +139,16 @@ export function CueTextEditor({
         </div>
       </div>
 
-      {/* CPS bar */}
-      <div className="h-[3px] w-full shrink-0 bg-zinc-900">
+      <div className="editor-cps-track" aria-hidden>
         <div
-          className={`h-full transition-all duration-150 ${metrics.cpsBarColor}`}
-          style={{ width: `${metrics.cpsBarWidth}%`, opacity: 0.7 }}
+          className="editor-cps-bar"
+          style={{
+            width: `${metrics.cpsBarWidth}%`,
+            backgroundColor: metrics.cpsBarBg,
+          }}
         />
       </div>
 
-      {/* Textarea */}
       <textarea
         ref={textRef}
         value={localText}
@@ -160,18 +166,18 @@ export function CueTextEditor({
             handleEscapeClose();
           }
         }}
-        className="h-full min-h-0 flex-1 resize-none border-0 border-b border-white/10 bg-[#0e0e0e] px-3.5 py-3 font-mono text-[15px] leading-relaxed text-zinc-100 outline-none placeholder:text-zinc-700"
+        className="editor-textarea h-full min-h-0 flex-1 resize-none px-5 py-5 font-mono text-[19px] leading-[1.55] tracking-tight text-zinc-100 placeholder:text-zinc-600"
         placeholder="Texto da legenda…"
       />
 
       {/* Actions */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-[#1a1a1a] px-3 py-2">
+      <div className="flex shrink-0 items-center gap-3 border-b border-white/10 bg-[#1a1a1a] px-5 py-3 sm:px-6">
         <div className="flex-1" />
         <button
           type="button"
           onClick={() => onNavigate("prev")}
           disabled={cueIndex === 0}
-          className="rounded border border-zinc-700/80 bg-zinc-800/70 px-2 py-1 text-[11px] text-zinc-400 hover:bg-zinc-700/70 disabled:cursor-not-allowed disabled:opacity-30"
+          className="inline-flex h-9 min-w-[2.5rem] items-center justify-center rounded-md border border-zinc-700/80 bg-zinc-800/70 px-3 text-sm text-zinc-400 hover:bg-zinc-700/70 disabled:cursor-not-allowed disabled:opacity-30"
           title="Cue anterior"
         >
           ↑
@@ -180,33 +186,32 @@ export function CueTextEditor({
           type="button"
           onClick={() => onNavigate("next")}
           disabled={cueIndex >= totalCues - 1}
-          className="rounded border border-zinc-700/80 bg-zinc-800/70 px-2 py-1 text-[11px] text-zinc-400 hover:bg-zinc-700/70 disabled:cursor-not-allowed disabled:opacity-30"
+          className="inline-flex h-9 min-w-[2.5rem] items-center justify-center rounded-md border border-zinc-700/80 bg-zinc-800/70 px-3 text-sm text-zinc-400 hover:bg-zinc-700/70 disabled:cursor-not-allowed disabled:opacity-30"
           title="Próxima cue"
         >
           ↓
         </button>
       </div>
 
-      {/* Stats footer */}
-      <div className="flex h-8 shrink-0 items-center justify-between border-t border-white/5 bg-[#181818] px-3">
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] text-white/25">
+      <div className="editor-footer mt-0.5 flex min-h-[2.75rem] shrink-0 items-center justify-between gap-4 border-t border-white/5 bg-[#181818] px-5 py-3 sm:px-6 sm:py-3.5">
+        <div className="editor-footer-stats flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1.5 sm:gap-x-6">
+          <span className="text-[11px] leading-snug text-white/40">
             Linha longa:{" "}
-            <strong className={`font-semibold ${metrics.longestLine > 42 ? "text-red-400" : "text-white/55"}`}>
+            <strong className={`font-semibold ${metrics.longestLine > 42 ? "text-red-400" : "text-white/60"}`}>
               {metrics.longestLine}
             </strong>
-            <span className="text-white/20">/42</span>
+            <span className="text-white/25">/42</span>
           </span>
-          <span className="text-[10px] text-white/25">
+          <span className="text-[11px] leading-snug text-white/40">
             Chars:{" "}
-            <strong className="font-semibold text-white/55">{metrics.totalLength}</strong>
+            <strong className="font-semibold text-white/60">{metrics.totalLength}</strong>
           </span>
-          <span className="text-[10px] text-white/25">
+          <span className="text-[11px] leading-snug text-white/40">
             Linhas:{" "}
-            <strong className="font-semibold text-white/55">{metrics.lineCount}</strong>
+            <strong className="font-semibold text-white/60">{metrics.lineCount}</strong>
           </span>
         </div>
-        <span className="font-mono text-[10px] text-zinc-600">
+        <span className="shrink-0 pl-3 font-mono text-[11px] leading-none tabular-nums text-zinc-500">
           {cueIndex + 1} / {totalCues}
         </span>
       </div>

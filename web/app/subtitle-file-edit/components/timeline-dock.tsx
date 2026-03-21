@@ -57,35 +57,43 @@ export function TimelineDock({
     waveformDurationSec,
   );
 
+  /** Evita valor fora dos steps (float / browser) — senão o select mostra em branco ou hífen. */
+  const playbackRateForSelect =
+    speedSteps.find((r) => Math.abs(r - playbackRate) < 1e-4) ??
+    speedSteps.reduce((a, b) =>
+      Math.abs(b - playbackRate) < Math.abs(a - playbackRate) ? b : a,
+    );
+
   return (
     <section
       className="editor-timeline-dock-inner editor-review-hub editor-media-dock editor-timing-dock flex h-full min-w-0 flex-col overflow-hidden bg-zinc-950"
       aria-label="Linha do tempo: áudio e forma de onda"
     >
       {mediaSourceUrl ? (
-        <div className="editor-media-stage editor-media-stage--dock mt-0 flex h-full min-w-0 flex-col overflow-hidden px-1 pb-1 pt-0.5">
+        <div className="editor-media-stage editor-media-stage--dock mt-0 flex h-full min-w-0 flex-col overflow-hidden px-3 pb-2 pt-2 sm:px-4">
           {mediaKind === "audio" ? (
             <>
               <div className="editor-waveform-lane flex h-full min-w-0 flex-col">
-                <div className="flex h-10 shrink-0 items-center gap-3 border-b border-zinc-800/70 bg-zinc-900/80 px-3">
-                  <span className="font-mono text-[20px] font-medium leading-none tabular-nums text-zinc-100">
+                <div className="editor-waveform-toolbar-strip mx-1 mb-2 mt-0.5 flex min-h-[3rem] shrink-0 items-center gap-4 rounded-lg border border-zinc-800/60 bg-zinc-900/80 px-4 py-3 sm:mx-2 sm:px-5 sm:py-3.5">
+                  <span className="min-w-0 pl-0.5 font-mono text-[20px] font-medium tabular-nums leading-none text-zinc-100">
                     {formatToolbarTime(currentPlaybackMs)}
                   </span>
 
-                  <div className="h-5 w-px bg-zinc-800" aria-hidden />
+                  <div className="mx-0.5 h-6 w-px shrink-0 bg-zinc-700/80" aria-hidden />
 
-                  <div className="relative">
+                  <div className="relative min-w-0 shrink-0">
                     <select
-                      value={playbackRate}
+                      value={playbackRateForSelect}
                       onChange={(e) =>
                         onPlaybackRateChange(Number.parseFloat(e.target.value))
                       }
-                      className={`h-6 rounded-sm border bg-zinc-900 px-2 font-mono text-[11px] outline-none hover:border-zinc-600 focus:border-zinc-500 ${
-                        playbackRate !== 1.0
+                      className={`editor-playback-rate-select max-w-full rounded-md border bg-zinc-900 font-mono tabular-nums outline-none hover:border-zinc-600 focus:border-zinc-500 focus:ring-0 ${
+                        Math.abs(playbackRateForSelect - 1) > 0.001
                           ? "border-amber-700/60 text-amber-300"
-                          : "border-zinc-800 text-zinc-400"
+                          : "border-zinc-700 text-zinc-300"
                       }`}
                       title="Velocidade de reprodução"
+                      aria-label="Velocidade de reprodução"
                     >
                       {speedSteps.map((rate) => (
                         <option key={rate} value={rate}>
@@ -240,7 +248,7 @@ export function TimelineDock({
                     onPointerDown={onOverviewPointerDown}
                   />
                 </div>
-                <div className="h-[48px] shrink-0 border-t border-zinc-800/60">
+                <div className="shrink-0 border-t border-zinc-800/60">
                   <WaveformTransportControls
                     onPlay={onPlayMedia}
                     onPause={onPauseMedia}
@@ -274,7 +282,7 @@ export function TimelineDock({
                   </div>
                 </div>
                 <div className="h-[36px] shrink-0 border-t border-zinc-800/70 bg-[#0e0e0e]" />
-                <div className="h-[48px] shrink-0 border-t border-zinc-800/60">
+                <div className="shrink-0 border-t border-zinc-800/60">
                   <WaveformTransportControls
                     onPlay={onPlayMedia}
                     onPause={onPauseMedia}

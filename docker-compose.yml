@@ -1,3 +1,5 @@
+# Postgres para desenvolvimento local. Na raiz: docker compose up -d
+# Depois em web/: copiar .env.example para .env e npm run db:migrate
 services:
   postgres:
     image: postgres:16

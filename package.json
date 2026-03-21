@@ -7,6 +7,11 @@
     "build": "npm run build --prefix web",
     "start": "npm run start --prefix web",
     "lint": "npm run lint --prefix web",
-    "seed": "npm run seed --prefix web"
+    "seed": "npm run seed --prefix web",
+    "db:seed": "npm run db:seed --prefix web",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run db:migrate --prefix web",
+    "db:deploy": "npm run db:deploy --prefix web"
   }
 }

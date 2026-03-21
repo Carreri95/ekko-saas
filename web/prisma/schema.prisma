@@ -15,6 +15,7 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   projects  Project[]
+  batchJobs BatchJob[]
 }
 
 model Project {
@@ -22,11 +23,16 @@ model Project {
   name          String
   description   String?
   status        ProjectStatus    @default(DRAFT)
+  /// Referência opaca ao arquivo no storage (ex.: UUID + extensão). Nunca expor path de disco.
+  storageKey    String?
+  mediaKind     MediaKind?
+  durationMs    Int?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   userId        String
   user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   subtitleFiles SubtitleFile[]
+  transcriptionJobs TranscriptionJob[]
 }
 
 model SubtitleFile {
@@ -42,6 +48,7 @@ model SubtitleFile {
   project     Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   cues        SubtitleCue[]
   versions    SubtitleVersion[]
+  transcriptionJobs TranscriptionJob[]
 }
 
 model SubtitleCue {
@@ -54,8 +61,54 @@ model SubtitleCue {
   updatedAt      DateTime     @updatedAt
   subtitleFileId String
   subtitleFile   SubtitleFile @relation(fields: [subtitleFileId], references: [id], onDelete: Cascade)
+  /// Job que gerou a cue (null = manual ou legado).
+  transcriptionJobId String?
+  transcriptionJob   TranscriptionJob? @relation(fields: [transcriptionJobId], references: [id], onDelete: SetNull)
 
   @@index([subtitleFileId, cueIndex])
+  @@index([subtitleFileId, startMs])
+}
+
+model BatchJob {
+  id        String         @id @default(cuid())
+  status    BatchJobStatus @default(PENDING)
+  engine    TranscriptionEngine @default(OPENAI_WHISPER)
+  language  String?
+  zipStorageKey String?
+  totalFiles Int           @default(0)
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+  completedAt DateTime?
+  jobs      TranscriptionJob[]
+}
+
+model TranscriptionJob {
+  id             String                 @id @default(cuid())
+  projectId      String
+  project        Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  subtitleFileId String
+  subtitleFile   SubtitleFile           @relation(fields: [subtitleFileId], references: [id], onDelete: Cascade)
+  batchId        String?
+  batch          BatchJob?              @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  /// Nome original do ficheiro upload (gerador em lote).
+  originalFilename String?
+  /// Ex.: SRT, TXT, VTT — UI do gerador.
+  exportFormat   String?                @default("SRT")
+  status         TranscriptionJobStatus   @default(PENDING)
+  engine         TranscriptionEngine      @default(OPENAI_WHISPER)
+  language       String?
+  errorMessage   String?
+  attemptCount   Int                    @default(0)
+  rawResponse    Json?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime               @default(now())
+  cues           SubtitleCue[]
+
+  @@index([projectId])
+  @@index([subtitleFileId])
+  @@index([batchId])
 }
 
 model SubtitleVersion {
@@ -80,4 +133,28 @@ enum SubtitleSourceType {
   UPLOADED_SRT
   IMPORTED_BUZZ
   IMPORTED_WHISPER
+}
+
+enum MediaKind {
+  audio
+  video
+}
+
+enum BatchJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum TranscriptionJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum TranscriptionEngine {
+  OPENAI_WHISPER
+  MOCK
 }

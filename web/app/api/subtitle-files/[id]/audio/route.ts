@@ -22,6 +22,22 @@ function pushCandidate(candidates: string[], value: string | null | undefined) {
   if (!candidates.includes(value)) candidates.push(value);
 }
 
+function mimeFromFilename(name: string): string {
+  const ext = path.extname(name).toLowerCase();
+  switch (ext) {
+    case ".mp3":
+      return "audio/mpeg";
+    case ".m4a":
+      return "audio/mp4";
+    case ".webm":
+      return "audio/webm";
+    case ".wav":
+      return "audio/wav";
+    default:
+      return "application/octet-stream";
+  }
+}
+
 async function resolveAudioPath(
   rawWavPath: string,
   wavFilename: string | null,
@@ -120,11 +136,12 @@ export async function GET(_: Request, { params }: RouteParams) {
 
     const bytes = await readFile(diskPath);
     const filename = subtitleFile.wavFilename ?? path.basename(diskPath);
+    const contentType = mimeFromFilename(filename);
 
     return new NextResponse(bytes, {
       status: 200,
       headers: {
-        "Content-Type": "audio/wav",
+        "Content-Type": contentType,
         "Content-Disposition": `inline; filename="${filename}"`,
         "Cache-Control": "no-store",
       },
