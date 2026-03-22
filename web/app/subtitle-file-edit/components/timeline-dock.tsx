@@ -46,7 +46,6 @@ export function TimelineDock({
   waveformPx,
   waveformGridStyle,
   onCueContextMenu,
-  formatToolbarTime,
   playbackRate,
   speedSteps,
   onPlaybackRateChange,
@@ -57,16 +56,9 @@ export function TimelineDock({
     waveformDurationSec,
   );
 
-  /** Evita valor fora dos steps (float / browser) — senão o select mostra em branco ou hífen. */
-  const playbackRateForSelect =
-    speedSteps.find((r) => Math.abs(r - playbackRate) < 1e-4) ??
-    speedSteps.reduce((a, b) =>
-      Math.abs(b - playbackRate) < Math.abs(a - playbackRate) ? b : a,
-    );
-
   return (
     <section
-      className="editor-timeline-dock-inner editor-review-hub editor-media-dock editor-timing-dock flex h-full min-w-0 flex-col overflow-hidden bg-zinc-950"
+      className="editor-timeline-dock-inner editor-review-hub editor-media-dock editor-timing-dock flex h-full min-w-0 flex-col overflow-hidden bg-[var(--bg-page)]"
       aria-label="Linha do tempo: áudio e forma de onda"
     >
       {mediaSourceUrl ? (
@@ -74,41 +66,12 @@ export function TimelineDock({
           {mediaKind === "audio" ? (
             <>
               <div className="editor-waveform-lane flex h-full min-w-0 flex-col">
-                <div className="editor-waveform-toolbar-strip mx-1 mb-2 mt-0.5 flex min-h-[3rem] shrink-0 items-center gap-4 rounded-lg border border-zinc-800/60 bg-zinc-900/80 px-4 py-3 sm:mx-2 sm:px-5 sm:py-3.5">
-                  <span className="min-w-0 pl-0.5 font-mono text-[20px] font-medium tabular-nums leading-none text-zinc-100">
-                    {formatToolbarTime(currentPlaybackMs)}
-                  </span>
-
-                  <div className="mx-0.5 h-6 w-px shrink-0 bg-zinc-700/80" aria-hidden />
-
-                  <div className="relative min-w-0 shrink-0">
-                    <select
-                      value={playbackRateForSelect}
-                      onChange={(e) =>
-                        onPlaybackRateChange(Number.parseFloat(e.target.value))
-                      }
-                      className={`editor-playback-rate-select max-w-full rounded-md border bg-zinc-900 font-mono tabular-nums outline-none hover:border-zinc-600 focus:border-zinc-500 focus:ring-0 ${
-                        Math.abs(playbackRateForSelect - 1) > 0.001
-                          ? "border-amber-700/60 text-amber-300"
-                          : "border-zinc-700 text-zinc-300"
-                      }`}
-                      title="Velocidade de reprodução"
-                      aria-label="Velocidade de reprodução"
-                    >
-                      {speedSteps.map((rate) => (
-                        <option key={rate} value={rate}>
-                          {rate}×
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
                 <WaveformTimeRuler
                   viewport={waveformViewport}
                   durationSec={waveformDurationSec}
                 />
-                <div className="editor-waveform-shell editor-waveform-shell--primary editor-waveform-shell--hero h-[220px] min-w-0 shrink-0 overflow-hidden">
-                  <div className="editor-waveform-stack editor-waveform-stack--hero relative min-h-0 w-full min-w-0 max-w-full">
+                <div className="editor-waveform-shell editor-waveform-shell--primary editor-waveform-shell--hero min-h-0 min-w-0 flex-1 shrink overflow-hidden">
+                  <div className="editor-waveform-stack editor-waveform-stack--hero relative h-full min-h-0 w-full min-w-0 max-w-full">
                     <div
                       className="relative h-full w-full min-h-0 touch-none"
                       style={{ touchAction: "none" }}
@@ -117,7 +80,6 @@ export function TimelineDock({
                       <div
                         ref={waveformContainerRef}
                         className="editor-waveform-mount editor-waveform-mount--timeline relative z-0 h-full w-full min-w-0 max-w-full overflow-hidden rounded-none"
-                        style={{ paddingTop: "10px", paddingBottom: "10px" }}
                       />
                       <canvas
                         ref={waveformCanvasOverlayRef}
@@ -136,8 +98,8 @@ export function TimelineDock({
                             style={{
                               left: -vp.scroll,
                               width: vp.totalW,
-                              top: 10,
-                              height: waveformPx,
+                              top: 0,
+                              height: "100%",
                             }}
                           >
                             <div
@@ -162,7 +124,7 @@ export function TimelineDock({
                       ? createPortal(
                           <div
                             className="editor-waveform-cue-regions"
-                            style={{ height: waveformPx, ...waveformGridStyle }}
+                            style={waveformGridStyle}
                           >
                             {cueWaveformRegions.map(
                               ({ cue, leftPx, widthPx, hasProblems }) => {
@@ -248,7 +210,7 @@ export function TimelineDock({
                     onPointerDown={onOverviewPointerDown}
                   />
                 </div>
-                <div className="shrink-0 border-t border-zinc-800/60">
+                <div className="h-[42px] shrink-0 overflow-hidden">
                   <WaveformTransportControls
                     onPlay={onPlayMedia}
                     onPause={onPauseMedia}
@@ -259,6 +221,9 @@ export function TimelineDock({
                         ? waveformDurationSec * 1000
                         : null
                     }
+                    playbackRate={playbackRate}
+                    speedSteps={speedSteps}
+                    onPlaybackRateChange={onPlaybackRateChange}
                   />
                 </div>
               </div>
@@ -266,23 +231,23 @@ export function TimelineDock({
           ) : (
             <>
               <div className="editor-waveform-lane flex h-full min-w-0 flex-col">
-                <div className="editor-waveform-shell editor-waveform-shell--primary editor-waveform-shell--hero h-[220px] min-w-0 shrink-0 overflow-hidden">
-                  <div className="editor-waveform-stack editor-waveform-stack--hero relative min-h-0 w-full min-w-0">
+                <div className="editor-waveform-shell editor-waveform-shell--primary editor-waveform-shell--hero min-h-0 min-w-0 flex-1 shrink overflow-hidden">
+                  <div className="editor-waveform-stack editor-waveform-stack--hero relative h-full min-h-0 w-full min-w-0">
                     <div
                       className="editor-waveform-mount editor-waveform-mount--timeline editor-waveform-mount--video-placeholder relative z-0 flex w-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-none px-2 text-center"
-                      style={{ minHeight: waveformPx }}
+                      style={{ minHeight: 200 }}
                       role="region"
                       aria-label="Área da timeline — carregue áudio para ver a forma de onda"
                     >
-                      <p className="text-[11px] text-zinc-500">
+                      <p className="text-[11px] text-[var(--text-muted)]">
                         Sem waveform — use um ficheiro de áudio (WAV/MP3) no
                         painel lateral.
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="h-[36px] shrink-0 border-t border-zinc-800/70 bg-[#0e0e0e]" />
-                <div className="shrink-0 border-t border-zinc-800/60">
+                <div className="h-[36px] shrink-0 border-t border-[var(--border)] bg-[var(--bg-page)]" />
+                <div className="h-[42px] shrink-0 overflow-hidden">
                   <WaveformTransportControls
                     onPlay={onPlayMedia}
                     onPause={onPauseMedia}
@@ -293,6 +258,9 @@ export function TimelineDock({
                         ? waveformDurationSec * 1000
                         : null
                     }
+                    playbackRate={playbackRate}
+                    speedSteps={speedSteps}
+                    onPlaybackRateChange={onPlaybackRateChange}
                   />
                 </div>
               </div>
@@ -300,8 +268,8 @@ export function TimelineDock({
           )}
         </div>
       ) : (
-        <div className="editor-timing-empty mt-0 flex h-full min-w-0 shrink-0 flex-col items-center justify-center border-t border-dashed border-zinc-800/70 bg-zinc-950/80 px-3 py-4 text-center">
-          <p className="text-[11px] text-zinc-500">
+        <div className="editor-timing-empty mt-0 flex h-full min-w-0 shrink-0 flex-col items-center justify-center border-t border-dashed border-[var(--border)] bg-[var(--bg-page)] px-3 py-4 text-center">
+          <p className="text-[11px] text-[var(--text-muted)]">
             Sem mídia — largue áudio ou vídeo no painel lateral (ou URL) para
             timeline e playhead.
           </p>

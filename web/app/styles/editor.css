@@ -1,0 +1,327 @@
+.mvp-cue-card {
+  border: 0.5px solid var(--border);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+}
+
+.mvp-cue-card--warn {
+  border-color: var(--warn-dot);
+  background: var(--warn-bg);
+}
+
+/* Trilha de cues — marca lateral leve */
+.editor-cue-track-column {
+  position: relative;
+  padding-left: 0.35rem;
+  border-left: 0.5px solid var(--border);
+}
+
+/* Lista de cues com scroll interno — playback não move a página inteira */
+.editor-cue-track-layout {
+  min-height: 0;
+}
+
+.editor-cue-list-scroll {
+  scrollbar-color: rgba(63, 63, 70, 0.9) rgba(9, 9, 11, 0.5);
+  scrollbar-width: thin;
+}
+
+.editor-cue-list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.editor-cue-list-scroll::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(63, 63, 70, 0.95);
+}
+
+.editor-cue-list-scroll::-webkit-scrollbar-track {
+  background: rgba(24, 24, 27, 0.6);
+  border-radius: 9999px;
+}
+
+/* ── Cue list — linha única 34px (estados via Tailwind no JSX) ── */
+.editor-cue-list-row {
+  display: grid !important;
+  grid-template-columns: 36px 112px minmax(0, 1fr) 56px !important;
+  column-gap: 8px;
+  row-gap: 0;
+  height: 34px;
+  min-height: 34px;
+  max-height: 34px;
+  align-items: center;
+  border-bottom: 0.5px solid #1e1e1e;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.08s;
+}
+
+.editor-cue-list-header {
+  display: grid !important;
+  grid-template-columns: 36px 112px minmax(0, 1fr) 56px !important;
+  column-gap: 8px;
+  row-gap: 0;
+  height: 28px;
+  min-height: 28px;
+  align-items: center;
+  background: #252525;
+  border-bottom: 0.5px solid #2e2e2e;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.editor-cue-list-header-cell {
+  font-size: 10px;
+  font-weight: 500;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.editor-cue-panel-input--dense {
+  min-height: 1.15rem !important;
+}
+
+.editor-cue-panel-textarea--dense {
+  min-height: 1.15rem !important;
+  line-height: 1.3 !important;
+}
+
+.editor-cue-text-wrap {
+  min-height: 0;
+}
+
+.editor-cue-panel-input {
+  border-color: var(--border-strong) !important;
+  background: var(--bg-input) !important;
+}
+
+.editor-cue-panel-input:focus {
+  border-color: var(--accent) !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(29, 158, 117, 0.15);
+}
+
+.editor-cue-panel-textarea {
+  border-color: rgba(52, 52, 58, 0.85) !important;
+  background: rgba(6, 6, 8, 0.55) !important;
+}
+
+.editor-cue-state-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.28rem;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.editor-cue-state-pill--playback {
+  border: 0.5px solid var(--accent-hover);
+  background: var(--accent-dark);
+  color: var(--accent-text);
+}
+
+.editor-cue-state-pill--focus {
+  border: 0.5px solid var(--warn-dot);
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+
+.editor-cue-problems--panel {
+  flex: 1 1 auto;
+  align-items: flex-start;
+  align-content: flex-start;
+}
+
+.editor-cue-problems--panel .editor-cue-problem-chip {
+  max-width: 100%;
+  font-size: var(--fs-xs);
+  padding: 0.08rem 0.28rem;
+}
+
+.editor-cue-panel-actions .mvp-btn-compact {
+  font-size: 0.6875rem;
+  padding: 0.2rem 0.45rem;
+}
+
+/* Ações por cue — sem separador pesado */
+.editor-cue-line-actions {
+  border-top: none;
+  padding-top: 0;
+}
+
+.editor-cue-line-actions.editor-cue-line-actions--dense {
+  border-top: 1px solid rgba(39, 39, 42, 0.35);
+  padding-top: 0.1rem;
+  padding-bottom: 0.15rem;
+}
+
+.editor-cue-action-btn {
+  border: 0;
+  background: transparent;
+  color: #71717a;
+  font-size: var(--fs-xs);
+  line-height: 1;
+  font-weight: 500;
+  padding: 0.05rem 0.2rem;
+  border-radius: 0.1rem;
+  transition: color 0.12s ease, background-color 0.12s ease;
+}
+
+.editor-cue-action-btn:hover:not(:disabled) {
+  color: #d4d4d8;
+  background: rgba(39, 39, 42, 0.35);
+}
+
+.editor-cue-action-btn:disabled {
+  cursor: not-allowed;
+}
+
+/* Rail — contexto secundário (histórico, filtros, export) */
+.editor-rail-context .mvp-card {
+  background: rgba(9, 9, 11, 0.58);
+  border-color: rgba(39, 39, 42, 0.8);
+  box-shadow: none;
+}
+
+.editor-rail-context .mvp-section-title {
+  font-size: 0.8125rem;
+  color: #d4d4d8;
+}
+
+.editor-rail-context .editor-rail-heading {
+  font-size: var(--fs-xs);
+  color: #52525b;
+}
+
+@keyframes editor-upload-pulse-border {
+  0%,
+  100% {
+    border-color: var(--accent-hover);
+  }
+  50% {
+    border-color: var(--accent);
+  }
+}
+
+.editor-upload-audio-pulse {
+  animation: editor-upload-pulse-border 2s ease-in-out infinite;
+}
+
+.editor-upload-accent-pulse {
+  animation: editor-upload-pulse-border 2s ease-in-out infinite;
+}
+
+.editor-timecode {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.editor-rail-heading {
+  margin-bottom: 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+.editor-cue-row:focus-within {
+  border-color: #52525b;
+}
+
+/* Lista de cues — densidade para revisão */
+.editor-cue-dense.mvp-cue-card {
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.editor-cue-scan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 0.75rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(39, 39, 42, 0.65);
+}
+
+/* Não combinar com .editor-cue-idx--panel — o painel da lista usa só a variante --panel */
+.editor-cue-idx:not(.editor-cue-idx--panel) {
+  display: flex;
+  height: 1.75rem;
+  min-width: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  background: rgba(39, 39, 42, 0.95);
+  border: 1px solid #3f3f46;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f4f4f5;
+}
+
+.editor-cue-mono-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.85rem;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  line-height: 1.25;
+}
+
+.editor-cue-metric-label {
+  margin-right: 0.25rem;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #52525b;
+}
+
+.editor-cue-metric-value {
+  color: #d4d4d8;
+  font-variant-numeric: tabular-nums;
+}
+
+.editor-cue-problems {
+  display: flex;
+  flex: 1 1 8rem;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.editor-cue-problem-chip {
+  max-width: 11rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(180, 83, 9, 0.45);
+  background: rgba(69, 26, 3, 0.45);
+  padding: 0.125rem 0.375rem;
+  font-size: 0.625rem;
+  line-height: 1.25;
+  font-weight: 600;
+  color: #fde68a;
+  word-break: break-word;
+}
+
+.editor-cue-ok-badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: #52525b;
+  letter-spacing: 0.02em;
+}

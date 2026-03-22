@@ -1,18 +1,13 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type RefObject,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { AspectRatio, MediaPreviewPanelProps } from "../types";
+import { CPS_CRIT_ABOVE, CPS_WARN_ABOVE } from "../lib/cue-utils";
 
 const RATIOS: Array<{ value: AspectRatio; label: string }> = [
   { value: "16:9", label: "16:9" },
   { value: "9:16", label: "9:16" },
-  { value: "1:1",  label: "1:1"  },
+  { value: "1:1", label: "1:1" },
 ];
 
 function getPlayerDimensions(
@@ -26,7 +21,8 @@ function getPlayerDimensions(
     "1:1": 1,
   };
   const r = ratioMap[ratio];
-  if (containerWidth <= 0 || containerHeight <= 0) return { width: 0, height: 0 };
+  if (containerWidth <= 0 || containerHeight <= 0)
+    return { width: 0, height: 0 };
   if (ratio === "9:16") {
     const height = Math.min(containerHeight * 0.92, containerWidth / r);
     return { width: height * r, height };
@@ -44,58 +40,45 @@ function getPlayerDimensions(
   return { width, height };
 }
 
-function AudioOnlyScreen({ text }: { text: string }) {
+function formatTimecode(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = (sec % 60).toFixed(1).padStart(4, "0");
+  return `${String(m).padStart(2, "0")}:${s}`;
+}
+
+function formatTimecodeShort(ms: number): string {
+  const sec = ms / 1000;
+  const m = Math.floor(sec / 60);
+  const s = (sec % 60).toFixed(1).padStart(4, "0");
+  return `${String(m).padStart(2, "0")}:${s}`;
+}
+
+function SubtitleOverlay({ text }: { text: string }) {
   return (
     <div
-      className="relative h-full w-full overflow-hidden"
-      style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #111 100%)" }}
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] box-border w-full min-w-0 max-w-full max-h-[min(42%,calc(100%-12%))] overflow-hidden"
+      style={{ padding: "0 8% 8%" }}
     >
-      {/* Subtle grid suggesting a screen surface */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.035]"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(255,255,255,0.6) 31px, rgba(255,255,255,0.6) 32px), repeating-linear-gradient(90deg, transparent, transparent 31px, rgba(255,255,255,0.6) 31px, rgba(255,255,255,0.6) 32px)",
-        }}
-      />
-
-      {/* Waveform decoration — very faint, center-top area */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center opacity-[0.06]">
-        <div className="flex items-end gap-[2px]">
-          {[3, 5, 9, 6, 11, 4, 8, 6, 10, 5, 7, 4, 9, 6, 4].map((h, i) => (
-            <div
-              key={i}
-              className="w-[3px] rounded-sm bg-white"
-              style={{ height: `${h * 4}px` }}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Subtitle positioned at bottom — exactly like real broadcast */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 px-[6%] pb-[8%]">
-        {text ? (
-          <div className="mx-auto max-w-full text-center">
-            <p
-              className="inline whitespace-pre-line break-words bg-black/85 px-[0.4em] py-[0.15em] font-medium text-white"
-              style={{
-                fontSize: "clamp(13px, 5.5cqw, 22px)",
-                lineHeight: 1.45,
-                boxDecorationBreak: "clone",
-                WebkitBoxDecorationBreak: "clone",
-                textShadow: "0 1px 3px rgba(0,0,0,1)",
-              }}
-            >
-              {text}
-            </p>
-          </div>
-        ) : (
-          /* Placeholder bars when no active cue */
-          <div className="flex flex-col items-center gap-[5px] opacity-[0.12]">
-            <div className="h-[5px] w-3/4 rounded-sm bg-white" />
-            <div className="h-[5px] w-1/2 rounded-sm bg-white" />
-          </div>
-        )}
+      <div className="w-full min-w-0 max-w-full" style={{ textAlign: "center" }}>
+        <span
+          style={{
+            display: "inline",
+            background: "rgba(0,0,0,0.82)",
+            color: "#ffffff",
+            padding: "3px 10px",
+            boxDecorationBreak: "clone",
+            WebkitBoxDecorationBreak: "clone",
+            fontSize: "clamp(11px, 5cqw, 18px)",
+            fontWeight: 600,
+            lineHeight: 1.65,
+            whiteSpace: "pre-line",
+            wordBreak: "break-word",
+            overflowWrap: "anywhere",
+            textShadow: "0 1px 3px rgba(0,0,0,1)",
+          }}
+        >
+          {text}
+        </span>
       </div>
     </div>
   );
@@ -109,6 +92,9 @@ export function MediaPreviewPanel({
   onTimeUpdate,
   aspectRatio,
   onAspectRatioChange,
+  currentTimeSec,
+  durationSec,
+  activeCueInfo,
 }: MediaPreviewPanelProps) {
   const playerHostRef = useRef<HTMLDivElement | null>(null);
   const [playerDims, setPlayerDims] = useState({ width: 0, height: 0 });
@@ -140,22 +126,29 @@ export function MediaPreviewPanel({
   const isVideo = Boolean(mediaSourceUrl && mediaKind === "video");
   const hasMedia = isAudioOnly || isVideo;
 
+  const progressPct =
+    durationSec != null &&
+    durationSec > 0 &&
+    currentTimeSec != null &&
+    Number.isFinite(currentTimeSec)
+      ? Math.min(100, (currentTimeSec / durationSec) * 100)
+      : 0;
+
   return (
-    <section className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded border border-zinc-800/80 bg-zinc-950">
-      {/* Header */}
-      <div className="flex h-8 shrink-0 items-center justify-between border-b border-zinc-800/70 bg-zinc-900/60 px-2">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">
-          preview
+    <section className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded border border-[var(--border)] bg-[var(--bg-page)]">
+      <div className="flex h-[32px] shrink-0 items-center justify-between border-b border-[#1e1e1e] bg-[#181818] px-[10px]">
+        <span className="text-[10px] font-[500] uppercase tracking-[0.08em] text-[#444]">
+          Preview
         </span>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-[2px]">
           {RATIOS.map((ratio) => (
             <button
               key={ratio.value}
               type="button"
-              className={`h-5 rounded px-2 text-[10px] font-mono transition-colors ${
+              className={`rounded-[3px] px-[6px] py-[1px] font-mono text-[10px] transition-colors ${
                 aspectRatio === ratio.value
-                  ? "bg-zinc-700 text-zinc-100"
-                  : "text-zinc-600 hover:text-zinc-400"
+                  ? "bg-[#2a2a2a] text-[#e8e8e8]"
+                  : "text-[#383838] hover:text-[#606060]"
               }`}
               onClick={() => onAspectRatioChange(ratio.value)}
             >
@@ -165,64 +158,100 @@ export function MediaPreviewPanel({
         </div>
       </div>
 
-      {/* Player host */}
       <div
         ref={playerHostRef}
-        className="relative flex min-h-0 flex-1 w-full items-center justify-center overflow-hidden bg-[#0d0d0d]"
+        className="relative flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden bg-[#080808]"
       >
         {hasMedia ? (
-          /* Proportional box rendered for BOTH video and audio */
           <div
-            className="relative max-w-full max-h-full overflow-hidden"
+            className="relative max-h-full max-w-full min-w-0 overflow-hidden"
             style={playerBoxStyle}
           >
             {isVideo ? (
-              <>
-                <video
-                  ref={mediaRef as RefObject<HTMLVideoElement>}
-                  className="h-full w-full object-contain"
-                  preload="metadata"
-                  playsInline
-                  src={mediaSourceUrl!}
-                  onTimeUpdate={(e) => onTimeUpdate(e.currentTarget.currentTime)}
-                />
-                {activeSubtitleText ? (
-                  <div
-                    className="pointer-events-none absolute inset-x-0 bottom-0 px-[6%] pb-[8%] text-center"
-                  >
-                    <p
-                      className="inline whitespace-pre-line break-words bg-black/85 px-[0.4em] py-[0.15em] font-medium text-white"
-                      style={{
-                        fontSize: "clamp(13px, 5.5cqw, 22px)",
-                        lineHeight: 1.45,
-                        boxDecorationBreak: "clone",
-                        WebkitBoxDecorationBreak: "clone",
-                        textShadow: "0 1px 3px rgba(0,0,0,1)",
-                      }}
-                    >
-                      {activeSubtitleText}
-                    </p>
-                  </div>
-                ) : null}
-              </>
+              <video
+                ref={mediaRef as RefObject<HTMLVideoElement>}
+                className="absolute inset-0 z-0 h-full w-full object-contain"
+                preload="metadata"
+                playsInline
+                src={mediaSourceUrl!}
+                onTimeUpdate={(e) =>
+                  onTimeUpdate(e.currentTarget.currentTime)
+                }
+              />
             ) : (
-              <AudioOnlyScreen text={activeSubtitleText} />
+              <div
+                className="absolute inset-0 z-0 bg-[#080808]"
+                aria-hidden
+              />
             )}
+
+            <div
+              className="pointer-events-none absolute inset-0 z-[2]"
+              style={{
+                margin: "4% 5%",
+                border: "1px solid rgba(255,255,255,0.05)",
+                borderRadius: 0,
+              }}
+            />
+
+            {activeSubtitleText ? (
+              <SubtitleOverlay text={activeSubtitleText} />
+            ) : null}
+
+            {currentTimeSec != null && Number.isFinite(currentTimeSec) ? (
+              <div className="pointer-events-none absolute left-[8px] top-[7px] z-[4] font-mono text-[9px] tabular-nums tracking-[0.05em] text-[rgba(255,255,255,0.22)]">
+                {formatTimecode(currentTimeSec)}
+              </div>
+            ) : null}
+
+            {durationSec != null && durationSec > 0 ? (
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-[4] h-[2px] bg-[rgba(255,255,255,0.06)]">
+                <div
+                  className="h-full bg-[#1D9E75] opacity-60"
+                  style={{
+                    width: `${progressPct}%`,
+                    transition: "none",
+                  }}
+                />
+              </div>
+            ) : null}
           </div>
         ) : (
-          /* No media loaded */
-          <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex items-end gap-[2px] opacity-10">
-              {[2, 4, 6, 5, 7, 3, 6, 4, 5, 3].map((h, i) => (
-                <div key={i} className="w-1 rounded-sm bg-zinc-400" style={{ height: `${h * 3}px` }} />
-              ))}
-            </div>
-            <p className="text-[11px] text-zinc-700">Sem mídia carregada</p>
+          <div className="flex flex-col items-center gap-[8px]">
+            <p className="text-[11px] text-[#333]">Sem mídia carregada</p>
           </div>
         )}
       </div>
 
-      {/* Hidden audio element */}
+      <div className="flex h-[26px] shrink-0 items-center gap-[8px] border-t border-[#1e1e1e] bg-[#141414] px-[10px]">
+        {activeCueInfo ? (
+          <>
+            <div className="h-[5px] w-[5px] shrink-0 rounded-full bg-[#1D9E75]" />
+            <span className="font-mono text-[10px] text-[#444]">
+              #{activeCueInfo.cueIndex}
+            </span>
+            <span className="text-[10px] text-[#333]">
+              {formatTimecodeShort(activeCueInfo.startMs)} →{" "}
+              {formatTimecodeShort(activeCueInfo.endMs)}
+            </span>
+            <div className="flex-1" />
+            <span
+              className={`font-mono text-[10px] tabular-nums ${
+                activeCueInfo.cps > CPS_CRIT_ABOVE
+                  ? "text-[#E24B4A]"
+                  : activeCueInfo.cps > CPS_WARN_ABOVE
+                    ? "text-[#BA7517]"
+                    : "text-[#444]"
+              }`}
+            >
+              {activeCueInfo.cps.toFixed(1)} c/s
+            </span>
+          </>
+        ) : (
+          <span className="text-[10px] text-[#333]">—</span>
+        )}
+      </div>
+
       {isAudioOnly ? (
         <audio
           ref={mediaRef as RefObject<HTMLAudioElement>}

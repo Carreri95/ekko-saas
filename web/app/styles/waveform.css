@@ -1,0 +1,344 @@
+@import "../subtitle-file-edit/waveform-cue-shadow.css";
+
+.editor-timeline-dock {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex-shrink: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--bg-page);
+}
+
+/* Estúdio de revisão — painel central */
+.editor-review-hub.editor-timing-dock {
+  border-color: var(--border-strong) !important;
+  background: var(--bg-surface) !important;
+}
+
+.editor-timing-dock-toolbar {
+  background: var(--bg-elevated);
+  border-bottom: 0.5px solid var(--border);
+}
+
+.editor-timecode--dock {
+  letter-spacing: 0.02em;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.editor-media-source-row--compact {
+  border-radius: 0;
+  border: none;
+  background: rgba(9, 9, 11, 0.55);
+}
+
+.editor-media-stage--dock {
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.editor-media-dock-meta {
+  flex-shrink: 0;
+}
+
+.editor-sync-badge--playback {
+  border-color: var(--accent-hover);
+  background: var(--accent-dark);
+  color: var(--accent-text);
+}
+
+.editor-sync-badge--focus {
+  border-color: var(--warn-dot);
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+
+.editor-waveform-lane {
+  min-height: 0;
+}
+
+.editor-waveform-shell--primary {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 0;
+  border: 0.5px solid var(--border);
+  border-top: 0.5px solid var(--border-mid);
+  background: var(--bg-page);
+  padding: 0.15rem 0.2rem 0.15rem;
+}
+
+/* Trilho único — dock de timeline (sem moldura “cartão”) */
+.editor-waveform-shell--hero {
+  border-color: var(--border);
+  border-top-color: var(--border-mid);
+  background: var(--bg-page);
+}
+
+.editor-waveform-shell--primary .editor-waveform-stack {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.editor-waveform-stack--hero {
+  min-height: 0;
+  flex: 1 1 auto;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Fundo por baixo do shadow DOM do WaveSurfer */
+.editor-waveform-mount {
+  background: var(--bg-page);
+}
+
+/* Grade temporal + horizontais — leitura ms (WaveSurfer por cima) */
+.editor-waveform-mount--timeline {
+  background-color: var(--bg-page);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.editor-waveform-mount--timeline.editor-waveform-mount--panning {
+  cursor: grabbing;
+}
+
+/* Vídeo: mesmo slot hero que a waveform; mensagem até haver áudio para WaveSurfer */
+.editor-waveform-mount--video-placeholder {
+  background: var(--bg-page);
+}
+
+.editor-waveform-mount--timeline.editor-waveform-mount--video-placeholder {
+  background: var(--bg-page);
+}
+
+/* WaveSurfer: wrappers internos com altura total — evita grade (overlay) só na metade superior */
+.editor-waveform-mount--timeline > div,
+.editor-waveform-mount--timeline > div > div {
+  height: 100% !important;
+  min-height: 100% !important;
+}
+
+/* Playhead — linha fina, alto contraste */
+.editor-waveform-mount--timeline > div::part(cursor) {
+  width: 2px !important;
+  border-radius: 0;
+  background: var(--warn-text) !important;
+}
+
+/* Scroll horizontal nativo oculto (usamos só o minimap custom). */
+.editor-waveform-mount--timeline > div::part(scroll) {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.editor-waveform-mount--timeline > div::part(scroll)::-webkit-scrollbar {
+  display: none;
+  height: 0;
+}
+
+.editor-timeline-dock .editor-waveform-lane {
+  flex: 1 1 auto;
+}
+
+/* Vista geral (minimap) — polegar = janela visível, linha âmbar = playhead no tempo total */
+.editor-waveform-overview-track {
+  border: 0.5px solid var(--border);
+}
+
+.editor-waveform-overview-track:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Zoom — barra de controlo acima da faixa */
+.editor-waveform-zoom-bar {
+  flex-shrink: 0;
+}
+
+.editor-waveform-zoom-range {
+  accent-color: var(--text-muted);
+}
+
+.editor-waveform-cue-overlay-host {
+  box-sizing: border-box;
+}
+
+.editor-native-audio {
+  accent-color: var(--accent);
+}
+
+.editor-native-audio-wrap {
+  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border-strong);
+  background: var(--bg-input);
+  padding: 0.15rem 0.25rem;
+}
+
+.editor-transport-bar--dock {
+  flex-shrink: 0;
+  justify-content: center;
+  gap: 0.375rem;
+  border: 0.5px solid var(--border);
+  border-radius: 0;
+  padding: 0.125rem 0.3rem;
+  margin-top: 0;
+  background: var(--bg-surface);
+}
+
+.editor-transport-hint {
+  flex-shrink: 0;
+}
+
+.editor-timing-empty {
+  border-color: rgba(39, 39, 42, 0.75);
+}
+
+.editor-hub-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  border: 0.5px solid var(--accent-hover);
+  background: var(--accent-dark);
+  padding: 0.15rem 0.65rem;
+  font-size: var(--fs-xs);
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--accent-text);
+}
+
+.editor-media-source-row {
+  border-radius: var(--radius-md);
+  border: 0.5px dashed var(--border-strong);
+  background: var(--bg-surface);
+  padding: 0.75rem 1rem;
+}
+
+.editor-media-stage {
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border-strong);
+  background: var(--bg-surface);
+}
+
+.editor-waveform-shell {
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border);
+  background: var(--bg-surface);
+  padding: 0.5rem 0.65rem;
+}
+
+/* Dock timeline: não deixar o padding genérico comer altura da waveform */
+.editor-waveform-shell.editor-waveform-shell--primary.editor-waveform-shell--hero {
+  padding: 0 0.65rem;
+}
+
+/* Regiões de cue na waveform: CSS em waveform-cue-shadow.css (injetado no Shadow DOM via waveformCueShadowStyles.ts) */
+
+.editor-waveform-stack {
+  min-height: 0;
+}
+
+.editor-transport-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border-top: 0;
+  padding-top: 0;
+}
+/* Waveform transport bar — tokens (botões / barra de progresso) */
+.editor-transport-root {
+  --editor-transport-row-bg: #141414;
+  --editor-transport-row-border: #2e2e2e;
+  --editor-transport-progress-track: #111111;
+  --editor-transport-progress-fill: rgb(29 158 117 / 0.4);
+  --editor-transport-playhead: var(--accent);
+  --editor-transport-play: #1d9e75;
+  --editor-transport-play-hover: #0f6e56;
+}
+
+select.editor-transport-rate-select {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 0 0 auto;
+  width: fit-content;
+  min-width: 0;
+  max-width: none;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  line-height: 1;
+  cursor: pointer;
+  box-sizing: border-box;
+  field-sizing: content;
+}
+
+/* Velocidade na timeline: precisa do select nativo (reset global remove appearance) */
+select.editor-playback-rate-select {
+  -webkit-appearance: menulist;
+  appearance: auto;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+  line-height: 1.35;
+  min-width: 4.75rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 1.75rem 0.45rem 0.75rem;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+/* Context menu waveform */
+.context-menu {
+  background: var(--bg-elevated);
+  border: 0.5px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  min-width: 160px;
+  z-index: 9999;
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-base);
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  text-align: left;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+
+.context-menu-item:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.context-menu-item:disabled {
+  cursor: not-allowed;
+}
+
+.context-menu-sep {
+  height: 0.5px;
+  background: var(--border);
+  margin: 4px 0;
+  border: none;
+}
+
+.context-menu-item.danger {
+  color: var(--danger-text);
+}
+
+.context-menu-item.danger:hover {
+  background: var(--error-bg);
+}

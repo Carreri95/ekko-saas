@@ -38,6 +38,34 @@ export function validateCuesForSave(cues: CueDto[]): string | null {
   return null;
 }
 
+/** Máximo de caracteres por linha (layout) — usado no painel; independente do CPS. */
+export const CPL_MAX_CHARS = 42;
+
+/**
+ * Caracteres para cálculo de CPS: igual ao painel do editor — remove só quebras de linha,
+ * mantém espaços (mede velocidade de leitura do texto “achatado”).
+ */
+export function charCountForCps(text: string): number {
+  return text.replace(/\r\n/g, "\n").replace(/\n/g, "").length;
+}
+
+/**
+ * CPS = caracteres (acima) / duração. Limiares ~prática EBU/legendagem (velocidade), não
+ * são o mesmo que CPL: o “42” limita caracteres por linha; ~21 CPS equivale, em ordem de
+ * grandeza, a ler uma linha cheia (42) em ~2 s.
+ */
+export const CPS_WARN_ABOVE = 17;
+export const CPS_CRIT_ABOVE = 21;
+
+export function computeCueCps(
+  text: string,
+  startMs: number,
+  endMs: number,
+): number {
+  const dur = Math.max(0.001, (endMs - startMs) / 1000);
+  return charCountForCps(text) / dur;
+}
+
 /**
  * Insere uma quebra de linha próxima ao meio (mesma ideia do botão "Auto br" no editor).
  * Textos muito curtos não são alterados.

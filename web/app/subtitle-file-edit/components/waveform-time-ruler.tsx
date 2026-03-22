@@ -49,7 +49,7 @@ export function WaveformTimeRuler({ viewport, durationSec }: WaveformTimeRulerPr
   if (!ticks.length) return null;
 
   return (
-    <div className="relative h-[24px] w-full shrink-0 border-b border-zinc-800/80 bg-[#111111]">
+    <div className="relative h-[24px] w-full shrink-0 border-b border-[var(--border)] bg-[var(--bg-page)]">
       {ticks.map((tick, idx) => (
         <div
           key={`${tick.leftPx}-${idx}`}
@@ -61,13 +61,13 @@ export function WaveformTimeRuler({ viewport, durationSec }: WaveformTimeRulerPr
           <div
             className={`absolute bottom-0 w-px ${
               tick.isMajor
-                ? "h-[8px] bg-zinc-500/70"
-                : "h-[4px] bg-zinc-700/60"
+                ? "h-[8px] bg-[color-mix(in_srgb,var(--text-muted)_70%,transparent)]"
+                : "h-[4px] bg-[color-mix(in_srgb,var(--border-mid)_60%,transparent)]"
             }`}
           />
           {/* Label — sits above the tick */}
           {tick.isMajor && tick.label ? (
-            <span className="absolute bottom-[10px] left-1 font-mono text-[9px] leading-none tabular-nums text-zinc-500/80">
+            <span className="absolute bottom-[10px] left-1 font-mono text-[9px] leading-none tabular-nums text-[color-mix(in_srgb,var(--text-muted)_80%,transparent)]">
               {tick.label}
             </span>
           ) : null}

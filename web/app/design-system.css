@@ -1,3 +1,9 @@
+/*
+ * REGRA: componentes TSX só usam classes semânticas (editor-*, app-*, batch-*)
+ * ou tokens via bg-[var(--token)]. Nunca zinc-*, blue-*, slate-* diretamente.
+ * Cores hardcoded em TSX tornam os tokens inúteis.
+ */
+
 /* Design System — SubtitleStudio (fonte única de verdade) */
 
 :root {

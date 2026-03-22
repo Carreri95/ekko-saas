@@ -41,6 +41,8 @@ import {
 } from "@/app/subtitle-file-edit/lib/cue-problems";
 import {
   autoBrText,
+  computeCueCps,
+  CPS_WARN_ABOVE,
   createTempId,
   getSaveCueHash,
   normalizeCueCollisions,
@@ -177,6 +179,7 @@ export default function SubtitleFileEditPage() {
   useEffect(() => {
     textEditUndoBaselineTempIdRef.current = null;
   }, [editingCueTempId]);
+
   /** Host DOM dentro do wrapper do WaveSurfer para alinhar regiões de cue ao zoom. */
   const [waveformCueOverlayHostEl, setWaveformCueOverlayHostEl] =
     useState<HTMLElement | null>(null);
@@ -338,8 +341,27 @@ export default function SubtitleFileEditPage() {
     };
   }, [mediaSourceUrl]);
 
-  /** Altura da faixa de waveform (px) — foco em legibilidade da cue e da onda. */
-  const WAVEFORM_PX = 220;
+  /** Altura da waveform (px) — alinhada à altura real do mount via ResizeObserver. */
+  const [waveformPx, setWaveformPx] = useState(220);
+
+  useEffect(() => {
+    const el = waveformContainerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const apply = (h: number) => {
+      if (h < 1) return;
+      const next = Math.max(48, Math.floor(h));
+      setWaveformPx((prev) =>
+        Math.abs(prev - next) < 2 ? prev : next,
+      );
+    };
+    apply(el.getBoundingClientRect().height);
+    const ro = new ResizeObserver((entries) => {
+      const h = entries[0]?.contentRect.height ?? 0;
+      apply(h);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [mediaSourceUrl, mediaKind]);
 
   const {
     seekPlaybackToTimeSec,
@@ -454,9 +476,8 @@ export default function SubtitleFileEditPage() {
   const highCpsCount = useMemo(
     () =>
       cues.reduce((count, cue) => {
-        const durationSec = Math.max(0.001, (cue.endMs - cue.startMs) / 1000);
-        const cps = cue.text.replace(/\s+/g, "").length / durationSec;
-        return cps > 17 ? count + 1 : count;
+        const cps = computeCueCps(cue.text, cue.startMs, cue.endMs);
+        return cps > CPS_WARN_ABOVE ? count + 1 : count;
       }, 0),
     [cues],
   );
@@ -509,6 +530,18 @@ export default function SubtitleFileEditPage() {
     if (!activeCueTempId) return "";
     const cue = cues.find((item) => item.tempId === activeCueTempId);
     return cue?.text?.trim() ?? "";
+  }, [cues, activeCueTempId]);
+
+  const activeCueInfoForPreview = useMemo(() => {
+    if (!activeCueTempId) return null;
+    const cue = cues.find((item) => item.tempId === activeCueTempId);
+    if (!cue) return null;
+    return {
+      cueIndex: cue.cueIndex,
+      startMs: cue.startMs,
+      endMs: cue.endMs,
+      cps: computeCueCps(cue.text, cue.startMs, cue.endMs),
+    };
   }, [cues, activeCueTempId]);
 
   const editingCueIndex = useMemo(
@@ -860,7 +893,7 @@ export default function SubtitleFileEditPage() {
     mediaSourceUrl,
     mediaKind,
     wavPath,
-    waveformPx: WAVEFORM_PX,
+    waveformPx,
     waveformContainerRef,
     mediaElementRef,
     waveSurferRef,
@@ -1140,7 +1173,7 @@ export default function SubtitleFileEditPage() {
             >
               <div className="editor-workspace-split flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden lg:flex-row">
                 <div
-                  className={`editor-panel-cues editor-cue-track-column editor-cue-track-layout box-border flex min-h-0 w-full min-w-0 flex-1 flex-col gap-0 rounded-[var(--radius-lg)] border border-zinc-800/60 bg-[var(--bg-surface)] p-2 lg:min-h-0 ${cuePanelRatioClass}`}
+                  className={`editor-panel-cues editor-cue-track-column editor-cue-track-layout box-border flex min-h-0 w-full min-w-0 flex-1 flex-col gap-0 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-surface)] p-2 lg:min-h-0 ${cuePanelRatioClass}`}
                 >
                   {cues.length > 0 ? (
                     <>
@@ -1150,16 +1183,17 @@ export default function SubtitleFileEditPage() {
                         role="list"
                         aria-label="Lista de cues (ligada à timeline)"
                       >
-                        <div className="sticky top-0 z-10 flex items-center border-b border-zinc-800/60 bg-zinc-950/95 px-3 py-2 backdrop-blur-sm">
-                          <span className="w-10 shrink-0 text-center font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+                        <div className="editor-cue-list-header grid w-full grid-cols-[36px_112px_minmax(0,1fr)_56px] items-center gap-x-2 gap-y-0">
+                          <div className="editor-cue-list-header-cell flex items-center justify-center">
                             #
-                          </span>
-                          <span className="min-w-0 flex-1 px-3 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
-                            legenda
-                          </span>
-                          <span className="w-[3.25rem] shrink-0 text-right font-mono text-[10px] uppercase tracking-widest text-zinc-600">
-                            c/s
-                          </span>
+                          </div>
+                          <div className="editor-cue-list-header-cell pl-[4px]">Timing</div>
+                          <div className="editor-cue-list-header-cell">Legenda</div>
+                          <div className="editor-cue-list-header-cell flex items-center justify-end pr-[6px]">
+                            <span className="rounded-[3px] px-[7px] py-[4px]">
+                              C/S
+                            </span>
+                          </div>
                         </div>
                         {visibleCueProblemsList.map(({ cue, problems }, index) => (
                           <CueListItem
@@ -1208,18 +1242,18 @@ export default function SubtitleFileEditPage() {
                           />
                         ))}
                         {visibleCueProblemsList.length === 0 ? (
-                          <div className="editor-cue-panel-empty border-t border-dashed border-zinc-800/80 px-3 py-6 text-center text-[13px] text-zinc-500">
+                          <div className="editor-cue-panel-empty border-t border-dashed border-[var(--border)] px-3 py-6 text-center text-[13px] text-[var(--text-muted)]">
                             Nenhuma cue neste filtro.
                           </div>
                         ) : null}
                       </div>
-                      <div className="flex min-h-[2.25rem] shrink-0 items-center gap-2 rounded-b-[var(--radius-md)] border-t border-zinc-800/50 bg-zinc-950 px-3 py-2">
-                        <span className="font-mono text-[10px] text-zinc-600">
+                      <div className="flex min-h-[2.25rem] shrink-0 items-center gap-2 rounded-b-[var(--radius-md)] border-t border-[var(--border)] bg-[var(--bg-page)] px-3 py-2">
+                        <span className="font-mono text-[10px] text-[var(--text-muted)]">
                           {cues.length} cues
                         </span>
                         {highCpsCount > 0 ? (
                           <>
-                            <span className="text-zinc-800">·</span>
+                            <span className="text-[var(--border-mid)]">·</span>
                             <span className="text-[10px] text-amber-400/80">
                               ⚠ {highCpsCount} CPS alto
                             </span>
@@ -1227,7 +1261,7 @@ export default function SubtitleFileEditPage() {
                         ) : null}
                         {problematicCount > 0 ? (
                           <>
-                            <span className="text-zinc-800">·</span>
+                            <span className="text-[var(--border-mid)]">·</span>
                             <span className="text-[10px] text-orange-400/80">
                               {problematicCount} com problemas
                             </span>
@@ -1235,7 +1269,7 @@ export default function SubtitleFileEditPage() {
                         ) : null}
                         {highCpsCount === 0 && problematicCount === 0 ? (
                           <>
-                            <span className="text-zinc-800">·</span>
+                            <span className="text-[var(--border-mid)]">·</span>
                             <span className="text-[10px] text-emerald-500/70">
                               ✓ tudo ok
                             </span>
@@ -1245,11 +1279,11 @@ export default function SubtitleFileEditPage() {
                       </div>
                     </>
                   ) : loading ? (
-                    <div className="border border-zinc-800/80 bg-zinc-950/80 py-10 text-center text-sm text-zinc-500">
+                    <div className="border border-[var(--border)] bg-[var(--bg-page)] py-10 text-center text-sm text-[var(--text-muted)]">
                       Carregando linhas…
                     </div>
                   ) : (
-                    <div className="border border-dashed border-zinc-800/90 bg-zinc-950/50 py-10 text-center text-sm text-zinc-500">
+                    <div className="border border-dashed border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-page)_50%,transparent)] py-10 text-center text-sm text-[var(--text-muted)]">
                       {subtitleFileId.trim()
                         ? "Nenhuma linha neste ficheiro."
                         : mediaSourceUrl
@@ -1260,7 +1294,7 @@ export default function SubtitleFileEditPage() {
                 </div>
 
                 <aside
-                  className={`editor-rail-context editor-panel-rail mvp-workspace-rail box-border flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-zinc-800/60 bg-zinc-950/30 p-2 ${previewPanelRatioClass}`}
+                  className={`editor-rail-context editor-panel-rail mvp-workspace-rail box-border flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-page)_30%,transparent)] p-2 ${previewPanelRatioClass}`}
                   data-editor-rail-mode={editorWorkspaceMode}
                 >
                   <MediaPreviewPanel
@@ -1271,12 +1305,15 @@ export default function SubtitleFileEditPage() {
                     onTimeUpdate={handleMediaTimeUpdate}
                     aspectRatio={playerAspectRatio}
                     onAspectRatioChange={setPlayerAspectRatio}
+                    currentTimeSec={currentPlaybackMs / 1000}
+                    durationSec={waveformDurationSec ?? undefined}
+                    activeCueInfo={activeCueInfoForPreview}
                   />
                 </aside>
               </div>
               <div className="editor-timeline-dock min-h-0 min-w-0">
                 <div className="flex h-[380px] min-w-0 flex-row gap-3">
-                  <aside className="box-border flex min-w-[380px] flex-[0_0_38%] flex-col rounded-[var(--radius-lg)] border border-zinc-800/60 bg-[#161616] p-2">
+                  <aside className="box-border flex min-w-[380px] flex-[0_0_38%] flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-surface)] p-2">
                     {editingCue ? (
                       <CueTextEditor
                         key={editingCue.tempId}
@@ -1293,7 +1330,7 @@ export default function SubtitleFileEditPage() {
                       </div>
                     )}
                   </aside>
-                  <div className="box-border flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-zinc-800/60 bg-[var(--bg-surface)] p-2">
+                  <div className="box-border flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-surface)] p-2">
                     <TimelineDock
                       mediaSourceUrl={mediaSourceUrl}
                       mediaKind={mediaKind}
@@ -1331,10 +1368,9 @@ export default function SubtitleFileEditPage() {
                       onPlayMedia={() => void playMedia()}
                       onPauseMedia={pauseMedia}
                       onResetMediaToStart={resetMediaToStart}
-                      waveformPx={WAVEFORM_PX}
+                      waveformPx={waveformPx}
                       waveformGridStyle={waveformGridStyle}
                       onCueContextMenu={handleWaveformCueContextMenu}
-                      formatToolbarTime={formatPlaybackTime}
                       playbackRate={playbackRate}
                       speedSteps={SPEED_STEPS}
                       onPlaybackRateChange={handleSpeedChange}

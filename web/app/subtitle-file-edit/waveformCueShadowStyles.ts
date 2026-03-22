@@ -3,12 +3,9 @@ const STYLE_ID = "subtitlebot-waveform-cue-shadow-styles";
 export const WAVEFORM_CUE_SHADOW_CSS = `
 .editor-waveform-cue-regions {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
+  inset: 0;
   z-index: 2;
-  height: 100%;
-  min-height: 160px;
+  box-sizing: border-box;
   border-radius: 0;
   overflow: hidden;
   pointer-events: none;

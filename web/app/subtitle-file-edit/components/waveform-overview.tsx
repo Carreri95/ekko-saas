@@ -18,7 +18,7 @@ export function WaveformOverview({
       aria-label="Vista geral da timeline"
     >
       <div
-        className={`editor-waveform-overview-track relative h-[16px] w-full touch-none rounded-sm border border-zinc-700/60 bg-[#0e0e0e] ${
+        className={`editor-waveform-overview-track relative h-[16px] w-full touch-none rounded-sm border border-[color-mix(in_srgb,var(--border-mid)_60%,transparent)] bg-[var(--bg-page)] ${
           canScroll ? "cursor-grab active:cursor-grabbing" : "cursor-default opacity-40"
         }`}
         onPointerDown={onPointerDown}
