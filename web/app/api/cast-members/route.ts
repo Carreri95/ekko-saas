@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { CastMemberStatus } from "@/app/generated/prisma/enums";
+import {
+  CastMemberStatus,
+  DubbingProjectStatus,
+} from "@/app/generated/prisma/enums";
+import { syncCastMemberStatus } from "./sync-status";
 import { PROJECTS_PAGE_SIZE } from "@/app/projetos/constants";
 import { prisma } from "@/src/lib/prisma";
 import { serializeCastMember } from "./serialize";
@@ -65,13 +69,33 @@ export async function GET(req: Request) {
     specialtyKinds,
   };
 
+  const castMemberListInclude = {
+    characters: {
+      where: {
+        project: {
+          status: {
+            notIn: [
+              DubbingProjectStatus.DONE,
+              DubbingProjectStatus.PAUSED,
+            ] as DubbingProjectStatus[],
+          },
+        },
+      },
+      select: { projectId: true },
+    },
+  };
+
   if (pageRaw == null) {
     const members = await prisma.castMember.findMany({
       where: listWhere,
       orderBy: { name: "asc" },
+      include: castMemberListInclude,
     });
     return NextResponse.json({
-      members: members.map(serializeCastMember),
+      members: members.map((m) => {
+        const uniqueProjectIds = new Set(m.characters.map((c) => c.projectId));
+        return serializeCastMember(m, uniqueProjectIds.size);
+      }),
       total,
       metrics,
     });
@@ -88,10 +112,14 @@ export async function GET(req: Request) {
     orderBy: { name: "asc" },
     skip,
     take: pageSize,
+    include: castMemberListInclude,
   });
 
   return NextResponse.json({
-    members: members.map(serializeCastMember),
+    members: members.map((m) => {
+      const uniqueProjectIds = new Set(m.characters.map((c) => c.projectId));
+      return serializeCastMember(m, uniqueProjectIds.size);
+    }),
     total,
     metrics,
   });
@@ -149,12 +177,20 @@ export async function POST(req: Request) {
         whatsapp: normalizedPhone,
         email: emailNormalized || null,
         specialties: d.specialties ?? [],
-        status: d.status,
+        status: d.manualInactive
+          ? CastMemberStatus.INACTIVE
+          : CastMemberStatus.AVAILABLE,
         notes: d.notes?.trim() || null,
       },
     });
+    if (member.status !== CastMemberStatus.INACTIVE) {
+      await syncCastMemberStatus([member.id]);
+    }
+    const refreshed = await prisma.castMember.findUnique({
+      where: { id: member.id },
+    });
     return NextResponse.json(
-      { member: serializeCastMember(member) },
+      { member: serializeCastMember(refreshed ?? member) },
       { status: 201 },
     );
   } catch (error) {

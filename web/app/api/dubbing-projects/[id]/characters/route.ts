@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/src/lib/prisma";
+import { syncCastMemberStatus } from "@/app/api/cast-members/sync-status";
 import { serializeProjectCharacter } from "./serialize";
 
 /** Select HTML envia "" em vez de null quando vazio. */
@@ -9,13 +10,21 @@ const castMemberIdField = z.preprocess(
   z.union([z.string().min(1), z.null()]).optional(),
 );
 
+/** JSON costuma enviar `null`; o Zod `.optional()` só aceita ausência ou `undefined`. */
+function optionalStringField(max: number) {
+  return z.preprocess(
+    (v) => (v === null || v === undefined ? undefined : v),
+    z.union([z.literal(""), z.string().max(max)]).optional(),
+  );
+}
+
 const characterSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(80),
-  type: z.union([z.literal(""), z.string().max(60)]).optional(),
-  voiceType: z.union([z.literal(""), z.string().max(60)]).optional(),
+  type: optionalStringField(60),
+  voiceType: optionalStringField(60),
   importance: z.enum(["MAIN", "SUPPORT", "EXTRA"]).default("SUPPORT"),
   castMemberId: castMemberIdField,
-  notes: z.union([z.literal(""), z.string().max(500)]).optional(),
+  notes: optionalStringField(500),
 });
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -82,6 +91,11 @@ export async function POST(req: Request, ctx: RouteContext) {
     },
     include: { castMember: { select: { id: true, name: true, role: true } } },
   });
+
+  if (d.castMemberId) {
+    await syncCastMemberStatus([d.castMemberId]);
+  }
+
   return NextResponse.json(
     { character: serializeProjectCharacter(character) },
     { status: 201 },

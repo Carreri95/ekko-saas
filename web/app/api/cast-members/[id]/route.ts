@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import type { CastMemberUpdateInput } from "@/app/generated/prisma/models/CastMember";
+import { CastMemberStatus } from "@/app/generated/prisma/enums";
 import { prisma } from "@/src/lib/prisma";
 import { serializeCastMember } from "../serialize";
+import { syncCastMemberStatus } from "../sync-status";
 import {
   CAST_MEMBER_DUPLICATE_EMAIL_BODY,
   CAST_MEMBER_DUPLICATE_WHATSAPP_BODY,
@@ -24,7 +26,11 @@ function patchToUpdateData(d: Partial<CastMemberFormData>): CastMemberUpdateInpu
     out.email = t ? t.toLowerCase() : null;
   }
   if (d.specialties !== undefined) out.specialties = d.specialties;
-  if (d.status !== undefined) out.status = d.status;
+  if (d.manualInactive !== undefined) {
+    out.status = d.manualInactive
+      ? CastMemberStatus.INACTIVE
+      : CastMemberStatus.AVAILABLE;
+  }
   if (d.notes !== undefined) out.notes = d.notes?.trim() || null;
   return out;
 }
@@ -91,11 +97,22 @@ export async function PATCH(req: Request, ctx: RouteContext) {
   }
 
   try {
-    const member = await prisma.castMember.update({
+    await prisma.castMember.update({
       where: { id },
       data: patchToUpdateData(d),
     });
-    return NextResponse.json({ member: serializeCastMember(member) });
+    const member = await prisma.castMember.findUnique({ where: { id } });
+    if (!member) {
+      return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+    }
+    if (member.status !== CastMemberStatus.INACTIVE) {
+      await syncCastMemberStatus([id]);
+    }
+    const refreshed = await prisma.castMember.findUnique({ where: { id } });
+    if (!refreshed) {
+      return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+    }
+    return NextResponse.json({ member: serializeCastMember(refreshed) });
   } catch (error) {
     const conflict = handleCastMemberUniqueError(error);
     if (conflict) return conflict;

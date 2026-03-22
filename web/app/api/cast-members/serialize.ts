@@ -2,7 +2,10 @@ import type { CastMember } from "@/app/generated/prisma/client";
 import type { CastMemberDto } from "@/app/types/cast-member";
 import { formatBrazilPhone } from "@/src/lib/phone-format";
 
-export function serializeCastMember(m: CastMember): CastMemberDto {
+export function serializeCastMember(
+  m: CastMember,
+  activeProjectCount = 0,
+): CastMemberDto {
   return {
     id: m.id,
     name: m.name,
@@ -14,5 +17,6 @@ export function serializeCastMember(m: CastMember): CastMemberDto {
     notes: m.notes,
     createdAt: m.createdAt.toISOString(),
     updatedAt: m.updatedAt.toISOString(),
+    activeProjectCount,
   };
 }
