@@ -352,7 +352,23 @@ export default function ElencoPage() {
                             ? formatBrazilPhone(m.whatsapp)
                             : "—"}
                         </td>
-                        <td className="td-center text-[#909090]">—</td>
+                        <td className="td-center">
+                          {(m.activeProjectCount ?? 0) > 0 ? (
+                            <span
+                              className="font-[500]"
+                              style={{
+                                color:
+                                  m.activeProjectCount === 1
+                                    ? "#EF9F27"
+                                    : "#5DCAA5",
+                              }}
+                            >
+                              {m.activeProjectCount}
+                            </span>
+                          ) : (
+                            <span className="text-[#444]">—</span>
+                          )}
+                        </td>
                         <td onClick={(e) => e.stopPropagation()}>
                           <div className="row-actions">
                             <button

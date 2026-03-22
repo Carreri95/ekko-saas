@@ -15,21 +15,18 @@ import {
   type CastMemberFormData,
   type CastMemberFormInput,
 } from "../schemas";
-import type { CastMemberDto } from "@/app/types/cast-member";
+import type {
+  CastMemberCastingDto,
+  CastMemberDto,
+} from "@/app/types/cast-member";
 import "../../projetos/projetos.css";
 
 const TABS = [
   { id: "info", label: "Informações", enabled: true },
-  { id: "projetos", label: "Projetos", enabled: false },
+  { id: "projetos", label: "Projetos", enabled: true },
   { id: "agenda", label: "Agenda", enabled: false },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
-
-const STATUS_OPTIONS = [
-  { value: "AVAILABLE", label: "Disponível", color: "#1D9E75" },
-  { value: "BUSY", label: "Em projeto", color: "#BA7517" },
-  { value: "INACTIVE", label: "Inativo", color: "#555" },
-] as const;
 
 const inputCls =
   "w-full min-h-[36px] rounded-[6px] border border-[#2e2e2e] bg-[#111] px-[10px] py-[7px] text-[13px] text-[#e8e8e8] outline-none placeholder:text-[#505050] focus:border-[#1D9E75] transition-colors";
@@ -39,6 +36,12 @@ const labelCls =
   "mb-[5px] block text-[10px] font-[600] uppercase tracking-[0.07em] text-[#505050]";
 const errorCls = "mt-[3px] text-[11px] text-[#F09595]";
 
+function importanceLabel(i: CastMemberCastingDto["importance"]) {
+  if (i === "MAIN") return "Principal";
+  if (i === "SUPPORT") return "Suporte";
+  return "Figurante";
+}
+
 function getDefaults(m: CastMemberDto): CastMemberFormInput {
   return {
     name: m.name,
@@ -46,7 +49,7 @@ function getDefaults(m: CastMemberDto): CastMemberFormInput {
     whatsapp: formatBrazilPhone(m.whatsapp ?? ""),
     email: m.email ?? "",
     specialties: m.specialties ?? [],
-    status: m.status,
+    manualInactive: m.status === "INACTIVE",
     notes: m.notes ?? "",
   };
 }
@@ -127,6 +130,8 @@ export default function CastMemberEditPage() {
   const [notFound, setNotFound] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("info");
   const [savedMsg, setSavedMsg] = useState(false);
+  const [castings, setCastings] = useState<CastMemberCastingDto[]>([]);
+  const [castingsLoading, setCastingsLoading] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) {
@@ -156,6 +161,25 @@ export default function CastMemberEditPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (activeTab !== "projetos" || !id) return;
+    let cancelled = false;
+    setCastingsLoading(true);
+    void (async () => {
+      try {
+        const res = await fetch(`/api/cast-members/${id}/castings`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { castings: CastMemberCastingDto[] };
+        if (!cancelled) setCastings(data.castings ?? []);
+      } finally {
+        if (!cancelled) setCastingsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, id]);
 
   const {
     register,
@@ -192,7 +216,7 @@ export default function CastMemberEditPage() {
         whatsapp: normalizePhoneForStorage(data.whatsapp) ?? "",
         email: data.email.trim(),
         specialties: data.specialties,
-        status: data.status,
+        manualInactive: data.manualInactive,
         notes: data.notes?.trim() ?? "",
       }),
     });
@@ -267,8 +291,11 @@ export default function CastMemberEditPage() {
   }
 
   const statusSubtitle =
-    STATUS_OPTIONS.find((s) => s.value === member.status)?.label ??
-    String(member.status);
+    member.status === "BUSY"
+      ? "Em projeto"
+      : member.status === "INACTIVE"
+        ? "Inativo"
+        : "Disponível";
 
   return (
     <PageShell
@@ -504,46 +531,87 @@ export default function CastMemberEditPage() {
                           </span>
                         </div>
                         <div className="flex flex-col gap-[6px] p-[14px]">
+                          <div
+                            className="rounded-[6px] border px-[12px] py-[8px] text-[12px] font-[500]"
+                            style={
+                              member.status === "BUSY"
+                                ? {
+                                    background: "rgba(186,117,23,0.1)",
+                                    borderColor: "#BA7517",
+                                    color: "#EF9F27",
+                                  }
+                                : member.status === "INACTIVE"
+                                  ? {
+                                      background: "#1e1e1e",
+                                      borderColor: "#2e2e2e",
+                                      color: "#505050",
+                                    }
+                                  : {
+                                      background: "rgba(29,158,117,0.1)",
+                                      borderColor: "#1D9E75",
+                                      color: "#5DCAA5",
+                                    }
+                            }
+                          >
+                            <div className="flex items-center gap-[6px]">
+                              <span
+                                className="h-[6px] w-[6px] flex-shrink-0 rounded-full"
+                                style={{
+                                  background:
+                                    member.status === "BUSY"
+                                      ? "#BA7517"
+                                      : member.status === "INACTIVE"
+                                        ? "#444"
+                                        : "#1D9E75",
+                                }}
+                              />
+                              {member.status === "BUSY"
+                                ? "Em projeto"
+                                : member.status === "INACTIVE"
+                                  ? "Inativo"
+                                  : "Disponível"}
+                            </div>
+                            {member.status !== "INACTIVE" ? (
+                              <div className="mt-[2px] text-[10px] opacity-60">
+                                Atualizado automaticamente com base nos projetos
+                              </div>
+                            ) : null}
+                          </div>
+
                           <Controller
-                            name="status"
+                            name="manualInactive"
                             control={control}
                             render={({ field }) => (
-                              <>
-                                {STATUS_OPTIONS.map((s) => (
-                                  <button
-                                    key={s.value}
-                                    type="button"
-                                    onClick={() => field.onChange(s.value)}
-                                    className="flex items-center gap-[8px] rounded-[6px] border px-[12px] py-[8px] text-left text-[12px] font-[500] transition-colors"
-                                    style={
-                                      field.value === s.value
-                                        ? {
-                                            background: `${s.color}18`,
-                                            borderColor: s.color,
-                                            color: s.color,
-                                          }
-                                        : {
-                                            background: "transparent",
-                                            borderColor: "#2e2e2e",
-                                            color: "#606060",
-                                          }
-                                    }
-                                  >
-                                    <span
-                                      className="h-[6px] w-[6px] flex-shrink-0 rounded-full"
-                                      style={{
-                                        background:
-                                          field.value === s.value
-                                            ? s.color
-                                            : "#333",
-                                      }}
-                                    />
-                                    {s.label}
-                                  </button>
-                                ))}
-                              </>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  field.onChange(!field.value)
+                                }
+                                className="rounded-[6px] border px-[12px] py-[7px] text-left text-[11px] font-[500] transition-colors"
+                                style={
+                                  field.value
+                                    ? {
+                                        background: "#1e1e1e",
+                                        borderColor: "#2e2e2e",
+                                        color: "#909090",
+                                      }
+                                    : {
+                                        background: "transparent",
+                                        borderColor: "#2e2e2e",
+                                        color: "#505050",
+                                      }
+                                }
+                              >
+                                {field.value
+                                  ? "✓ Marcado como inativo — clique para reativar"
+                                  : "Marcar como inativo"}
+                              </button>
                             )}
                           />
+                          <p className="text-[10px] text-[#404040]">
+                            Inativo = dublador fora do estúdio. Não aparece em
+                            novos projetos.
+                          </p>
                         </div>
                       </div>
 
@@ -584,7 +652,145 @@ export default function CastMemberEditPage() {
                 </div>
               )}
 
-              {activeTab !== "info" && (
+              {activeTab === "projetos" && (
+                <div className="flex flex-col gap-[16px]">
+                  {castingsLoading ? (
+                    <div className="py-[24px] text-center text-[12px] text-[#505050]">
+                      A carregar…
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <h3 className="mb-[8px] text-[11px] font-[600] uppercase tracking-[0.06em] text-[#505050]">
+                          Projetos ativos
+                        </h3>
+                        {castings.filter((c) => c.isActive).length === 0 ? (
+                          <div className="rounded-[8px] border border-[#252525] bg-[#1a1a1a] px-[14px] py-[20px] text-center text-[12px] text-[#444]">
+                            Nenhum projeto ativo no momento
+                          </div>
+                        ) : (
+                          <div className="overflow-hidden rounded-[8px] border border-[#252525] bg-[#1a1a1a]">
+                            <table className="projects-table w-full">
+                              <colgroup>
+                                <col />
+                                <col style={{ width: 200 }} />
+                                <col style={{ width: 120 }} />
+                                <col style={{ width: 90 }} />
+                              </colgroup>
+                              <thead>
+                                <tr>
+                                  <th>Personagem</th>
+                                  <th>Projeto</th>
+                                  <th>Cliente</th>
+                                  <th>Importância</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {castings
+                                  .filter((c) => c.isActive)
+                                  .map((c) => (
+                                    <tr
+                                      key={c.characterId}
+                                      className="cursor-pointer transition-colors hover:bg-[#202020]"
+                                      onClick={() =>
+                                        router.push(`/projetos/${c.projectId}`)
+                                      }
+                                    >
+                                      <td>
+                                        <div className="text-[13px] font-[500] text-[#e8e8e8]">
+                                          {c.characterName}
+                                        </div>
+                                        {c.voiceType ? (
+                                          <div className="text-[10px] text-[#505050]">
+                                            {c.voiceType}
+                                          </div>
+                                        ) : null}
+                                      </td>
+                                      <td className="text-[12px] text-[#909090]">
+                                        {c.projectName}
+                                      </td>
+                                      <td className="text-[11px] text-[#606060]">
+                                        {c.projectClient ?? "—"}
+                                      </td>
+                                      <td>
+                                        <span className="rounded-[3px] bg-[#252525] px-[6px] py-[1px] text-[10px] text-[#707070]">
+                                          {importanceLabel(c.importance)}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+
+                      {castings.filter((c) => !c.isActive).length > 0 ? (
+                        <div>
+                          <h3 className="mb-[8px] text-[11px] font-[600] uppercase tracking-[0.06em] text-[#505050]">
+                            Histórico
+                          </h3>
+                          <div className="overflow-hidden rounded-[8px] border border-[#252525] bg-[#1a1a1a] opacity-70">
+                            <table className="projects-table w-full">
+                              <colgroup>
+                                <col />
+                                <col style={{ width: 200 }} />
+                                <col style={{ width: 120 }} />
+                                <col style={{ width: 90 }} />
+                              </colgroup>
+                              <thead>
+                                <tr>
+                                  <th>Personagem</th>
+                                  <th>Projeto</th>
+                                  <th>Cliente</th>
+                                  <th>Importância</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {castings
+                                  .filter((c) => !c.isActive)
+                                  .map((c) => (
+                                    <tr
+                                      key={c.characterId}
+                                      className="cursor-pointer transition-colors hover:bg-[#202020]"
+                                      onClick={() =>
+                                        router.push(`/projetos/${c.projectId}`)
+                                      }
+                                    >
+                                      <td>
+                                        <div className="text-[13px] font-[500] text-[#909090]">
+                                          {c.characterName}
+                                        </div>
+                                        {c.voiceType ? (
+                                          <div className="text-[10px] text-[#444]">
+                                            {c.voiceType}
+                                          </div>
+                                        ) : null}
+                                      </td>
+                                      <td className="text-[12px] text-[#606060]">
+                                        {c.projectName}
+                                      </td>
+                                      <td className="text-[11px] text-[#505050]">
+                                        {c.projectClient ?? "—"}
+                                      </td>
+                                      <td>
+                                        <span className="rounded-[3px] bg-[#1e1e1e] px-[6px] py-[1px] text-[10px] text-[#505050]">
+                                          {importanceLabel(c.importance)}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "agenda" && (
                 <div className="flex min-h-[200px] items-center justify-center rounded-[10px] border border-[#252525] bg-[#1a1a1a] text-[13px] text-[#444]">
                   Em breve
                 </div>

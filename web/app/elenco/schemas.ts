@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-export const castMemberStatusEnum = z.enum(["AVAILABLE", "BUSY", "INACTIVE"]);
-
+/** Disponível / Em projeto são automáticos; só "inativo" é escolha manual. */
 export const castMemberFormSchema = z.object({
   name: z
     .string()
@@ -28,7 +27,7 @@ export const castMemberFormSchema = z.object({
     .min(1, "Adicione pelo menos uma especialidade")
     .max(10, "Máximo de 10 especialidades"),
 
-  status: castMemberStatusEnum,
+  manualInactive: z.boolean(),
 
   notes: z.string(),
 });

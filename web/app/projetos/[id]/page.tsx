@@ -19,7 +19,7 @@ import type { DubbingProjectStatus } from "../domain";
 import type { ProjectCharacterDto } from "@/app/types/project-character";
 import type { CastMemberDto } from "@/app/types/cast-member";
 import { CharacterCard } from "./components/character-card";
-import { CharacterDrawer } from "./components/character-drawer";
+import { CharacterModal } from "./components/character-modal";
 import { LanguageCombobox } from "../components/language-combobox";
 import { CurrencyValueField } from "../components/currency-value-field";
 import { ProjectStatusStepper } from "../components/project-status-stepper";
@@ -113,7 +113,7 @@ export default function ProjectEditPage() {
   const [clientListRefresh, setClientListRefresh] = useState(0);
   const [characters, setCharacters] = useState<ProjectCharacterDto[]>([]);
   const [castMembers, setCastMembers] = useState<CastMemberDto[]>([]);
-  const [charDrawerOpen, setCharDrawerOpen] = useState(false);
+  const [charModalOpen, setCharModalOpen] = useState(false);
   const [editingChar, setEditingChar] = useState<ProjectCharacterDto | null>(
     null,
   );
@@ -177,14 +177,14 @@ export default function ProjectEditPage() {
 
   const openNewChar = () => {
     setEditingChar(null);
-    setCharDrawerOpen(true);
+    setCharModalOpen(true);
   };
   const openEditChar = (c: ProjectCharacterDto) => {
     setEditingChar(c);
-    setCharDrawerOpen(true);
+    setCharModalOpen(true);
   };
   const onCharSaved = () => {
-    setCharDrawerOpen(false);
+    setCharModalOpen(false);
     setEditingChar(null);
     void loadCharacters();
   };
@@ -909,7 +909,8 @@ export default function ProjectEditPage() {
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(3,1fr)",
+                            gridTemplateColumns:
+                              "repeat(auto-fill, minmax(280px, 1fr))",
                             gap: 10,
                           }}
                         >
@@ -965,13 +966,13 @@ export default function ProjectEditPage() {
             ) : null}
           </div>
         </form>
-        {charDrawerOpen ? (
-          <CharacterDrawer
+        {charModalOpen ? (
+          <CharacterModal
             character={editingChar}
             projectId={id}
             castMembers={castMembers}
             onClose={() => {
-              setCharDrawerOpen(false);
+              setCharModalOpen(false);
               setEditingChar(null);
             }}
             onSaved={onCharSaved}

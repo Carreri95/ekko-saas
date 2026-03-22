@@ -6,6 +6,7 @@ import {
   type ValueCurrency,
 } from "@/app/generated/prisma/enums";
 import { prisma } from "@/src/lib/prisma";
+import { syncCastMemberStatus } from "@/app/api/cast-members/sync-status";
 import { serializeDubbingProject } from "../serialize";
 import { normalizeMoneyForStorage } from "@/app/projetos/lib/project-finance";
 import { dubbingProjectPatchRequestSchema } from "@/app/projetos/schemas";
@@ -172,10 +173,32 @@ export async function PATCH(req: Request, ctx: RouteContext) {
     return NextResponse.json({ project: serializeDubbingProject(existing) });
   }
 
+  const statusBefore = existing.status;
+
   const project = await prisma.dubbingProject.update({
     where: { id },
     data,
   });
+
+  if (
+    d.status !== undefined &&
+    d.status !== statusBefore
+  ) {
+    const rows = await prisma.projectCharacter.findMany({
+      where: { projectId: id, castMemberId: { not: null } },
+      select: { castMemberId: true },
+    });
+    const memberIds = [
+      ...new Set(
+        rows
+          .map((r) => r.castMemberId)
+          .filter((cid): cid is string => Boolean(cid)),
+      ),
+    ];
+    if (memberIds.length > 0) {
+      await syncCastMemberStatus(memberIds);
+    }
+  }
 
   return NextResponse.json({ project: serializeDubbingProject(project) });
 }

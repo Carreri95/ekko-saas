@@ -14,12 +14,6 @@ import {
   normalizePhoneForStorage,
 } from "@/src/lib/phone-format";
 
-const STATUS_OPTIONS = [
-  { value: "AVAILABLE", label: "Disponível", color: "#1D9E75" },
-  { value: "BUSY", label: "Em projeto", color: "#BA7517" },
-  { value: "INACTIVE", label: "Inativo", color: "#555" },
-] as const;
-
 const inputValidCls = `
   w-full min-h-[36px] rounded-[6px] border border-[#2e2e2e] bg-[#111]
   px-[10px] py-[8px] text-[13px] leading-snug text-[#e8e8e8] outline-none
@@ -50,7 +44,7 @@ function getDefaults(m: CastMemberDto | null): CastMemberFormInput {
       whatsapp: "",
       email: "",
       specialties: [],
-      status: "AVAILABLE",
+      manualInactive: false,
       notes: "",
     };
   return {
@@ -59,7 +53,7 @@ function getDefaults(m: CastMemberDto | null): CastMemberFormInput {
     whatsapp: formatBrazilPhone(m.whatsapp ?? ""),
     email: m.email ?? "",
     specialties: m.specialties ?? [],
-    status: m.status,
+    manualInactive: m.status === "INACTIVE",
     notes: m.notes ?? "",
   };
 }
@@ -105,7 +99,7 @@ export function CastMemberDrawer({ member, onClose, onSaved }: Props) {
           whatsapp: normalizePhoneForStorage(data.whatsapp) ?? "",
           email: data.email.trim(),
           specialties: data.specialties,
-          status: data.status,
+          manualInactive: data.manualInactive,
           notes: data.notes?.trim() ?? "",
         }),
       });
@@ -298,37 +292,90 @@ export function CastMemberDrawer({ member, onClose, onSaved }: Props) {
 
           <div className="flex flex-col gap-[10px]">
             <div className={sectionCls}>Status</div>
+            {!isNew && member ? (
+              <div
+                className="rounded-[6px] border px-[12px] py-[8px] text-[12px] font-[500]"
+                style={
+                  member.status === "BUSY"
+                    ? {
+                        background: "rgba(186,117,23,0.1)",
+                        borderColor: "#BA7517",
+                        color: "#EF9F27",
+                      }
+                    : member.status === "INACTIVE"
+                      ? {
+                          background: "#1e1e1e",
+                          borderColor: "#2e2e2e",
+                          color: "#505050",
+                        }
+                      : {
+                          background: "rgba(29,158,117,0.1)",
+                          borderColor: "#1D9E75",
+                          color: "#5DCAA5",
+                        }
+                }
+              >
+                <div className="flex items-center gap-[6px]">
+                  <span
+                    className="h-[6px] w-[6px] flex-shrink-0 rounded-full"
+                    style={{
+                      background:
+                        member.status === "BUSY"
+                          ? "#BA7517"
+                          : member.status === "INACTIVE"
+                            ? "#444"
+                            : "#1D9E75",
+                    }}
+                  />
+                  {member.status === "BUSY"
+                    ? "Em projeto"
+                    : member.status === "INACTIVE"
+                      ? "Inativo"
+                      : "Disponível"}
+                </div>
+                {member.status !== "INACTIVE" ? (
+                  <div className="mt-[2px] text-[10px] opacity-60">
+                    Atualizado automaticamente com base nos projetos
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-[11px] text-[#505050]">
+                Disponível ou Em projeto será definido automaticamente após
+                escalar em projetos.
+              </p>
+            )}
             <Controller
-              name="status"
+              name="manualInactive"
               control={control}
               render={({ field }) => (
-                <div className="flex gap-[6px]">
-                  {STATUS_OPTIONS.map((s) => (
-                    <button
-                      key={s.value}
-                      type="button"
-                      onClick={() => field.onChange(s.value)}
-                      className="flex-1 rounded-[99px] border px-[10px] py-[5px] text-[11px] font-[500] transition-colors"
-                      style={
-                        field.value === s.value
-                          ? {
-                              background: `${s.color}22`,
-                              borderColor: s.color,
-                              color: s.color,
-                            }
-                          : {
-                              background: "transparent",
-                              borderColor: "#2e2e2e",
-                              color: "#606060",
-                            }
-                      }
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => field.onChange(!field.value)}
+                  className="rounded-[6px] border px-[12px] py-[7px] text-left text-[11px] font-[500] transition-colors"
+                  style={
+                    field.value
+                      ? {
+                          background: "#1e1e1e",
+                          borderColor: "#2e2e2e",
+                          color: "#909090",
+                        }
+                      : {
+                          background: "transparent",
+                          borderColor: "#2e2e2e",
+                          color: "#505050",
+                        }
+                  }
+                >
+                  {field.value
+                    ? "✓ Marcado como inativo — clique para reativar"
+                    : "Marcar como inativo"}
+                </button>
               )}
             />
+            <p className="text-[10px] text-[#404040]">
+              Inativo = dublador fora do estúdio. Não aparece em novos projetos.
+            </p>
           </div>
 
           {!isNew ? (
