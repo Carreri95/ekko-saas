@@ -65,6 +65,7 @@ import type {
   WaveformOverviewDragRefState,
   WaveformViewport,
 } from "./types";
+import { PageShell } from "@/app/components/page-shell";
 import { useSidebarDisplay } from "@/app/components/sidebar-display-context";
 import { injectWaveformCueShadowStyles } from "./waveformCueShadowStyles";
 
@@ -1096,8 +1097,19 @@ export default function SubtitleFileEditPage() {
         ? "lg:basis-[45%]"
         : "lg:basis-1/2";
 
+  const pageShellSubtitle =
+    filename != null && filename.trim() !== ""
+      ? `· ${filename.length > 52 ? `${filename.slice(0, 49)}…` : filename}`
+      : undefined;
+
   return (
-    <main className="mvp-page editor-desktop-page">
+    <PageShell
+      title="Editor"
+      subtitle={pageShellSubtitle}
+      section="editor"
+      noScroll
+    >
+    <main className="mvp-page editor-desktop-page flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
       <div className="editor-desktop-shell flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-hidden">
         <>
         {hasEditorContent || loading ? (
@@ -1462,5 +1474,6 @@ export default function SubtitleFileEditPage() {
         />
       ) : null}
     </main>
+    </PageShell>
   );
 }

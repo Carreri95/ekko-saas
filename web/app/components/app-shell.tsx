@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { ConfirmProvider } from "./confirm-provider";
 import { SidebarDisplayProvider } from "./sidebar-display-context";
 import { SidebarNav } from "./sidebar-nav";
 
@@ -56,25 +63,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarDisplayProvider>
-      <SidebarContext.Provider value={value}>
-        <div
-          className={`app-shell-root ${ready && collapsed ? "app-shell-root--collapsed" : ""}`}
-          data-sidebar-collapsed={ready && collapsed ? "true" : "false"}
-        >
-          <aside
-            className={`app-sidebar ${ready && collapsed ? "app-sidebar--collapsed" : ""}`}
+      <ConfirmProvider>
+        <SidebarContext.Provider value={value}>
+          <div
+            className={`app-shell-root ${ready && collapsed ? "app-shell-root--collapsed" : ""}`}
+            data-sidebar-collapsed={ready && collapsed ? "true" : "false"}
           >
-            <SidebarNav
-              collapsed={ready && collapsed}
-              onToggle={toggle}
-            />
-          </aside>
+            <aside
+              className={`app-sidebar ${ready && collapsed ? "app-sidebar--collapsed" : ""}`}
+            >
+              <SidebarNav collapsed={ready && collapsed} onToggle={toggle} />
+            </aside>
 
-          <main className="app-main flex h-full min-h-0 min-w-0 flex-1 flex-col">
-            {children}
-          </main>
-        </div>
-      </SidebarContext.Provider>
+            <main className="app-main flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+              {children}
+            </main>
+          </div>
+        </SidebarContext.Provider>
+      </ConfirmProvider>
     </SidebarDisplayProvider>
   );
 }

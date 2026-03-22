@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "./**/*.{ts,tsx,js,jsx,mjs}";
 @import "./design-system.css";
 @import "./styles/shell.css";
 @import "./styles/editor.css";
@@ -12,9 +13,132 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  color-scheme: dark;
+}
+
 html,
 body {
   height: 100%;
+  overflow: hidden;
+}
+
+/* ── Date / datetime nativos — tema escuro + acento (popover depende do SO) ── */
+input[type="date"],
+input[type="datetime-local"] {
+  color-scheme: dark;
+  background: #111;
+  border: 0.5px solid #2e2e2e;
+  border-radius: 5px;
+  color: #e8e8e8;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 8px;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+input[type="date"]:hover,
+input[type="datetime-local"]:hover {
+  border-color: #3a3a3a;
+}
+
+input[type="date"]:focus,
+input[type="datetime-local"]:focus {
+  border-color: #1d9e75;
+  box-shadow: 0 0 0 2px rgba(29, 158, 117, 0.15);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.65) sepia(0.35) saturate(2) hue-rotate(100deg);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+input[type="date"]:invalid,
+input[type="date"]:not([value]):not(:focus) {
+  color: #404040;
+}
+
+/* react-day-picker — SubtitleBot (popover custom) */
+.date-input-popover .date-input-rdp {
+  --rdp-accent-color: #1d9e75;
+  --rdp-accent-background-color: rgba(29, 158, 117, 0.18);
+  --rdp-day-height: 32px;
+  --rdp-day-width: 32px;
+  --rdp-day_button-height: 28px;
+  --rdp-day_button-width: 28px;
+  color: #e8e8e8;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Largura do calendário não pode herdar a coluna estreita do trigger */
+.date-input-popover .date-input-rdp .rdp-months {
+  max-width: none;
+  width: 100%;
+}
+
+.date-input-popover .date-input-rdp .rdp-month {
+  width: 100%;
+}
+
+.date-input-popover .date-input-rdp .rdp-month_grid {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.date-input-popover .date-input-rdp .rdp-weekday,
+.date-input-popover .date-input-rdp .rdp-day {
+  width: 14.28%;
+  box-sizing: border-box;
+}
+
+.date-input-popover .date-input-rdp .rdp-weekday {
+  opacity: 0.85;
+  color: #707070;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.date-input-popover .date-input-rdp .rdp-caption_label {
+  color: #e8e8e8;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.date-input-popover .date-input-rdp .rdp-button_next,
+.date-input-popover .date-input-rdp .rdp-button_previous {
+  border-radius: 4px;
+  border: 0.5px solid #2e2e2e;
+  color: #909090;
+}
+
+.date-input-popover .date-input-rdp .rdp-button_next:hover,
+.date-input-popover .date-input-rdp .rdp-button_previous:hover {
+  background: #252525;
+  color: #e8e8e8;
+}
+
+.date-input-popover .date-input-rdp .rdp-day_button {
+  color: #c8c8c8;
+}
+
+.date-input-popover .date-input-rdp .rdp-today:not(.rdp-selected) .rdp-day_button {
+  border: 0.5px solid #1d9e75;
+  color: #5dcaa5;
+}
+
+.date-input-popover .date-input-rdp .rdp-outside .rdp-day_button {
+  color: #404040;
+  opacity: 0.9;
 }
 
 body {
@@ -28,4 +152,15 @@ body {
   height: 100%;
   background: var(--bg-page);
   color: var(--text-primary);
+}
+
+/* Sidebar — item ativo: verde escuro + texto claro (mockup), nunca verde sólido #1d9e75 */
+aside.app-sidebar a.app-sidebar-nav-item.active,
+aside.app-sidebar .app-sidebar-nav-item.active {
+  background: #0d3d2a !important;
+  color: #5dcaa5 !important;
+}
+
+aside.app-sidebar a.app-sidebar-nav-item.active {
+  text-decoration: none;
 }

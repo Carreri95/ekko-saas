@@ -1,0 +1,59 @@
+{
+  "id": "episode_0066",
+  "title": "episode_0066",
+  "novel_id": "novela001",
+  "global_id": "novela001__episode_0066",
+  "paths": {
+    "audio_filename": "audio.wav",
+    "raw_srt_filename": "Bruto.srt",
+    "final_srt_filename": "Final.srt"
+  },
+  "status": "complete",
+  "missing_files": [],
+  "audio": {
+    "exists": true,
+    "filename": "audio.wav",
+    "extension": ".wav",
+    "duration_sec": 67.708
+  },
+  "raw_srt": {
+    "filename": "Bruto.srt",
+    "exists": true,
+    "blocks": 14,
+    "first_start": "00:00:01,000",
+    "last_end": "00:01:07,000",
+    "timeline_duration_sec": 66.0,
+    "text_char_count": 564,
+    "text_line_count": 14
+  },
+  "final_srt": {
+    "filename": "Final.srt",
+    "exists": true,
+    "blocks": 18,
+    "first_start": "00:00:02,007",
+    "last_end": "00:01:07,101",
+    "timeline_duration_sec": 65.094,
+    "text_char_count": 569,
+    "text_line_count": 23
+  },
+  "pipeline": {
+    "language": "pt-BR",
+    "raw_generated_later": true,
+    "raw_generator": "Buzz",
+    "asr_backend": "OpenAI Whisper API",
+    "asr_task": "transcribe",
+    "asr_language": "Portuguese",
+    "word_level_timings": false,
+    "extract_speech": false,
+    "export_format": "srt",
+    "temperature": 0.0,
+    "initial_prompt": "",
+    "ai_translation_enabled": false,
+    "ai_translation_model": "",
+    "ai_translation_instructions": "",
+    "has_manual_text_cleanup": true,
+    "has_manual_timing_adjustment": true,
+    "style": "vertical_shortform",
+    "notes": ""
+  }
+}

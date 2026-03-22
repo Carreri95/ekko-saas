@@ -1,0 +1,102 @@
+================================================================================
+  SubtitleBot — Organização e compartimentação do repositório
+  (resumo de alto nível; pode evoluir com o código)
+================================================================================
+
+VISÃO GERAL
+-----------
+• Repositório monolítico: a aplicação principal é Next.js (App Router) na pasta `web/`.
+• Na raiz (`SubtitleBot/`) existem apenas scripts npm que delegam para `web/` (dev, build,
+  db:migrate, etc.), Docker (`docker-compose.yml`), documentação e ficheiros de referência.
+• Stack principal em `web/`: Next.js 16, React 19, Tailwind 4, Prisma 7 + PostgreSQL,
+  WaveSurfer (waveform no editor).
+
+
+ESTRUTURA DE PASTAS (nível raiz SubtitleBot)
+--------------------------------------------
+  web/              → App Next.js (código-fonte da aplicação)
+  ml-pipeline/      → Scripts Python / pipeline ML (antigo `Frontend/`); não é o núcleo da app Next em `web/`
+  docker-compose.yml
+  package.json      → Atalhos para comandos dentro de `web/`
+  *.md              → Documentação de pipeline, arquitetura, inventário (quando existir)
+  srt_generator_mockup.html, design-system.html → referências / mockups
+
+
+WEB/ — ORGANIZAÇÃO PRINCIPAL
+----------------------------
+
+1) app/ — Next.js App Router (rotas, UI, API colocalizada)
+   • layout.tsx, page.tsx, globals.css, design-system.css — shell global e tokens visuais.
+   • app/components/ — componentes partilhados ao nível da app (ex.: navegação, shell).
+   • app/gerar/ — fluxo “gerar” / processamento em lote (UI).
+   • app/subtitle-file-edit/ — editor de legendas (desktop): página principal, dezenas
+     de hooks (`hooks/`), componentes (`components/`), libs locais (`lib/`), tipos
+     (`types.ts`), CSS específico (ex.: waveform, cue editor). É o maior bloco de UI
+     interativa (lista de cues, waveform, transport, persistência, atalhos).
+   • app/api/ — Route Handlers REST (41 rotas `route.ts`), organizados por domínio:
+       - projects/, subtitle-files/, cues/, subtitle-cues/
+       - batch-jobs/ (ZIP, ficheiros, start, download, jobs por ficheiro, retry)
+       - jobs/ (status, retry, reprocess-normalization)
+     Isto compartimenta: projeto/legenda/cue no servidor vs jobs de transcrição vs lote.
+
+2) components/ — componentes React reutilizáveis fora de uma rota única
+   • Ex.: `components/batch/` — tabelas e peças UI do fluxo em lote (polling, formatação).
+
+3) src/ — Lógica de domínio e servidor partilhada (fora das rotas)
+   • src/lib/ — utilitários puros (ex.: parse SRT em `lib/srt/`, matching de episódios em
+     `lib/project/`).
+   • src/server/transcription/ — serviços e tipos do pipeline de transcrição (jobs,
+     normalização, integração com engines).
+   • src/types/ — tipos TypeScript transversais quando aplicável.
+
+4) prisma/ — Modelo de dados e migrações
+   • schema.prisma — User, Project, SubtitleFile, SubtitleCue, SubtitleVersion,
+     BatchJob, TranscriptionJob, enums de estado/engine.
+   • migrations/ — histórico SQL versionado.
+   • Cliente Prisma gerado em app/generated/prisma (configurado no schema).
+
+5) public/ — Estáticos servidos pelo Next.
+
+6) scripts/ — Scripts auxiliares (ex.: embed de CSS da waveform no bundle TS).
+
+7) Ficheiros de configuração na raiz de `web/`
+   • middleware.ts — regras à entrada (rotas, headers, etc.).
+   • next.config.ts, tsconfig.json, eslint, vitest, postcss — tooling.
+
+
+FRONTEND vs BACKEND NO MESMO REPOSITÓRIO
+-----------------------------------------
+• UI: páginas e componentes em `web/app/` e `web/components/`.
+• API: `web/app/api/**/route.ts` — cada ficheiro exporta GET/POST/PATCH… por recurso.
+• Persistência: Prisma em rotas e em `src/server/*`.
+• Regras de negócio partilhadas: preferencialmente `src/lib` e `src/server` para manter
+  as rotas finas e testáveis.
+
+
+DOMÍNIOS FUNCIONAIS (RESUMO)
+-----------------------------
+• Projetos e legendas: CRUD de Project, SubtitleFile, cues, export SRT, media.
+• Transcrição: TranscriptionJob ligado a Project/SubtitleFile; rotas em `api/jobs/`.
+• Lote (batch): BatchJob + jobs filhos; upload ZIP, arranque, download, retry.
+• Editor local/remoto: `subtitle-file-edit` — estado rico no cliente (waveform, undo,
+  auto-save para API quando há `subtitleFileId`), intake de ficheiros locais.
+
+
+CONVENÇÕES ÚTEIS
+----------------
+• Tipos do editor: concentrados em `app/subtitle-file-edit/types.ts` (props de
+  componentes e contratos de hooks).
+• CSS global + design system: `app/globals.css` + `app/design-system.css`; estilos de
+  módulos (ex.: waveform shadow) podem ser importados ou gerados por script.
+• Variáveis de ambiente: `web/.env.example` como referência; segredos não commitados.
+
+
+DOCUMENTAÇÃO ADICIONAL NO REPO
+--------------------------------
+• ARCHITECTURE.md, PIPELINE-*.md, COMPONENTES_INVENTARIO.txt (quando atualizados) —
+  detalhe além deste resumo.
+
+
+================================================================================
+  Fim do resumo — gerado para leitura humana; ajustar quando a estrutura mudar.
+================================================================================
