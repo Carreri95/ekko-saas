@@ -232,8 +232,11 @@ export function useWaveformLifecycle({
       const host = waveformCueOverlayHostRef.current;
       if (!wrapper || !host) return;
       const totalW = Math.max(wrapper.scrollWidth, wrapper.offsetWidth);
+      const h = Math.max(1, wrapper.clientHeight);
       host.style.width = `${totalW}px`;
       host.style.minWidth = `${totalW}px`;
+      host.style.height = `${h}px`;
+      host.style.minHeight = `${h}px`;
     }
 
     function mountCueOverlayHost() {
@@ -253,7 +256,8 @@ export function useWaveformLifecycle({
         "left:0",
         "top:0",
         "width:0",
-        `height:${waveformPx}px`,
+        "height:100%",
+        "min-height:100%",
         "pointer-events:none",
         "z-index:6",
       ].join(";");
@@ -373,14 +377,13 @@ export function useWaveformLifecycle({
       }
       setWaveformDurationSec(null);
     };
-    // IMPORTANT: manter dependências mínimas para evitar recriação desnecessária.
-    // para evitar recriação desnecessária do WaveSurfer.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `waveformPx` incluído: altura do mount medida por ResizeObserver — deve coincidir com o WaveSurfer.
   }, [
     waveformEnabled,
     localWaveformData,
     bindPanSeekHandlers,
     mediaSourceUrl,
     mediaKind,
+    waveformPx,
   ]);
 }

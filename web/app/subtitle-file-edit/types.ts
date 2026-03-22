@@ -151,6 +151,9 @@ export type WaveformTransportControlsProps = {
   onReset: () => void;
   currentPlaybackMs: number;
   durationMs: number | null;
+  playbackRate: number;
+  speedSteps: readonly number[];
+  onPlaybackRateChange: (rate: number) => void;
 };
 
 export type TimelineDockProps = {
@@ -200,7 +203,6 @@ export type TimelineDockProps = {
   waveformPx: number;
   waveformGridStyle: CSSProperties;
   onCueContextMenu: (e: MouseEvent, cue: CueDto) => void;
-  formatToolbarTime: (ms: number) => string;
   playbackRate: number;
   speedSteps: readonly number[];
   onPlaybackRateChange: (rate: number) => void;
@@ -274,6 +276,13 @@ export type WaveformContextMenuOpenState = {
   canAddText: boolean;
 };
 
+export type MediaPreviewActiveCueInfo = {
+  cueIndex: number;
+  startMs: number;
+  endMs: number;
+  cps: number;
+};
+
 export type MediaPreviewPanelProps = {
   mediaSourceUrl: string | null;
   mediaKind: "audio" | "video" | null;
@@ -282,6 +291,12 @@ export type MediaPreviewPanelProps = {
   onTimeUpdate: (currentTimeSec: number) => void;
   aspectRatio: AspectRatio;
   onAspectRatioChange: (ratio: AspectRatio) => void;
+  /** Segundos atuais (timecode e barra de progresso no preview). */
+  currentTimeSec?: number;
+  /** Duração total em segundos (barra de progresso). */
+  durationSec?: number;
+  /** Cue ativa no playback (footer do preview). */
+  activeCueInfo?: MediaPreviewActiveCueInfo | null;
 };
 
 export type CueTextEditorProps = {
