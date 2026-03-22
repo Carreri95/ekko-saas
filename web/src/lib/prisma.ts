@@ -5,7 +5,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
  * Incrementar após `prisma migrate` / mudanças no schema que alterem o client,
  * para não reutilizar um PrismaClient antigo em memória (HMR) com modelo incompatível.
  */
-const PRISMA_CLIENT_REVISION = "20260323-restore-value-currency";
+/** Bump após adicionar/alterar modelos Prisma (ex. Client) para não reutilizar instância antiga sem novos delegates. */
+const PRISMA_CLIENT_REVISION = "20260322-client-model";
 
 // Evita criar múltiplas instâncias do PrismaClient durante hot reload no dev.
 // (Em prod, não faz cache no global.)

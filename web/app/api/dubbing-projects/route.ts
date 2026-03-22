@@ -123,6 +123,7 @@ export async function POST(req: Request) {
       data: {
         name: d.name,
         client: d.client,
+        clientId: d.clientId ?? null,
         status: DubbingProjectStatus.SPOTTING,
         startDate,
         deadline,

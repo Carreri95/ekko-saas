@@ -85,6 +85,14 @@ export async function PATCH(req: Request, ctx: RouteContext) {
     data.client = d.client === "" ? null : d.client;
   }
 
+  if (d.clientId !== undefined) {
+    if (d.clientId === null) {
+      data.clientRef = { disconnect: true };
+    } else {
+      data.clientRef = { connect: { id: d.clientId } };
+    }
+  }
+
   if (d.status !== undefined) {
     data.status = d.status as DubbingProjectStatus;
   }

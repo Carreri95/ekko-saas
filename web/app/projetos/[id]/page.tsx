@@ -16,9 +16,15 @@ import {
 } from "../schemas";
 import type { DubbingProjectDto } from "../types";
 import type { DubbingProjectStatus } from "../domain";
+import type { ProjectCharacterDto } from "@/app/types/project-character";
+import type { CastMemberDto } from "@/app/types/cast-member";
+import { CharacterCard } from "./components/character-card";
+import { CharacterDrawer } from "./components/character-drawer";
 import { LanguageCombobox } from "../components/language-combobox";
 import { CurrencyValueField } from "../components/currency-value-field";
 import { ProjectStatusStepper } from "../components/project-status-stepper";
+import { ClientSelect } from "../components/client-select";
+import { ClientQuickModal } from "../components/client-quick-modal";
 import {
   contractTotalHint,
   formUnitToStoredTotal,
@@ -29,7 +35,7 @@ import {
 
 const TABS = [
   { id: "info", label: "Informações", enabled: true },
-  { id: "elenco", label: "Elenco", enabled: false },
+  { id: "elenco", label: "Elenco", enabled: true },
   { id: "agenda", label: "Agenda", enabled: false },
   { id: "gravacoes", label: "Gravações", enabled: false },
   { id: "financeiro", label: "Financeiro", enabled: false },
@@ -78,6 +84,7 @@ function getEditDefaults(p: DubbingProjectDto): DubbingProjectEditFormInput {
   return {
     name: p.name,
     client: p.client?.trim() ? p.client : "",
+    clientId: p.clientId ?? null,
     startDate: isoToInput(p.startDate),
     deadline: isoToInput(p.deadline),
     episodes: p.episodes != null ? Number(p.episodes) : "",
@@ -102,6 +109,14 @@ export default function ProjectEditPage() {
   const [notFound, setNotFound] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("info");
   const [savedMsg, setSavedMsg] = useState(false);
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [clientListRefresh, setClientListRefresh] = useState(0);
+  const [characters, setCharacters] = useState<ProjectCharacterDto[]>([]);
+  const [castMembers, setCastMembers] = useState<CastMemberDto[]>([]);
+  const [charDrawerOpen, setCharDrawerOpen] = useState(false);
+  const [editingChar, setEditingChar] = useState<ProjectCharacterDto | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     if (!id) {
@@ -131,6 +146,48 @@ export default function ProjectEditPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const loadCharacters = useCallback(async () => {
+    if (!id) return;
+    const res = await fetch(`/api/dubbing-projects/${id}/characters`);
+    if (!res.ok) {
+      setCharacters([]);
+      return;
+    }
+    const data = (await res.json()) as { characters: ProjectCharacterDto[] };
+    setCharacters(data.characters ?? []);
+  }, [id]);
+
+  const loadCastMembers = useCallback(async () => {
+    const res = await fetch("/api/cast-members");
+    if (!res.ok) {
+      setCastMembers([]);
+      return;
+    }
+    const data = (await res.json()) as { members: CastMemberDto[] };
+    setCastMembers(data.members ?? []);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "elenco") {
+      void loadCharacters();
+      void loadCastMembers();
+    }
+  }, [activeTab, loadCharacters, loadCastMembers]);
+
+  const openNewChar = () => {
+    setEditingChar(null);
+    setCharDrawerOpen(true);
+  };
+  const openEditChar = (c: ProjectCharacterDto) => {
+    setEditingChar(c);
+    setCharDrawerOpen(true);
+  };
+  const onCharSaved = () => {
+    setCharDrawerOpen(false);
+    setEditingChar(null);
+    void loadCharacters();
+  };
 
   const {
     register,
@@ -201,6 +258,7 @@ export default function ProjectEditPage() {
     String(currentStatus);
 
   const onSubmit = async (data: DubbingProjectEditFormData) => {
+    if (activeTab !== "info") return;
     clearErrors("root");
     const storedTotal = normalizeMoneyForStorage(
       formUnitToStoredTotal(
@@ -213,6 +271,7 @@ export default function ProjectEditPage() {
     const body = {
       name: data.name,
       client: data.client,
+      clientId: data.clientId ?? null,
       startDate: data.startDate,
       deadline: data.deadline,
       episodes: data.episodes,
@@ -403,7 +462,7 @@ export default function ProjectEditPage() {
                   />
                 </div>
 
-                {activeTab === "info" ? (
+                {activeTab === "info" && (
                   <div className="flex flex-col gap-[14px]">
                     <p className="text-[10px] text-[#444]">
                       Campos marcados com{" "}
@@ -460,13 +519,31 @@ export default function ProjectEditPage() {
                                   Cliente / Contratante{" "}
                                   <span className="text-[#E24B4A]">*</span>
                                 </label>
-                                <input
-                                  id="edit-project-client"
-                                  {...register("client")}
-                                  className={
-                                    errors.client ? inputErrCls : inputCls
-                                  }
-                                  placeholder="Cliente ou estúdio"
+                                <Controller
+                                  name="client"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <ClientSelect
+                                      value={field.value ?? ""}
+                                      clientId={
+                                        (watch("clientId") as
+                                          | string
+                                          | null
+                                          | undefined) ?? null
+                                      }
+                                      refreshToken={clientListRefresh}
+                                      onChange={(text, cid) => {
+                                        field.onChange(text);
+                                        setValue("clientId", cid, {
+                                          shouldDirty: true,
+                                        });
+                                      }}
+                                      onCreateNew={() =>
+                                        setClientModalOpen(true)
+                                      }
+                                      error={!!errors.client}
+                                    />
+                                  )}
                                 />
                                 {errors.client ? (
                                   <p className={errorCls}>
@@ -749,44 +826,168 @@ export default function ProjectEditPage() {
                       </div>
                     </div>
                   </div>
-                ) : (
+                )}
+                {activeTab === "elenco" && (
+                  <div className="flex-1 overflow-y-auto px-[24px] py-[20px]">
+                    <div className="mx-auto" style={{ maxWidth: 900 }}>
+                      <div className="mb-[16px] flex items-center justify-between">
+                        <div>
+                          <h2 className="text-[14px] font-[600] text-[#e8e8e8]">
+                            Elenco do projeto
+                          </h2>
+                          <p className="mt-[2px] text-[11px] text-[#505050]">
+                            {characters.length} personagem
+                            {characters.length !== 1 ? "s" : ""}
+                            {" · "}
+                            {characters.filter((c) => c.castMemberId).length}{" "}
+                            dublador
+                            {characters.filter((c) => c.castMemberId).length !== 1
+                              ? "es"
+                              : ""}{" "}
+                            escalado
+                            {characters.filter((c) => c.castMemberId).length !== 1
+                              ? "s"
+                              : ""}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={openNewChar}
+                          className="flex items-center gap-[6px] rounded-[6px] border border-[#0F6E56] bg-[#1D9E75] px-[12px] py-[5px] text-[11px] font-[500] text-white transition-colors hover:bg-[#0F6E56]"
+                        >
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                          >
+                            <path
+                              d="M8 2v12M2 8h12"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          Adicionar personagem
+                        </button>
+                      </div>
+
+                      {characters.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center gap-[12px] rounded-[10px] border border-[#252525] bg-[#1a1a1a] py-[48px]">
+                          <div className="flex h-[44px] w-[44px] items-center justify-center rounded-[10px] border border-[#2a2a2a] bg-[#141414]">
+                            <svg
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#404040"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                              <circle cx="9" cy="7" r="4" />
+                            </svg>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[13px] font-[500] text-[#505050]">
+                              Nenhum personagem adicionado
+                            </p>
+                            <p className="mt-[2px] text-[11px] text-[#404040]">
+                              Adicione os personagens e escale dubladores
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={openNewChar}
+                            className="flex items-center gap-[6px] rounded-[6px] border border-[#0F6E56] bg-[#1D9E75] px-[12px] py-[5px] text-[11px] font-[500] text-white transition-colors hover:bg-[#0F6E56]"
+                          >
+                            + Adicionar personagem
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(3,1fr)",
+                            gap: 10,
+                          }}
+                        >
+                          {characters.map((c) => (
+                            <CharacterCard
+                              key={c.id}
+                              character={c}
+                              onEdit={openEditChar}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {activeTab !== "info" && activeTab !== "elenco" ? (
                   <div className="flex min-h-[200px] items-center justify-center rounded-[10px] border border-[#252525] bg-[#1a1a1a] py-16 text-[13px] text-[#444]">
                     Em breve
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-[8px] border-t border-[#1e1e1e] bg-[#141414] px-[20px] py-[10px] sm:px-[24px]">
-              <div className="flex-1" />
-              {savedMsg ? (
-                <span className="text-[11px] text-[#5DCAA5]">
-                  ✓ Salvo com sucesso
-                </span>
-              ) : null}
-              {isDirty && !savedMsg ? (
-                <span className="text-[11px] text-[#EF9F27]">
-                  ● Alterações não salvas
-                </span>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => reset(getEditDefaults(project))}
-                disabled={isSubmitting || !isDirty}
-                className="rounded-[5px] border border-[#2e2e2e] px-[12px] py-[6px] text-[11px] text-[#606060] transition-colors hover:bg-[#252525] disabled:opacity-40"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting || !isDirty}
-                className="rounded-[5px] border border-[#0F6E56] bg-[#1D9E75] px-[14px] py-[6px] text-[11px] font-[500] text-white transition-colors hover:bg-[#0F6E56] disabled:opacity-40"
-              >
-                {isSubmitting ? "Salvando…" : "Salvar alterações"}
-              </button>
-            </div>
+            {activeTab === "info" ? (
+              <div className="flex shrink-0 items-center gap-[8px] border-t border-[#1e1e1e] bg-[#141414] px-[20px] py-[10px] sm:px-[24px]">
+                <div className="flex-1" />
+                {savedMsg ? (
+                  <span className="text-[11px] text-[#5DCAA5]">
+                    ✓ Salvo com sucesso
+                  </span>
+                ) : null}
+                {isDirty && !savedMsg ? (
+                  <span className="text-[11px] text-[#EF9F27]">
+                    ● Alterações não salvas
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => reset(getEditDefaults(project))}
+                  disabled={isSubmitting || !isDirty}
+                  className="rounded-[5px] border border-[#2e2e2e] px-[12px] py-[6px] text-[11px] text-[#606060] transition-colors hover:bg-[#252525] disabled:opacity-40"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !isDirty}
+                  className="rounded-[5px] border border-[#0F6E56] bg-[#1D9E75] px-[14px] py-[6px] text-[11px] font-[500] text-white transition-colors hover:bg-[#0F6E56] disabled:opacity-40"
+                >
+                  {isSubmitting ? "Salvando…" : "Salvar alterações"}
+                </button>
+              </div>
+            ) : null}
           </div>
         </form>
+        {charDrawerOpen ? (
+          <CharacterDrawer
+            character={editingChar}
+            projectId={id}
+            castMembers={castMembers}
+            onClose={() => {
+              setCharDrawerOpen(false);
+              setEditingChar(null);
+            }}
+            onSaved={onCharSaved}
+          />
+        ) : null}
+        {clientModalOpen ? (
+          <ClientQuickModal
+            onClose={() => setClientModalOpen(false)}
+            onCreated={(c) => {
+              setValue("client", c.name, { shouldDirty: true });
+              setValue("clientId", c.id, { shouldDirty: true });
+              setClientListRefresh((k) => k + 1);
+              setClientModalOpen(false);
+            }}
+          />
+        ) : null}
       </div>
     </PageShell>
   );

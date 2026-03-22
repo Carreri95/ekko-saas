@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ClientSelect } from "./client-select";
+import { ClientQuickModal } from "./client-quick-modal";
 import {
   dubbingProjectFormSchema,
   type DubbingProjectFormData,
@@ -60,6 +62,7 @@ function getNewDefaults(): DubbingProjectFormInput {
   return {
     name: "",
     client: "",
+    clientId: null,
     startDate: "",
     deadline: "",
     episodes: "",
@@ -73,12 +76,16 @@ function getNewDefaults(): DubbingProjectFormInput {
 }
 
 export function ProjectDrawer({ onClose, onSaved }: Props) {
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [clientListRefresh, setClientListRefresh] = useState(0);
+
   const {
     register,
     handleSubmit,
     control,
     watch,
     reset,
+    setValue,
     setError,
     clearErrors,
     formState: { errors, isSubmitting },
@@ -135,6 +142,7 @@ export function ProjectDrawer({ onClose, onSaved }: Props) {
     const body = {
       name: data.name,
       client: data.client,
+      clientId: data.clientId ?? null,
       startDate: data.startDate,
       deadline: data.deadline,
       episodes: data.episodes,
@@ -240,11 +248,24 @@ export function ProjectDrawer({ onClose, onSaved }: Props) {
               Cliente / Contratante{" "}
               <span className="text-[#E24B4A]">*</span>
             </label>
-            <input
-              id="project-client"
-              {...register("client")}
-              className={errors.client ? inputErrorCls : inputValidCls}
-              placeholder="Nome do cliente ou estúdio"
+            <Controller
+              name="client"
+              control={control}
+              render={({ field }) => (
+                <ClientSelect
+                  value={field.value ?? ""}
+                  clientId={
+                    (watch("clientId") as string | null | undefined) ?? null
+                  }
+                  refreshToken={clientListRefresh}
+                  onChange={(text, id) => {
+                    field.onChange(text);
+                    setValue("clientId", id, { shouldDirty: true });
+                  }}
+                  onCreateNew={() => setClientModalOpen(true)}
+                  error={!!errors.client}
+                />
+              )}
             />
             {errors.client ? (
               <p className={errorCls}>{errors.client.message}</p>
@@ -455,6 +476,17 @@ export function ProjectDrawer({ onClose, onSaved }: Props) {
         aria-label="Fechar painel"
       />
       {formEl}
+      {clientModalOpen ? (
+        <ClientQuickModal
+          onClose={() => setClientModalOpen(false)}
+          onCreated={(c) => {
+            setValue("client", c.name, { shouldDirty: true });
+            setValue("clientId", c.id, { shouldDirty: true });
+            setClientListRefresh((k) => k + 1);
+            setClientModalOpen(false);
+          }}
+        />
+      ) : null}
     </>
   );
 }

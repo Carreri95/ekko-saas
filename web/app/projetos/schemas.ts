@@ -161,6 +161,13 @@ const dubbingProjectPatchFields = z.object({
     z.string().max(120, "O nome do cliente não pode ter mais de 120 caracteres"),
   ]),
 
+  clientId: z
+    .preprocess(
+      (v) => (v === "" || v === null || v === undefined ? null : v),
+      z.union([z.string().min(1), z.null()]).optional(),
+    )
+    .optional(),
+
   startDate: dateStrLoose,
   deadline: dateStrLoose,
 
@@ -207,6 +214,13 @@ const dubbingProjectCreateFields = z.object({
         .min(1, "O cliente / contratante é obrigatório")
         .max(120, "O nome do cliente não pode ter mais de 120 caracteres"),
     ),
+
+  clientId: z
+    .preprocess(
+      (v) => (v === "" || v === null || v === undefined ? null : v),
+      z.union([z.string().min(1), z.null()]).optional(),
+    )
+    .optional(),
 
   startDate: requiredIsoDate("A data de início é obrigatória"),
   deadline: requiredIsoDate("O prazo de entrega é obrigatório"),
@@ -274,3 +288,51 @@ export type DubbingProjectEditFormData = z.output<
   typeof dubbingProjectEditFormSchema
 >;
 export type DubbingProjectPayload = z.output<typeof dubbingProjectSchema>;
+
+/** Drawer de personagem do projeto (`/projetos/[id]`, aba Elenco). */
+export const projectCharacterFormSchema = z.object({
+  name: z
+    .string()
+    .transform((s) => s.trim())
+    .pipe(
+      z
+        .string()
+        .min(1, "Nome do personagem é obrigatório")
+        .max(80, "O nome não pode ter mais de 80 caracteres"),
+    ),
+
+  type: z
+    .union([
+      z.literal(""),
+      z.string().max(60, "Tipo não pode ter mais de 60 caracteres"),
+    ])
+    .optional(),
+
+  voiceType: z
+    .union([
+      z.literal(""),
+      z.string().max(60, "Tipo de voz não pode ter mais de 60 caracteres"),
+    ])
+    .optional(),
+
+  importance: z.enum(["MAIN", "SUPPORT", "EXTRA"]).default("SUPPORT"),
+
+  castMemberId: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? null : v),
+    z.union([z.string().min(1), z.null()]).optional(),
+  ),
+
+  notes: z
+    .union([
+      z.literal(""),
+      z.string().max(500, "Observações não podem ter mais de 500 caracteres"),
+    ])
+    .optional(),
+});
+
+export type ProjectCharacterFormInput = z.input<
+  typeof projectCharacterFormSchema
+>;
+export type ProjectCharacterFormData = z.output<
+  typeof projectCharacterFormSchema
+>;
