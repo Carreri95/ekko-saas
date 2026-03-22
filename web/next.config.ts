@@ -17,6 +17,16 @@ const maxFileMb =
 const bodySize = `${maxFileMb}mb` as const;
 
 const nextConfig: NextConfig = {
+  /** Redirecionamento HTTP antes do RSC — evita 500 em dev com `redirect()` só na página. */
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/gerar",
+        permanent: false,
+      },
+    ];
+  },
   /** Evita que o bundler reescreva o caminho do binário (ex.: `\\ROOT\\node_modules\\...`). */
   serverExternalPackages: ["ffmpeg-static"],
   experimental: {

@@ -1,0 +1,13 @@
+{
+  "input_records": 5941,
+  "reconciled_groups": 7,
+  "consumed_records": 24,
+  "generated_records": 7,
+  "by_new_operation": {
+    "split": 3,
+    "resegment_rewrite": 1,
+    "split_rewrite": 1,
+    "resegment": 2
+  },
+  "output_records": 5924
+}

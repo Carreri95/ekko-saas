@@ -1,0 +1,414 @@
+# Guia de Deploy — SubtitleStudio
+
+## Ler antes de começar
+
+Este documento contém tudo que precisa ser feito para subir o projeto
+em produção. Siga a ordem — cada etapa depende da anterior.
+
+**Stack atual:**
+
+- Next.js 16 App Router + TypeScript
+- PostgreSQL + Prisma 7
+- Storage de áudio em disco local (`MEDIA_STORAGE_DIR`)
+- Transcrição via OpenAI Whisper (processo em background in-process)
+- Sem autenticação (demo user hardcoded)
+- Chave OpenAI passada pelo frontend
+
+---
+
+## ETAPA 1 — Railway (deploy inicial, quase sem mudanças)
+
+**Por que Railway primeiro:** filesystem persistente, processos longos
+funcionam, PostgreSQL incluso. Funciona com o código atual sem precisar
+resolver storage ou filas.
+
+### 1.1 Criar conta e projeto no Railway
+
+1. Acessar https://railway.app
+2. Criar novo projeto → "Deploy from GitHub repo"
+3. Selecionar o repositório SubtitleBot
+4. Definir o **Root Directory** como `web` (onde está o Next.js)
+
+### 1.2 Adicionar PostgreSQL no Railway
+
+1. No projeto Railway → Add Service → PostgreSQL
+2. Railway gera automaticamente a `DATABASE_URL`
+3. Ela é injetada automaticamente nas variáveis de ambiente
+
+### 1.3 Configurar variáveis de ambiente no Railway
+
+```env
+# Banco (gerado automaticamente pelo Railway)
+DATABASE_URL=postgresql://...
+
+# OpenAI
+OPENAI_API_KEY=sk-...
+
+# Storage — usar path absoluto no container
+MEDIA_STORAGE_DIR=/app/uploads
+
+# App
+MAX_FILE_SIZE_MB=100
+MAX_TRANSCRIPTION_ATTEMPTS=3
+NODE_ENV=production
+```
+
+### 1.4 Configurar o build
+
+No Railway, definir:
+
+- **Build Command:** `npm run build`
+- **Start Command:** `npm run start`
+
+No `package.json` da raiz, garantir que os scripts apontam para `web/`:
+
+```json
+{
+  "scripts": {
+    "build": "npm --prefix web run build",
+    "start": "npm --prefix web run start"
+  }
+}
+```
+
+### 1.5 Rodar migrations em produção
+
+Adicionar script no `package.json` de `web/`:
+
+```json
+{
+  "scripts": {
+    "db:migrate:prod": "prisma migrate deploy"
+  }
+}
+```
+
+No Railway, configurar como **Deploy Command** (roda antes do start):
+
+```
+npx prisma migrate deploy && npm run start
+```
+
+Ou criar um **one-off command** no Railway para rodar a migration
+manualmente na primeira vez.
+
+### 1.6 Verificar deploy
+
+Após o deploy:
+
+- [ ] Acessar a URL do Railway
+- [ ] Testar criar um projeto em `/projetos`
+- [ ] Testar upload de áudio e transcrição
+- [ ] Verificar logs no Railway se algo falhar
+
+---
+
+## ETAPA 2 — Migrar storage para Cloudflare R2
+
+**Por que R2:** S3-compatible, 10GB grátis, barato depois disso (~$0.015/GB).
+Necessário antes de ir para Vercel ou qualquer plataforma serverless.
+
+### 2.1 Criar bucket R2 no Cloudflare
+
+1. Acessar https://dash.cloudflare.com → R2
+2. Criar bucket: `subtitlestudio-media`
+3. Gerar API token com permissão de leitura/escrita no bucket
+4. Anotar: `Account ID`, `Access Key ID`, `Secret Access Key`, `Bucket Name`
+
+### 2.2 Instalar SDK
+
+```bash
+cd web
+npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+```
+
+### 2.3 Criar serviço de storage abstrato
+
+**Arquivo:** `web/src/server/storage/storage.service.ts`
+
+```ts
+// Interface que tanto o storage local quanto o R2 implementam
+export interface StorageService {
+  save(key: string, buffer: Buffer, mimeType: string): Promise<void>;
+  getUrl(key: string): Promise<string>;
+  delete(key: string): Promise<void>;
+  getStream(key: string): Promise<NodeJS.ReadableStream>;
+}
+```
+
+**Arquivo:** `web/src/server/storage/r2-storage.service.ts`
+
+```ts
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+const client = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+  },
+});
+
+export const r2Storage = {
+  async save(key: string, buffer: Buffer, mimeType: string) {
+    await client.send(
+      new PutObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME!,
+        Key: key,
+        Body: buffer,
+        ContentType: mimeType,
+      }),
+    );
+  },
+
+  async getSignedUrl(key: string, expiresIn = 3600) {
+    return getSignedUrl(
+      client,
+      new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME!,
+        Key: key,
+      }),
+      { expiresIn },
+    );
+  },
+
+  async delete(key: string) {
+    await client.send(
+      new DeleteObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME!,
+        Key: key,
+      }),
+    );
+  },
+};
+```
+
+### 2.4 Variáveis de ambiente para R2
+
+Adicionar em `.env` e no Railway:
+
+```env
+R2_ACCOUNT_ID=seu-account-id
+R2_ACCESS_KEY_ID=sua-access-key
+R2_SECRET_ACCESS_KEY=sua-secret-key
+R2_BUCKET_NAME=subtitlestudio-media
+```
+
+### 2.5 Migrar MediaStorageService para usar R2
+
+Em `web/src/server/transcription/media-storage.service.ts`,
+substituir as operações de `fs` por chamadas ao `r2Storage`:
+
+- `fs.writeFile(path, buffer)` → `r2Storage.save(key, buffer, mimeType)`
+- `path.join(dir, key)` → `r2Storage.getSignedUrl(key)`
+- `fs.unlink(path)` → `r2Storage.delete(key)`
+
+### 2.6 Verificar
+
+- [ ] Upload de áudio salva no R2 (verificar no dashboard Cloudflare)
+- [ ] Transcrição consegue ler o arquivo do R2
+- [ ] Download do ZIP funciona
+- [ ] Arquivo antigo no disco pode ser deletado
+
+---
+
+## ETAPA 3 — Autenticação com NextAuth
+
+**Por que:** sem auth, qualquer pessoa acessa todos os dados de todos os usuários.
+
+### 3.1 Instalar NextAuth
+
+```bash
+cd web
+npm install next-auth@beta @auth/prisma-adapter
+```
+
+### 3.2 Adicionar modelo User ao Prisma (se não existir)
+
+O schema já tem `User` — verificar se tem os campos do NextAuth:
+
+```prisma
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+
+  // Relações com dados do app
+  dubbingProjects DubbingProject[]
+}
+
+// Modelos obrigatórios do NextAuth
+model Account { ... }
+model Session { ... }
+model VerificationToken { ... }
+```
+
+Rodar: `npm run db:migrate`
+
+### 3.3 Criar arquivo de configuração
+
+**Arquivo:** `web/auth.ts`
+
+```ts
+import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/src/lib/prisma";
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
+  callbacks: {
+    session({ session, user }) {
+      session.user.id = user.id;
+      return session;
+    },
+  },
+});
+```
+
+### 3.4 Proteger rotas em middleware.ts
+
+```ts
+export { auth as middleware } from "@/auth";
+
+export const config = {
+  matcher: [
+    "/projetos/:path*",
+    "/gerar/:path*",
+    "/subtitle-file-edit/:path*",
+    "/elenco/:path*",
+    "/agenda/:path*",
+  ],
+};
+```
+
+### 3.5 Usar sessão no UserMenu
+
+Em `page-shell.tsx`, substituir o mock por `useSession`:
+
+```tsx
+import { useSession, signOut } from "next-auth/react";
+
+const { data: session } = useSession();
+
+<UserMenu
+  user={{
+    name: session?.user?.name ?? "Usuário",
+    email: session?.user?.email ?? "",
+    plan: "Pro",
+  }}
+  onSignOut={() => signOut({ callbackUrl: "/login" })}
+/>;
+```
+
+### 3.6 Variáveis de ambiente
+
+```env
+AUTH_SECRET=gerar-com-openssl-rand-base64-32
+GOOGLE_CLIENT_ID=seu-client-id
+GOOGLE_CLIENT_SECRET=seu-client-secret
+NEXTAUTH_URL=https://sua-url.railway.app
+```
+
+---
+
+## ETAPA 4 — Mover chave OpenAI para o servidor
+
+**Problema atual:** a chave é passada pelo formulário do frontend,
+exposta no header da requisição — qualquer usuário vê a chave.
+
+### 4.1 Remover campo de chave do frontend
+
+Em `app/gerar/page.tsx`, remover o input de chave OpenAI do formulário.
+
+### 4.2 Usar chave do .env no servidor
+
+Em `web/src/server/transcription/openai-whisper.adapter.ts`,
+sempre usar `process.env.OPENAI_API_KEY` — nunca aceitar chave
+vinda do cliente.
+
+### 4.3 Variável de ambiente
+
+```env
+OPENAI_API_KEY=sk-...
+```
+
+---
+
+## ETAPA 5 — BullMQ para filas de transcrição (quando escalar)
+
+**Quando fazer:** só necessário com múltiplos usuários simultâneos.
+O `void runInBackground()` atual funciona para uso pequeno.
+
+### 5.1 Instalar
+
+```bash
+cd web
+npm install bullmq ioredis
+```
+
+### 5.2 Adicionar Redis
+
+No Railway, adicionar serviço Redis.
+Variável gerada automaticamente: `REDIS_URL`.
+
+### 5.3 Criar worker de transcrição
+
+**Arquivo:** `web/src/server/transcription/transcription.worker.ts`
+
+```ts
+import { Worker } from "bullmq";
+import { connection } from "./redis";
+import { processTranscriptionJob } from "./transcription-job.service";
+
+export const transcriptionWorker = new Worker(
+  "transcription",
+  async (job) => {
+    await processTranscriptionJob(job.data.jobId);
+  },
+  { connection },
+);
+```
+
+---
+
+## Resumo — Prioridades
+
+| Etapa                  | Quando fazer                 | Risco sem fazer               |
+| ---------------------- | ---------------------------- | ----------------------------- |
+| Railway (Etapa 1)      | Agora                        | App não está online           |
+| R2 Storage (Etapa 2)   | Antes de Vercel / ao escalar | Arquivos somem em serverless  |
+| NextAuth (Etapa 3)     | Antes de usuários reais      | Qualquer um acessa tudo       |
+| Chave OpenAI (Etapa 4) | Junto com NextAuth           | Chave exposta ao usuário      |
+| BullMQ (Etapa 5)       | Quando tiver volume          | Transcrições falham sob carga |
+
+---
+
+## Checklist final antes de ir ao ar
+
+- [ ] `DATABASE_URL` apontando para banco de produção
+- [ ] `OPENAI_API_KEY` configurada no servidor
+- [ ] Migrations rodadas (`prisma migrate deploy`)
+- [ ] Storage funcionando (local no Railway ou R2)
+- [ ] Autenticação ativa (se for público)
+- [ ] `NODE_ENV=production`
+- [ ] `AUTH_SECRET` gerado e configurado
+- [ ] Testar fluxo completo: upload → transcrição → exportar SRT

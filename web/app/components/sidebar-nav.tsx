@@ -6,20 +6,112 @@ import { useSidebarDisplay } from "./sidebar-display-context";
 
 const ENGINE_LABEL = "Whisper / mock";
 
-function IconSidebarToggle({ collapsed }: { collapsed: boolean }) {
+function IconCollapseChevron({ collapsed }: { collapsed: boolean }) {
   return (
     <svg
-      width={22}
-      height={22}
-      viewBox="0 0 24 24"
+      width={12}
+      height={12}
+      viewBox="0 0 16 16"
       fill="none"
       aria-hidden
       className="app-sidebar-recolher-icon"
     >
+      {collapsed ? (
+        <path
+          d="M6 3l5 5-5 5"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : (
+        <path
+          d="M10 3L5 8l5 5"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
+    </svg>
+  );
+}
+
+function IconGrid() {
+  return (
+    <svg
+      width={15}
+      height={15}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      aria-hidden
+    >
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
+function IconUsers() {
+  return (
+    <svg
+      width={15}
+      height={15}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function IconCalendar() {
+  return (
+    <svg
+      width={15}
+      height={15}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function IconPencil() {
+  return (
+    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
-        d={collapsed ? "m9 18 6-6-6-6" : "m15 18-6-6 6-6"}
+        d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5"
         stroke="currentColor"
-        strokeWidth={2.25}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m16 3 4 4L9 18H5v-4z"
+        stroke="currentColor"
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -39,27 +131,6 @@ function IconMic() {
       />
       <path
         d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconPencil() {
-  return (
-    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="m16 3 4 4L9 18H5v-4z"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
@@ -100,7 +171,13 @@ function IconClockSmall() {
 
 function IconGear() {
   return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      width={13}
+      height={13}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" />
       <path
         d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"
@@ -112,12 +189,27 @@ function IconGear() {
   );
 }
 
-function isGerarActive(pathname: string) {
-  return pathname.startsWith("/gerar");
+type NavIconId = "grid" | "users" | "calendar" | "edit" | "mic";
+
+function NavItemIcon({ id }: { id: NavIconId }) {
+  switch (id) {
+    case "grid":
+      return <IconGrid />;
+    case "users":
+      return <IconUsers />;
+    case "calendar":
+      return <IconCalendar />;
+    case "edit":
+      return <IconPencil />;
+    case "mic":
+      return <IconMic />;
+    default:
+      return null;
+  }
 }
 
-function isEditActive(pathname: string) {
-  return pathname.startsWith("/subtitle-file-edit");
+function isActivePath(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
 type Props = {
@@ -129,10 +221,13 @@ export function SidebarNav({ collapsed, onToggle }: Props) {
   const pathname = usePathname();
   const { editorFilename } = useSidebarDisplay();
 
-  const timingLabel =
+  const activeFileName =
     editorFilename && editorFilename.trim().length > 0
-      ? `Timing · ${editorFilename}`
-      : "Timing";
+      ? editorFilename.trim()
+      : null;
+
+  const showEditorTimingSub = Boolean(activeFileName);
+  const showGeradorLoteSub = Boolean(ENGINE_LABEL?.trim());
 
   return (
     <>
@@ -147,7 +242,10 @@ export function SidebarNav({ collapsed, onToggle }: Props) {
         }
         title={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
       >
-        <IconSidebarToggle collapsed={collapsed} />
+        <IconCollapseChevron collapsed={collapsed} />
+        {!collapsed ? (
+          <span className="app-sidebar-recolher-label">Recolher</span>
+        ) : null}
       </button>
 
       <div className="app-sidebar-brand-block">
@@ -157,56 +255,101 @@ export function SidebarNav({ collapsed, onToggle }: Props) {
           aria-label="Início — SubtitleStudio"
         >
           <div className="app-sidebar-brand-name">SubtitleStudio</div>
-          <div className="app-sidebar-brand-sub">
-            Workspace de revisão de legendas
-          </div>
+          <div className="app-sidebar-brand-sub">Estúdio de dublagem</div>
         </Link>
       </div>
 
       <nav
         id="app-sidebar-nav"
-        className={`app-sidebar-nav-main ${collapsed ? "app-sidebar-nav-main--collapsed" : ""}`}
+        className="app-sidebar-nav-main"
         aria-label="Navegação do workspace"
       >
-        <span className="app-sidebar-group-label">GERAÇÃO</span>
+        {/* GESTÃO */}
         <div className="app-sidebar-nav-stack">
+          <span className="app-sidebar-group-label">Gestão</span>
           <Link
-            href="/gerar"
-            className={`app-sidebar-nav-item${isGerarActive(pathname) ? " active" : ""}`}
-            aria-current={isGerarActive(pathname) ? "page" : undefined}
-            title={collapsed ? "Gerador SRT" : undefined}
+            href="/projetos"
+            className={`app-sidebar-nav-item${isActivePath(pathname, "/projetos") ? " active" : ""}`}
+            aria-current={
+              isActivePath(pathname, "/projetos") ? "page" : undefined
+            }
+            title={collapsed ? "Projetos" : undefined}
           >
-            <IconMic />
-            <span className="app-sidebar-nav-item-label">Gerador SRT</span>
+            <NavItemIcon id="grid" />
+            <span className="app-sidebar-nav-item-label">Projetos</span>
           </Link>
-          <div className="app-sidebar-subitem" aria-hidden={collapsed}>
-            <IconUploadSmall />
-            <span>Lote · {ENGINE_LABEL}</span>
-          </div>
+          <Link
+            href="/elenco"
+            className={`app-sidebar-nav-item${isActivePath(pathname, "/elenco") ? " active" : ""}`}
+            aria-current={
+              isActivePath(pathname, "/elenco") ? "page" : undefined
+            }
+            title={collapsed ? "Elenco" : undefined}
+          >
+            <NavItemIcon id="users" />
+            <span className="app-sidebar-nav-item-label">Elenco</span>
+          </Link>
+          <Link
+            href="/agenda"
+            className={`app-sidebar-nav-item${isActivePath(pathname, "/agenda") ? " active" : ""}`}
+            aria-current={
+              isActivePath(pathname, "/agenda") ? "page" : undefined
+            }
+            title={collapsed ? "Agenda" : undefined}
+          >
+            <NavItemIcon id="calendar" />
+            <span className="app-sidebar-nav-item-label">Agenda</span>
+          </Link>
         </div>
 
-        <span className="app-sidebar-group-label">REVISÃO</span>
+        {collapsed ? (
+          <div className="app-sidebar-group-sep" aria-hidden />
+        ) : null}
+
+        {/* EDITOR */}
         <div className="app-sidebar-nav-stack">
+          <span className="app-sidebar-group-label">Editor</span>
           <Link
             href="/subtitle-file-edit"
-            className={`app-sidebar-nav-item${isEditActive(pathname) ? " active" : ""}`}
-            aria-current={isEditActive(pathname) ? "page" : undefined}
+            className={`app-sidebar-nav-item${isActivePath(pathname, "/subtitle-file-edit") ? " active" : ""}`}
+            aria-current={
+              isActivePath(pathname, "/subtitle-file-edit")
+                ? "page"
+                : undefined
+            }
             title={collapsed ? "Editor" : undefined}
           >
-            <IconPencil />
+            <NavItemIcon id="edit" />
             <span className="app-sidebar-nav-item-label">Editor</span>
           </Link>
-          <div className="app-sidebar-subitem" aria-hidden={collapsed}>
-            <IconClockSmall />
-            <span>{timingLabel}</span>
-          </div>
+          {showEditorTimingSub ? (
+            <div className="app-sidebar-subitem" aria-hidden={collapsed}>
+              <IconClockSmall />
+              <span>Timing · {activeFileName}</span>
+            </div>
+          ) : null}
+          <Link
+            href="/gerar"
+            className={`app-sidebar-nav-item${isActivePath(pathname, "/gerar") ? " active" : ""}`}
+            aria-current={isActivePath(pathname, "/gerar") ? "page" : undefined}
+            title={collapsed ? "Gerador SRT" : undefined}
+          >
+            <NavItemIcon id="mic" />
+            <span className="app-sidebar-nav-item-label">Gerador SRT</span>
+          </Link>
+          {showGeradorLoteSub ? (
+            <div className="app-sidebar-subitem" aria-hidden={collapsed}>
+              <IconUploadSmall />
+              <span>Lote · {ENGINE_LABEL}</span>
+            </div>
+          ) : null}
         </div>
       </nav>
 
       <div className="app-sidebar-spacer" aria-hidden />
 
       <footer className="app-sidebar-footer">
-        <Link href="/gerar" className="app-sidebar-footer-item">
+        <Link href="/configuracoes" className="app-sidebar-footer-item">
           <IconGear />
           <span>Configurações</span>
         </Link>

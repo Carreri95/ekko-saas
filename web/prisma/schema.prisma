@@ -158,3 +158,47 @@ enum TranscriptionEngine {
   OPENAI_WHISPER
   MOCK
 }
+
+/// Projetos de dublagem / gestão (separado de `Project` de transcrição).
+model DubbingProject {
+  id          String                 @id @default(cuid())
+  name        String
+  client      String?
+  status      DubbingProjectStatus   @default(SPOTTING)
+  startDate   DateTime?
+  deadline    DateTime?
+  episodes    Int?
+  durationMin Int?
+  language    String?
+  value         Decimal?      @db.Decimal(10, 2)
+  valueCurrency ValueCurrency @default(BRL)
+  paymentType   PaymentType   @default(PER_PROJECT)
+  notes       String?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  userId      String?
+
+  @@index([status])
+  @@index([deadline])
+}
+
+enum DubbingProjectStatus {
+  SPOTTING
+  ADAPTATION
+  REVIEW
+  RECORDING
+  DELIVERY
+  DONE
+  PAUSED
+}
+
+enum PaymentType {
+  PER_PROJECT
+  PER_EPISODE
+  PER_MINUTE
+}
+
+enum ValueCurrency {
+  BRL
+  USD
+}

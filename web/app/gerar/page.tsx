@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 
+import { PageShell } from "@/app/components/page-shell";
 import "@/components/batch/batch-generator.css";
 import { filterAudioFiles } from "@/components/batch/audio-files";
 import { BatchStatusBar } from "@/components/batch/BatchStatusBar";
@@ -325,7 +326,8 @@ export default function GerarPage() {
   };
 
   return (
-    <div className="mvp-page flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 sm:p-4">
+    <PageShell noScroll title="Gerador SRT" section="editor">
+      <div className="mvp-page flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 sm:p-4">
       <div className="batch-gen-wrap">
         <div
           className={`batch-gen-app${appDragOver ? " batch-gen-app--drag" : ""}`}
@@ -444,5 +446,6 @@ export default function GerarPage() {
         />
       </div>
     </div>
+    </PageShell>
   );
 }

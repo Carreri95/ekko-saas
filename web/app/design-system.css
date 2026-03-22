@@ -70,12 +70,15 @@
   --fs-2xl: 24px;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* Dentro de @layer base para não sobrepor utilities do Tailwind (padding/margin em className). */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 html,
