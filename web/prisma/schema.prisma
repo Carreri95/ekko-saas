@@ -159,11 +159,32 @@ enum TranscriptionEngine {
   MOCK
 }
 
+model Client {
+  id        String       @id @default(cuid())
+  name      String
+  email     String?      @unique
+  phone     String?      @unique
+  country   String?
+  notes     String?
+  status    ClientStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  projects DubbingProject[]
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+}
+
 /// Projetos de dublagem / gestão (separado de `Project` de transcrição).
 model DubbingProject {
   id          String                 @id @default(cuid())
   name        String
   client      String?
+  clientId    String?
+  clientRef   Client?                @relation(fields: [clientId], references: [id], onDelete: SetNull)
   status      DubbingProjectStatus   @default(SPOTTING)
   startDate   DateTime?
   deadline    DateTime?
@@ -177,6 +198,7 @@ model DubbingProject {
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
   userId      String?
+  characters  ProjectCharacter[]
 
   @@index([status])
   @@index([deadline])
@@ -201,4 +223,47 @@ enum PaymentType {
 enum ValueCurrency {
   BRL
   USD
+}
+
+model CastMember {
+  id           String               @id @default(cuid())
+  name         String
+  role         String? // ex: "Dublador sênior", "Dubladora"
+  whatsapp     String?              @unique
+  email        String?              @unique
+  specialties  String[] // ex: ["Feminino adulto", "Anime"]
+  status       CastMemberStatus     @default(AVAILABLE)
+  notes        String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  characters   ProjectCharacter[]
+}
+
+model ProjectCharacter {
+  id           String                @id @default(cuid())
+  projectId    String
+  project      DubbingProject        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name         String
+  type         String?
+  voiceType    String?
+  importance   CharacterImportance   @default(SUPPORT)
+  castMemberId String?
+  castMember   CastMember?           @relation(fields: [castMemberId], references: [id], onDelete: SetNull)
+  notes        String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([projectId])
+}
+
+enum CharacterImportance {
+  MAIN // Principal
+  SUPPORT // Suporte
+  EXTRA // Figurante
+}
+
+enum CastMemberStatus {
+  AVAILABLE // Disponível
+  BUSY // Em projeto
+  INACTIVE // Inativo
 }

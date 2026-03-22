@@ -91,7 +91,7 @@ export default function ProjetosPage() {
       subtitle={`· ${total}`}
       section="gestao"
     >
-      <div className="projects-body min-h-full">
+      <div className="min-h-0 flex-1 overflow-y-auto px-[24px] py-[24px]">
         <div className="projects-container">
           <div className="flex items-center gap-[8px]">
             <div className="flex w-[260px] items-center gap-[6px] rounded-[6px] border border-[#252525] bg-[#111] px-[10px] py-[5px]">
@@ -170,25 +170,27 @@ export default function ProjetosPage() {
               onRowClick={(p) => router.push(`/projetos/${p.id}`)}
             />
             {total > 0 ? (
-              <div className="flex shrink-0 items-center justify-center gap-[16px] border-t border-[#1e1e1e] px-[16px] py-[10px] text-[11px] text-[#606060]">
+              <div className="flex shrink-0 items-center justify-center gap-[12px] border-t border-[#1e1e1e] bg-[#141414] px-[16px] py-[10px]">
                 <button
                   type="button"
                   disabled={page <= 1 || loading}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="rounded-[4px] border border-[#2e2e2e] px-[10px] py-[4px] text-[11px] text-[#909090] transition-colors hover:border-[#404040] hover:text-[#e8e8e8] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex items-center gap-[4px] rounded-[5px] border border-[#2e2e2e] bg-[#1a1a1a] px-[10px] py-[5px] text-[11px] text-[#606060] transition-colors hover:border-[#404040] hover:bg-[#252525] hover:text-[#e8e8e8] disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                  Anterior
+                  ← Anterior
                 </button>
-                <span className="tabular-nums">
-                  Página {page} de {totalPages}
+                <span className="text-[11px] tabular-nums text-[#505050]">
+                  Página <span className="font-[500] text-[#909090]">{page}</span>
+                  {" "}de{" "}
+                  <span className="font-[500] text-[#909090]">{totalPages}</span>
                 </span>
                 <button
                   type="button"
                   disabled={page >= totalPages || loading}
                   onClick={() => setPage((p) => p + 1)}
-                  className="rounded-[4px] border border-[#2e2e2e] px-[10px] py-[4px] text-[11px] text-[#909090] transition-colors hover:border-[#404040] hover:text-[#e8e8e8] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex items-center gap-[4px] rounded-[5px] border border-[#2e2e2e] bg-[#1a1a1a] px-[10px] py-[5px] text-[11px] text-[#606060] transition-colors hover:border-[#404040] hover:bg-[#252525] hover:text-[#e8e8e8] disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                  Próxima
+                  Próxima →
                 </button>
               </div>
             ) : null}

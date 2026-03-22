@@ -9,6 +9,7 @@ export type DubbingProjectDto = {
   id: string;
   name: string;
   client: string | null;
+  clientId: string | null;
   status: DubbingProjectStatus;
   startDate: string | null;
   deadline: string | null;

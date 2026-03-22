@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSidebarDisplay } from "./sidebar-display-context";
 
-const ENGINE_LABEL = "Whisper / mock";
-
 function IconCollapseChevron({ collapsed }: { collapsed: boolean }) {
   return (
     <svg
@@ -77,6 +75,25 @@ function IconUsers() {
   );
 }
 
+function IconBriefcase() {
+  return (
+    <svg
+      width={15}
+      height={15}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="7" width="20" height="14" rx="2" />
+      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+    </svg>
+  );
+}
+
 function IconCalendar() {
   return (
     <svg
@@ -140,20 +157,6 @@ function IconMic() {
   );
 }
 
-function IconUploadSmall() {
-  return (
-    <svg width={11} height={11} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function IconClockSmall() {
   return (
     <svg width={11} height={11} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -189,7 +192,7 @@ function IconGear() {
   );
 }
 
-type NavIconId = "grid" | "users" | "calendar" | "edit" | "mic";
+type NavIconId = "grid" | "users" | "briefcase" | "calendar" | "edit" | "mic";
 
 function NavItemIcon({ id }: { id: NavIconId }) {
   switch (id) {
@@ -197,6 +200,8 @@ function NavItemIcon({ id }: { id: NavIconId }) {
       return <IconGrid />;
     case "users":
       return <IconUsers />;
+    case "briefcase":
+      return <IconBriefcase />;
     case "calendar":
       return <IconCalendar />;
     case "edit":
@@ -227,7 +232,6 @@ export function SidebarNav({ collapsed, onToggle }: Props) {
       : null;
 
   const showEditorTimingSub = Boolean(activeFileName);
-  const showGeradorLoteSub = Boolean(ENGINE_LABEL?.trim());
 
   return (
     <>
@@ -290,6 +294,17 @@ export function SidebarNav({ collapsed, onToggle }: Props) {
             <span className="app-sidebar-nav-item-label">Elenco</span>
           </Link>
           <Link
+            href="/clientes"
+            className={`app-sidebar-nav-item${isActivePath(pathname, "/clientes") ? " active" : ""}`}
+            aria-current={
+              isActivePath(pathname, "/clientes") ? "page" : undefined
+            }
+            title={collapsed ? "Clientes" : undefined}
+          >
+            <NavItemIcon id="briefcase" />
+            <span className="app-sidebar-nav-item-label">Clientes</span>
+          </Link>
+          <Link
             href="/agenda"
             className={`app-sidebar-nav-item${isActivePath(pathname, "/agenda") ? " active" : ""}`}
             aria-current={
@@ -337,12 +352,6 @@ export function SidebarNav({ collapsed, onToggle }: Props) {
             <NavItemIcon id="mic" />
             <span className="app-sidebar-nav-item-label">Gerador SRT</span>
           </Link>
-          {showGeradorLoteSub ? (
-            <div className="app-sidebar-subitem" aria-hidden={collapsed}>
-              <IconUploadSmall />
-              <span>Lote · {ENGINE_LABEL}</span>
-            </div>
-          ) : null}
         </div>
       </nav>
 

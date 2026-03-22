@@ -8,6 +8,7 @@ export type DubbingProjectSerializeInput = {
   id: string;
   name: string;
   client: string | null;
+  clientId: string | null;
   status: DubbingProjectDto["status"];
   startDate: Date | null;
   deadline: Date | null;
@@ -31,6 +32,7 @@ export function serializeDubbingProject(
     id: p.id,
     name: p.name,
     client: p.client,
+    clientId: p.clientId,
     status: p.status,
     startDate: p.startDate?.toISOString() ?? null,
     deadline: p.deadline?.toISOString() ?? null,

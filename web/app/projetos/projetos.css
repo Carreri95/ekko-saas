@@ -1,15 +1,9 @@
-/* ── Layout centralizado ── */
-.projects-body {
-  background: #0f0f0f;
-}
-
+/* ── Layout (largura total; padding no page.tsx via px-[24px] py-[24px]) ── */
 .projects-container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 28px 32px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* ── KPI cards ── */
@@ -334,10 +328,6 @@
 @media (max-width: 900px) {
   .projects-kpi-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .projects-container {
-    padding: 20px;
   }
 
   .project-edit-grid {
