@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -9,6 +10,7 @@ import {
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
 } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import WaveSurfer from "wavesurfer.js";
 
 import { parseSrt } from "@/src/lib/srt/parse-srt";
@@ -67,6 +69,8 @@ import type {
 } from "./types";
 import { PageShell } from "@/app/components/page-shell";
 import { useSidebarDisplay } from "@/app/components/sidebar-display-context";
+import type { DubbingEpisodeDto } from "@/app/types/dubbing-episode";
+import { DubbingEpisodeNavBar } from "./components/dubbing-episode-nav-bar";
 import { injectWaveformCueShadowStyles } from "./waveformCueShadowStyles";
 
 /** Duração mínima (ms) entre início e fim ao arrastar bordas na waveform. */
@@ -81,19 +85,6 @@ function sanitizeSubtitleFileId(raw: string | null | undefined): string {
   // Evita placeholders comuns como "<ID>" que quebram as rotas de API.
   if (/^<[^>]+>$/.test(trimmed)) return "";
   return trimmed;
-}
-
-function normalizeBrowserMediaPath(raw: string | null | undefined): string | null {
-  const trimmed = String(raw ?? "").trim();
-  if (!trimmed) return null;
-  if (/^(blob:|data:|https?:\/\/)/i.test(trimmed)) return trimmed;
-  if (trimmed.startsWith("/")) return trimmed;
-  if (/^[a-zA-Z]:[\\/]/.test(trimmed)) return null;
-  const withoutPublic = trimmed
-    .replace(/^web[\\/]+public[\\/]+/i, "")
-    .replace(/^public[\\/]+/i, "")
-    .replace(/[\\/]+/g, "/");
-  return `/${withoutPublic.replace(/^\/+/, "")}`;
 }
 
 function logBrowserError(context: string, error: unknown): void {
@@ -113,7 +104,16 @@ function isSpaceReservedForFocusedElement(target: EventTarget | null): boolean {
   );
 }
 
-export default function SubtitleFileEditPage() {
+function SubtitleFileEditPageInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const fileIdParam =
+    searchParams.get("fileId") ?? searchParams.get("subtitleFileId") ?? "";
+  const episodeIdParam = searchParams.get("episodeId") ?? "";
+  const projectIdParam = searchParams.get("projectId") ?? "";
+  const dubbingContextActive =
+    Boolean(episodeIdParam.trim()) && Boolean(projectIdParam.trim());
+
   const mediaElementRef = useRef<HTMLAudioElement | HTMLVideoElement | null>(
     null,
   );
@@ -128,7 +128,6 @@ export default function SubtitleFileEditPage() {
   const autoSaveTimerRef = useRef<number | null>(null);
   const autoSaveInFlightRef = useRef(false);
   const lastSavedServerHashRef = useRef("");
-  const audioRouteFallbackTriedRef = useRef(false);
   const waveformOverviewDragRef = useRef<WaveformOverviewDragRefState>(null);
   const suppressWaveformInteractionUntilRef = useRef(0);
   /** Enquanto `performance.now()` < valor, não forçar scroll a seguir o playhead (scroll manual). */
@@ -143,6 +142,7 @@ export default function SubtitleFileEditPage() {
   const { setEditorFilename } = useSidebarDisplay();
   const [wavFilename, setWavFilename] = useState<string | null>(null);
   const [wavPath, setWavPath] = useState<string | null>(null);
+  const [audioOverlayVisible, setAudioOverlayVisible] = useState(false);
   const [cues, setCues] = useState<CueDto[]>([]);
   const cuesRef = useRef(cues);
   cuesRef.current = cues;
@@ -188,6 +188,14 @@ export default function SubtitleFileEditPage() {
   const emptyAudioInputRef = useRef<HTMLInputElement | null>(null);
   const [srtDropActive, setSrtDropActive] = useState(false);
   const [audioDropActive, setAudioDropActive] = useState(false);
+  const [dubbingEpisodes, setDubbingEpisodes] = useState<DubbingEpisodeDto[]>(
+    [],
+  );
+  const [dubbingEpisodesLoading, setDubbingEpisodesLoading] = useState(false);
+  const [dubbingEpisodesError, setDubbingEpisodesError] = useState<
+    string | null
+  >(null);
+  const [saveCompleteBusy, setSaveCompleteBusy] = useState(false);
   /** Vista geral da faixa (scroll) — barra por baixo da waveform. */
   const [waveformViewport, setWaveformViewport] = useState<WaveformViewport>(null);
 
@@ -209,9 +217,7 @@ export default function SubtitleFileEditPage() {
   const { bindPanSeekHandlers } = useWaveformPanSeek();
 
   useEffect(() => {
-    const rawId = new URLSearchParams(window.location.search).get(
-      "subtitleFileId",
-    );
+    const rawId = fileIdParam;
     const id = sanitizeSubtitleFileId(rawId);
     if (id) {
       setSubtitleFileId(id);
@@ -222,7 +228,47 @@ export default function SubtitleFileEditPage() {
         "ID inválido na URL (placeholder). Use um subtitleFileId real ou carregue SRT/áudio local.",
       );
     }
-  }, []);
+  }, [fileIdParam]);
+
+  useEffect(() => {
+    if (!dubbingContextActive) {
+      setDubbingEpisodes([]);
+      setDubbingEpisodesError(null);
+      return;
+    }
+    const pid = projectIdParam.trim();
+    let cancelled = false;
+    setDubbingEpisodesLoading(true);
+    setDubbingEpisodesError(null);
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/dubbing-projects/${encodeURIComponent(pid)}/episodes`,
+        );
+        if (!res.ok) {
+          throw new Error("Não foi possível carregar os episódios.");
+        }
+        const data = (await res.json()) as { episodes: DubbingEpisodeDto[] };
+        if (!cancelled) {
+          setDubbingEpisodes(data.episodes ?? []);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setDubbingEpisodes([]);
+          setDubbingEpisodesError(
+            e instanceof Error ? e.message : String(e),
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setDubbingEpisodesLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dubbingContextActive, projectIdParam]);
 
   /** Carrega legenda e metadados do servidor quando há `?subtitleFileId=` na URL. */
   useEffect(() => {
@@ -232,6 +278,8 @@ export default function SubtitleFileEditPage() {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setWavPath(null);
+    setAudioOverlayVisible(false);
 
     void (async () => {
       try {
@@ -258,6 +306,9 @@ export default function SubtitleFileEditPage() {
         setFilename(json.filename);
         setWavFilename(json.wavFilename);
         setWavPath(json.wavPath);
+        const hasAudioPath =
+          typeof json.wavPath === "string" && json.wavPath.trim() !== "";
+        setAudioOverlayVisible(hasAudioPath);
         setMediaSourceUrl(`/api/subtitle-files/${encodeURIComponent(id)}/audio`);
         setMediaKind("audio");
         setLocalWaveformData(null);
@@ -265,6 +316,7 @@ export default function SubtitleFileEditPage() {
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : String(e));
+          setAudioOverlayVisible(false);
         }
       } finally {
         if (!cancelled) {
@@ -277,6 +329,50 @@ export default function SubtitleFileEditPage() {
       cancelled = true;
     };
   }, [subtitleFileId]);
+
+  useEffect(() => {
+    if (!audioOverlayVisible) return;
+    if (!subtitleFileId || !wavPath) return;
+
+    let cancelled = false;
+    let rafId = 0;
+    let detachReady: (() => void) | null = null;
+    let detachError: (() => void) | null = null;
+
+    const attachToWaveSurfer = () => {
+      if (cancelled) return;
+      const ws = waveSurferRef.current;
+      if (!ws) {
+        rafId = requestAnimationFrame(attachToWaveSurfer);
+        return;
+      }
+      const d = ws.getDuration();
+      if (Number.isFinite(d) && d > 0) {
+        setAudioOverlayVisible(false);
+        return;
+      }
+      detachReady = ws.on("ready", () => {
+        setAudioOverlayVisible(false);
+      });
+      detachError = ws.on("error", () => {
+        setAudioOverlayVisible(false);
+      });
+    };
+
+    attachToWaveSurfer();
+
+    return () => {
+      cancelled = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      detachReady?.();
+      detachError?.();
+    };
+  }, [audioOverlayVisible, subtitleFileId, wavPath]);
+
+  useEffect(() => {
+    if (!error) return;
+    setAudioOverlayVisible(false);
+  }, [error]);
 
   useEffect(() => {
     setEditorFilename(filename);
@@ -907,7 +1003,6 @@ export default function SubtitleFileEditPage() {
     waveformMoveDragRef,
     suppressWaveformInteractionUntilRef,
     suppressPlayheadFollowUntilRef,
-    audioRouteFallbackTriedRef,
     setWaveformDurationSec,
     setWaveformCueOverlayHostEl,
     setWaveformViewport,
@@ -915,7 +1010,6 @@ export default function SubtitleFileEditPage() {
     setMediaSourceUrl,
     seekPlaybackToTimeSec,
     logBrowserError,
-    normalizeBrowserMediaPath,
     injectWaveformCueShadowStyles,
   });
 
@@ -946,6 +1040,58 @@ export default function SubtitleFileEditPage() {
     lastSavedServerHashRef,
     persistCuesToServer,
   });
+
+  const handleSaveAndComplete = useCallback(async () => {
+    const pid = projectIdParam.trim();
+    const eid = episodeIdParam.trim();
+    if (!pid || !eid || !dubbingContextActive) return;
+    setSaveCompleteBusy(true);
+    try {
+      const ok = await persistCuesToServer({
+        showSuccess: true,
+        syncServerResponseToUi: true,
+      });
+      if (!ok) return;
+      const res = await fetch(
+        `/api/dubbing-projects/${encodeURIComponent(pid)}/episodes/${encodeURIComponent(eid)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "DONE",
+            editedAt: new Date().toISOString(),
+          }),
+        },
+      );
+      const raw = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg =
+          typeof raw === "object" && raw && "error" in raw
+            ? String((raw as { error?: unknown }).error)
+            : "Falha ao atualizar o episódio.";
+        setError(msg);
+        return;
+      }
+      const data = raw as { episode?: DubbingEpisodeDto };
+      if (data.episode) {
+        setDubbingEpisodes((prev) =>
+          prev.map((row) =>
+            row.id === data.episode!.id ? data.episode! : row,
+          ),
+        );
+      }
+      setSaveSuccess("Revisão gravada e episódio concluído.");
+    } finally {
+      setSaveCompleteBusy(false);
+    }
+  }, [
+    persistCuesToServer,
+    projectIdParam,
+    episodeIdParam,
+    dubbingContextActive,
+    setError,
+    setSaveSuccess,
+  ]);
 
   const { clearMedia: clearMediaInner, resetPlaybackToStart: resetPlaybackInner } =
     useMediaSessionControls({
@@ -1109,9 +1255,46 @@ export default function SubtitleFileEditPage() {
       section="editor"
       noScroll
     >
+    {audioOverlayVisible ? (
+      <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[rgba(8,8,10,0.82)]">
+        <div className="flex flex-col items-center gap-3 rounded-[10px] border border-[var(--border)] bg-[var(--bg-elevated)] px-5 py-4">
+          <span
+            className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[#1D9E75] border-t-transparent"
+            aria-hidden
+          />
+          <p className="text-[12px] font-medium text-[var(--text-primary)]">
+            Carregando áudio...
+          </p>
+        </div>
+      </div>
+    ) : null}
     <main className="mvp-page editor-desktop-page flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
       <div className="editor-desktop-shell flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-hidden">
         <>
+        {dubbingContextActive ? (
+          <DubbingEpisodeNavBar
+            currentEpisodeId={episodeIdParam.trim()}
+            episodes={dubbingEpisodes}
+            loading={dubbingEpisodesLoading}
+            error={dubbingEpisodesError}
+            onSelectDoneEpisode={(ep) => {
+              if (ep.status !== "DONE" || !ep.subtitleFileId) return;
+              router.push(
+                `/subtitle-file-edit?fileId=${encodeURIComponent(ep.subtitleFileId)}&episodeId=${encodeURIComponent(ep.id)}&projectId=${encodeURIComponent(projectIdParam.trim())}`,
+              );
+            }}
+            onSaveAndComplete={handleSaveAndComplete}
+            saveCompleting={saveCompleteBusy}
+            canSaveAndComplete={
+              dubbingContextActive &&
+              hasServerSubtitleFile &&
+              !loading &&
+              !hasInvalidCue &&
+              !saving &&
+              !saveCompleteBusy
+            }
+          />
+        ) : null}
         {hasEditorContent || loading ? (
         <div className="editor-desktop-toolbar shrink-0 border-b border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2">
           <div className="flex flex-wrap items-end gap-2">
@@ -1475,5 +1658,23 @@ export default function SubtitleFileEditPage() {
       ) : null}
     </main>
     </PageShell>
+  );
+}
+
+export default function SubtitleFileEditPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageShell title="Editor" section="editor" noScroll>
+          <main className="mvp-page editor-desktop-page flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+            <div className="flex flex-1 items-center justify-center p-6 text-sm text-[var(--text-muted)]">
+              Carregando editor…
+            </div>
+          </main>
+        </PageShell>
+      }
+    >
+      <SubtitleFileEditPageInner />
+    </Suspense>
   );
 }

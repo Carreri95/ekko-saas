@@ -87,6 +87,11 @@ export type Client = Prisma.ClientModel
  */
 export type DubbingProject = Prisma.DubbingProjectModel
 /**
+ * Model Episode
+ * Episódio de projeto de dublagem (linha editoral por número).
+ */
+export type Episode = Prisma.EpisodeModel
+/**
  * Model CastMember
  * 
  */

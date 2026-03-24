@@ -60,6 +60,7 @@ export const ModelName = {
   SubtitleVersion: 'SubtitleVersion',
   Client: 'Client',
   DubbingProject: 'DubbingProject',
+  Episode: 'Episode',
   CastMember: 'CastMember',
   ProjectCharacter: 'ProjectCharacter',
   MediaAsset: 'MediaAsset'
@@ -210,7 +211,7 @@ export const DubbingProjectScalarFieldEnum = {
   status: 'status',
   startDate: 'startDate',
   deadline: 'deadline',
-  episodes: 'episodes',
+  episodeCount: 'episodeCount',
   durationMin: 'durationMin',
   language: 'language',
   value: 'value',
@@ -223,6 +224,23 @@ export const DubbingProjectScalarFieldEnum = {
 } as const
 
 export type DubbingProjectScalarFieldEnum = (typeof DubbingProjectScalarFieldEnum)[keyof typeof DubbingProjectScalarFieldEnum]
+
+
+export const EpisodeScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  editedAt: 'editedAt',
+  number: 'number',
+  title: 'title',
+  status: 'status',
+  subtitleFileId: 'subtitleFileId',
+  audioFileId: 'audioFileId',
+  transcriptionProjectId: 'transcriptionProjectId',
+  projectId: 'projectId'
+} as const
+
+export type EpisodeScalarFieldEnum = (typeof EpisodeScalarFieldEnum)[keyof typeof EpisodeScalarFieldEnum]
 
 
 export const CastMemberScalarFieldEnum = {

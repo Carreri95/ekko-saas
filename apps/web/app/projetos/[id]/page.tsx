@@ -5,7 +5,14 @@ import "../projetos.css";
 import { PageShell } from "@/app/components/page-shell";
 import { useConfirm } from "@/app/components/confirm-provider";
 import { DateInput } from "@/app/components/date-input";
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
+import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
 import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +25,10 @@ import type { DubbingProjectDto } from "../types";
 import type { DubbingProjectStatus } from "../domain";
 import type { ProjectCharacterDto } from "@/app/types/project-character";
 import type { CastMemberDto } from "@/app/types/cast-member";
+import type {
+  DubbingEpisodeDto,
+  DubbingEpisodeStatus,
+} from "@/app/types/dubbing-episode";
 import { CharacterCard } from "./components/character-card";
 import { CharacterModal } from "./components/character-modal";
 import { LanguageCombobox } from "../components/language-combobox";
@@ -32,10 +43,12 @@ import {
   storedTotalToFormUnit,
   valueFieldLabel,
 } from "../lib/project-finance";
+import { getStoredOpenAiApiKey } from "@/lib/openai-api-key-storage";
 
 const TABS = [
   { id: "info", label: "Informações", enabled: true },
   { id: "elenco", label: "Elenco", enabled: true },
+  { id: "episodios", label: "Episódios", enabled: true },
   { id: "agenda", label: "Agenda", enabled: false },
   { id: "gravacoes", label: "Gravações", enabled: false },
   { id: "financeiro", label: "Financeiro", enabled: false },
@@ -66,6 +79,27 @@ const inputErrCls =
 const labelCls =
   "mb-[5px] block text-[10px] font-[600] uppercase tracking-[0.07em] text-[#505050]";
 const errorCls = "mt-[3px] text-[11px] text-[#F09595]";
+
+const EPISODE_STATUS_BADGE: Record<
+  DubbingEpisodeStatus,
+  { className: string; label: string }
+> = {
+  PENDING: {
+    className:
+      "border border-[#404040] bg-[#2a2a2a] text-[#909090]",
+    label: "Pendente",
+  },
+  TRANSCRIBING: {
+    className:
+      "border border-[#5c4a20] bg-[#3d3520] text-[#EF9F27]",
+    label: "Em transcrição",
+  },
+  DONE: {
+    className:
+      "border border-[#0F6E56] bg-[#0d3d2a] text-[#5DCAA5]",
+    label: "Concluído",
+  },
+};
 
 function isoToInput(iso?: string | null) {
   if (!iso) return "";
@@ -117,6 +151,31 @@ export default function ProjectEditPage() {
   const [editingChar, setEditingChar] = useState<ProjectCharacterDto | null>(
     null,
   );
+  const [episodes, setEpisodes] = useState<DubbingEpisodeDto[]>([]);
+  const [episodesLoading, setEpisodesLoading] = useState(false);
+  const [episodesError, setEpisodesError] = useState<string | null>(null);
+  const [uploadingEpisodeId, setUploadingEpisodeId] = useState<string | null>(
+    null,
+  );
+  const [episodeInlineError, setEpisodeInlineError] = useState<
+    Record<string, string>
+  >({});
+  const [openEpisodeMenuId, setOpenEpisodeMenuId] = useState<string | null>(
+    null,
+  );
+  /** Posição do dropdown (portal + fixed) — evita recorte por `overflow-y-auto` do painel. */
+  const [episodeMenuFixed, setEpisodeMenuFixed] = useState<{
+    top: number;
+    right: number;
+  } | null>(null);
+  const episodesTabScrollRef = useRef<HTMLDivElement | null>(null);
+  const [exportSrtsBusy, setExportSrtsBusy] = useState(false);
+  const [exportSrtsError, setExportSrtsError] = useState<string | null>(null);
+  const audioTargetEpRef = useRef<string | null>(null);
+  const audioFileInputRef = useRef<HTMLInputElement>(null);
+  const transcriptionPollRef = useRef<
+    Record<string, ReturnType<typeof setInterval>>
+  >({});
 
   const load = useCallback(async () => {
     if (!id) {
@@ -168,12 +227,322 @@ export default function ProjectEditPage() {
     setCastMembers(data.members ?? []);
   }, []);
 
+  const loadEpisodes = useCallback(async () => {
+    if (!id) return;
+    setEpisodesLoading(true);
+    setEpisodesError(null);
+    setExportSrtsError(null);
+    try {
+      const res = await fetch(`/api/dubbing-projects/${id}/episodes`);
+      if (!res.ok) {
+        setEpisodes([]);
+        setEpisodesError("Não foi possível carregar os episódios.");
+        return;
+      }
+      const data = (await res.json()) as { episodes: DubbingEpisodeDto[] };
+      setEpisodes(data.episodes ?? []);
+    } catch {
+      setEpisodes([]);
+      setEpisodesError("Não foi possível carregar os episódios.");
+    } finally {
+      setEpisodesLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (activeTab === "elenco") {
       void loadCharacters();
       void loadCastMembers();
     }
   }, [activeTab, loadCharacters, loadCastMembers]);
+
+  useEffect(() => {
+    if (activeTab === "episodios") {
+      void loadEpisodes();
+    }
+  }, [activeTab, loadEpisodes]);
+
+  useEffect(() => {
+    return () => {
+      const polls = transcriptionPollRef.current;
+      for (const iv of Object.values(polls)) {
+        clearInterval(iv);
+      }
+      transcriptionPollRef.current = {};
+    };
+  }, []);
+
+  useEffect(() => {
+    const onDocPointerDown = (e: PointerEvent) => {
+      const target = e.target;
+      if (!(target instanceof Element)) {
+        setOpenEpisodeMenuId(null);
+        setEpisodeMenuFixed(null);
+        return;
+      }
+      const inside =
+        target.closest("[data-episode-menu-root='1']") ||
+        target.closest("[data-episode-menu-portal='1']");
+      if (!inside) {
+        setOpenEpisodeMenuId(null);
+        setEpisodeMenuFixed(null);
+      }
+    };
+    document.addEventListener("pointerdown", onDocPointerDown);
+    return () => document.removeEventListener("pointerdown", onDocPointerDown);
+  }, []);
+
+  useEffect(() => {
+    if (!openEpisodeMenuId) return;
+    const onScrollOrResize = () => {
+      setOpenEpisodeMenuId(null);
+      setEpisodeMenuFixed(null);
+    };
+    window.addEventListener("resize", onScrollOrResize);
+    const el = episodesTabScrollRef.current;
+    el?.addEventListener("scroll", onScrollOrResize, { passive: true });
+    return () => {
+      window.removeEventListener("resize", onScrollOrResize);
+      el?.removeEventListener("scroll", onScrollOrResize);
+    };
+  }, [openEpisodeMenuId]);
+
+  useEffect(() => {
+    setOpenEpisodeMenuId(null);
+    setEpisodeMenuFixed(null);
+  }, [activeTab]);
+
+  const patchEpisodeRow = useCallback(
+    async (epId: string, body: Record<string, unknown>) => {
+      if (!id) return null;
+      const res = await fetch(
+        `/api/dubbing-projects/${id}/episodes/${encodeURIComponent(epId)}`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+      if (!res.ok) return null;
+      const data = (await res.json()) as { episode: DubbingEpisodeDto };
+      return data.episode ?? null;
+    },
+    [id],
+  );
+
+  const stopTranscriptionPoll = useCallback((epId: string) => {
+    const iv = transcriptionPollRef.current[epId];
+    if (iv) {
+      clearInterval(iv);
+      delete transcriptionPollRef.current[epId];
+    }
+  }, []);
+
+  const startTranscriptionPoll = useCallback(
+    (epId: string, jobId: string) => {
+      stopTranscriptionPoll(epId);
+      const tick = async () => {
+        const res = await fetch(
+          `/api/jobs/${encodeURIComponent(jobId)}/status`,
+          { cache: "no-store" },
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          status: string;
+          subtitleFileId?: string | null;
+          errorMessage?: string | null;
+        };
+        const st = data.status;
+        if (st === "DONE") {
+          stopTranscriptionPoll(epId);
+          const updated = await patchEpisodeRow(epId, {
+            status: "DONE",
+            subtitleFileId: data.subtitleFileId ?? null,
+          });
+          if (updated) {
+            setEpisodes((prev) =>
+              prev.map((e) => (e.id === epId ? updated : e)),
+            );
+          }
+          setEpisodeInlineError((prev) => {
+            const n = { ...prev };
+            delete n[epId];
+            return n;
+          });
+        } else if (st === "FAILED") {
+          stopTranscriptionPoll(epId);
+          await patchEpisodeRow(epId, { status: "PENDING" });
+          setEpisodes((prev) =>
+            prev.map((e) =>
+              e.id === epId ? { ...e, status: "PENDING" } : e,
+            ),
+          );
+          const msg =
+            data.errorMessage?.trim() || "A transcrição falhou.";
+          setEpisodeInlineError((prev) => ({ ...prev, [epId]: msg }));
+        }
+      };
+      transcriptionPollRef.current[epId] = setInterval(
+        () => void tick(),
+        3000,
+      );
+      void tick();
+    },
+    [patchEpisodeRow, stopTranscriptionPoll],
+  );
+
+  const onPickEpisodeAudio = (epId: string) => {
+    audioTargetEpRef.current = epId;
+    audioFileInputRef.current?.click();
+  };
+
+  const onEpisodeAudioSelected = async (e: ChangeEvent<HTMLInputElement>) => {
+    const epId = audioTargetEpRef.current;
+    const input = e.target;
+    audioTargetEpRef.current = null;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!epId || !id || !file) return;
+
+    setUploadingEpisodeId(epId);
+    setEpisodeInlineError((prev) => {
+      const n = { ...prev };
+      delete n[epId];
+      return n;
+    });
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(
+        `/api/dubbing-projects/${id}/episodes/${encodeURIComponent(epId)}/audio`,
+        {
+          method: "POST",
+          body: fd,
+        },
+      );
+      const raw = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err =
+          typeof raw === "object" && raw && "error" in raw
+            ? String((raw as { error?: unknown }).error)
+            : "Falha no upload.";
+        setEpisodeInlineError((prev) => ({ ...prev, [epId]: err }));
+        return;
+      }
+      const data = raw as { episode?: DubbingEpisodeDto };
+      if (data.episode) {
+        setEpisodes((prev) =>
+          prev.map((row) => (row.id === epId ? data.episode! : row)),
+        );
+      } else {
+        void loadEpisodes();
+      }
+    } catch {
+      setEpisodeInlineError((prev) => ({
+        ...prev,
+        [epId]: "Falha de rede no upload.",
+      }));
+    } finally {
+      setUploadingEpisodeId(null);
+    }
+  };
+
+  const onExportDoneEpisodesSrts = async () => {
+    if (!id) return;
+    setExportSrtsBusy(true);
+    setExportSrtsError(null);
+    try {
+      const res = await fetch(
+        `/api/dubbing-projects/${encodeURIComponent(id)}/episodes/export`,
+        { cache: "no-store" },
+      );
+      if (res.status === 404) {
+        setExportSrtsError("Nenhum episódio concluído");
+        return;
+      }
+      if (!res.ok) {
+        setExportSrtsError("Falha ao gerar o arquivo.");
+        return;
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get("content-disposition");
+      let filename = `projeto-${id}-srts.zip`;
+      if (cd) {
+        const m = /filename="([^"]+)"/.exec(cd);
+        if (m?.[1]) filename = m[1];
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportSrtsError("Falha de rede ao exportar.");
+    } finally {
+      setExportSrtsBusy(false);
+    }
+  };
+
+  const onGenerateEpisodeSrt = async (ep: DubbingEpisodeDto) => {
+    if (!id || !ep.audioFileId) return;
+    const key = getStoredOpenAiApiKey();
+    if (!key) {
+      setEpisodeInlineError((prev) => ({
+        ...prev,
+        [ep.id]:
+          "Defina a chave OpenAI na página Gerar (campo na sessão do browser).",
+      }));
+      return;
+    }
+    setEpisodeInlineError((prev) => {
+      const n = { ...prev };
+      delete n[ep.id];
+      return n;
+    });
+    try {
+      const res = await fetch(
+        `/api/dubbing-projects/${id}/episodes/${encodeURIComponent(ep.id)}/transcriptions`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-openai-key": key,
+          },
+          body: JSON.stringify({}),
+        },
+      );
+      const raw = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err =
+          typeof raw === "object" && raw && "error" in raw
+            ? String((raw as { error?: unknown }).error)
+            : "Não foi possível iniciar a transcrição.";
+        setEpisodeInlineError((prev) => ({ ...prev, [ep.id]: err }));
+        return;
+      }
+      const data = raw as {
+        jobId?: string;
+        episode?: DubbingEpisodeDto;
+      };
+      if (data.episode) {
+        setEpisodes((prev) =>
+          prev.map((row) => (row.id === ep.id ? data.episode! : row)),
+        );
+      }
+      if (data.jobId) {
+        startTranscriptionPoll(ep.id, data.jobId);
+      }
+    } catch {
+      setEpisodeInlineError((prev) => ({
+        ...prev,
+        [ep.id]: "Falha de rede ao iniciar transcrição.",
+      }));
+    }
+  };
 
   const openNewChar = () => {
     setEditingChar(null);
@@ -227,6 +596,21 @@ export default function ProjectEditPage() {
   const watchedDeadline = watch("deadline");
   const watchedStatus = watch("status");
   const notesLen = watchedNotes?.length ?? 0;
+
+  const episodeTotal = episodes.length;
+  const episodeDoneCount = episodes.filter((e) => e.status === "DONE").length;
+  const hasAnyDoneEpisode = episodeDoneCount > 0;
+  const episodeTranscribingCount = episodes.filter(
+    (e) => e.status === "TRANSCRIBING",
+  ).length;
+  const episodeProgressPct =
+    episodeTotal > 0
+      ? Math.round(
+          ((episodeDoneCount + episodeTranscribingCount * 0.5) /
+            episodeTotal) *
+            100,
+        )
+      : 0;
 
   const numVal =
     typeof watchedValue === "number"
@@ -926,7 +1310,303 @@ export default function ProjectEditPage() {
                     </div>
                   </div>
                 )}
-                {activeTab !== "info" && activeTab !== "elenco" ? (
+                {activeTab === "episodios" && (
+                  <div
+                    ref={episodesTabScrollRef}
+                    className="flex-1 overflow-y-auto px-[24px] py-[20px]"
+                  >
+                    <div className="mx-auto" style={{ maxWidth: 900 }}>
+                      <div className="mb-[16px] flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <h2 className="text-[14px] font-[600] text-[#e8e8e8]">
+                            Episódios
+                          </h2>
+                          <p className="mt-[2px] text-[11px] text-[#505050]">
+                            Lista editorial por número
+                          </p>
+                        </div>
+                        {hasAnyDoneEpisode ? (
+                          <button
+                            type="button"
+                            disabled={exportSrtsBusy || episodesLoading}
+                            onClick={() => void onExportDoneEpisodesSrts()}
+                            className="shrink-0 rounded-[6px] border border-[#0F6E56] bg-[#1D9E75] px-[12px] py-[6px] text-[11px] font-[500] text-white transition-colors hover:bg-[#0F6E56] disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {exportSrtsBusy ? "Gerando…" : "↓ Baixar SRTs"}
+                          </button>
+                        ) : null}
+                      </div>
+                      {exportSrtsError ? (
+                        <p className="mb-[12px] text-[11px] text-[#F09595]">
+                          {exportSrtsError}
+                        </p>
+                      ) : null}
+
+                      {episodesLoading ? (
+                        <div className="flex min-h-[160px] items-center justify-center rounded-[10px] border border-[#252525] bg-[#1a1a1a] text-[13px] text-[#505050]">
+                          Carregando episódios…
+                        </div>
+                      ) : episodesError ? (
+                        <div className="rounded-[10px] border border-[#5a1515] bg-[#2a0a0a] px-[14px] py-[12px] text-[12px] text-[#F09595]">
+                          {episodesError}
+                        </div>
+                      ) : (
+                        <>
+                          <input
+                            ref={audioFileInputRef}
+                            type="file"
+                            accept="audio/*"
+                            className="hidden"
+                            aria-hidden
+                            onChange={onEpisodeAudioSelected}
+                          />
+                          <div className="mb-[16px] overflow-hidden rounded-[10px] border border-[#252525] bg-[#1a1a1a]">
+                            <div className="border-b border-[#252525] px-[14px] py-[10px]">
+                              <span className="text-[12px] font-[600] text-[#e8e8e8]">
+                                Progresso
+                              </span>
+                            </div>
+                            <div className="p-[14px]">
+                              <p className="mb-[10px] text-[12px] text-[#909090]">
+                                {episodeDoneCount} de {episodeTotal} episódios
+                                concluídos
+                              </p>
+                              <div className="h-[8px] w-full overflow-hidden rounded-full bg-[#252525]">
+                                <div
+                                  className="h-full rounded-full bg-[#1D9E75] transition-[width]"
+                                  style={{
+                                    width: `${episodeProgressPct}%`,
+                                  }}
+                                  aria-hidden
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {episodes.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center gap-[12px] rounded-[10px] border border-[#252525] bg-[#1a1a1a] py-[48px]">
+                              <p className="text-[13px] font-[500] text-[#505050]">
+                                Nenhum episódio neste projeto
+                              </p>
+                              <p className="text-[11px] text-[#404040]">
+                                Os episódios são criados ao definir o projeto
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="overflow-visible rounded-[10px] border border-[#252525] bg-[#1a1a1a]">
+                              <div className="border-b border-[#252525] px-[14px] py-[10px]">
+                                <span className="text-[12px] font-[600] text-[#e8e8e8]">
+                                  Lista ({episodes.length})
+                                </span>
+                              </div>
+                              <ul className="divide-y divide-[#252525]">
+                                {episodes.map((ep) => {
+                                  const title =
+                                    ep.title?.trim() ||
+                                    `Episódio ${ep.number}`;
+                                  const badge = EPISODE_STATUS_BADGE[ep.status];
+                                  const busy =
+                                    ep.status === "TRANSCRIBING" ||
+                                    uploadingEpisodeId === ep.id;
+                                  const inlineErr = episodeInlineError[ep.id];
+                                  const isMenuOpen = openEpisodeMenuId === ep.id;
+                                  const closeEpisodeMenu = () => {
+                                    setOpenEpisodeMenuId(null);
+                                    setEpisodeMenuFixed(null);
+                                  };
+
+                                  const episodeMenuPanel =
+                                    isMenuOpen &&
+                                    episodeMenuFixed &&
+                                    typeof document !== "undefined"
+                                      ? createPortal(
+                                          <div
+                                            data-episode-menu-portal="1"
+                                            className="fixed z-[9999] min-w-[170px] overflow-hidden rounded-[8px] border border-[#2e2e2e] bg-[#141414] shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+                                            style={{
+                                              top: episodeMenuFixed.top,
+                                              right: episodeMenuFixed.right,
+                                            }}
+                                          >
+                                            {ep.status === "PENDING" &&
+                                            !ep.audioFileId ? (
+                                              <button
+                                                type="button"
+                                                disabled={busy}
+                                                onClick={() => {
+                                                  closeEpisodeMenu();
+                                                  onPickEpisodeAudio(ep.id);
+                                                }}
+                                                className="block w-full px-[10px] py-[8px] text-left text-[11px] text-[#cfcfcf] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
+                                              >
+                                                ↑ Enviar áudio
+                                              </button>
+                                            ) : null}
+
+                                            {ep.status === "PENDING" &&
+                                            ep.audioFileId ? (
+                                              <>
+                                                <button
+                                                  type="button"
+                                                  disabled={busy}
+                                                  onClick={() => {
+                                                    closeEpisodeMenu();
+                                                    onPickEpisodeAudio(ep.id);
+                                                  }}
+                                                  className="block w-full px-[10px] py-[8px] text-left text-[11px] text-[#cfcfcf] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
+                                                >
+                                                  ↑ Substituir áudio
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  disabled={busy}
+                                                  onClick={() => {
+                                                    closeEpisodeMenu();
+                                                    void onGenerateEpisodeSrt(ep);
+                                                  }}
+                                                  className="block w-full border-t border-[#252525] px-[10px] py-[8px] text-left text-[11px] text-[#5DCAA5] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
+                                                >
+                                                  Gerar SRT
+                                                </button>
+                                              </>
+                                            ) : null}
+
+                                            {ep.status === "TRANSCRIBING" ? (
+                                              <span className="block w-full cursor-not-allowed px-[10px] py-[8px] text-left text-[11px] text-[#707070]">
+                                                Transcrevendo...
+                                              </span>
+                                            ) : null}
+
+                                            {ep.status === "DONE" ? (
+                                              <>
+                                                <button
+                                                  type="button"
+                                                  disabled={!ep.subtitleFileId}
+                                                  onClick={() => {
+                                                    if (!ep.subtitleFileId) return;
+                                                    closeEpisodeMenu();
+                                                    router.push(
+                                                      `/subtitle-file-edit?fileId=${encodeURIComponent(ep.subtitleFileId)}&episodeId=${encodeURIComponent(ep.id)}&projectId=${encodeURIComponent(id)}`,
+                                                    );
+                                                  }}
+                                                  className="block w-full px-[10px] py-[8px] text-left text-[11px] text-[#5DCAA5] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
+                                                >
+                                                  Abrir editor
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  disabled={busy}
+                                                  onClick={() => {
+                                                    closeEpisodeMenu();
+                                                    onPickEpisodeAudio(ep.id);
+                                                  }}
+                                                  className="block w-full border-t border-[#252525] px-[10px] py-[8px] text-left text-[11px] text-[#cfcfcf] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
+                                                >
+                                                  ↑ Substituir áudio
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  disabled={busy}
+                                                  onClick={() => {
+                                                    closeEpisodeMenu();
+                                                    void onGenerateEpisodeSrt(ep);
+                                                  }}
+                                                  className="block w-full border-t border-[#252525] px-[10px] py-[8px] text-left text-[11px] text-[#5DCAA5] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
+                                                >
+                                                  Gerar SRT
+                                                </button>
+                                              </>
+                                            ) : null}
+                                          </div>,
+                                          document.body,
+                                        )
+                                      : null;
+
+                                  return (
+                                    <li
+                                      key={ep.id}
+                                      className="flex items-start justify-between gap-[10px] px-[14px] py-[12px]"
+                                    >
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex min-w-0 flex-row flex-wrap items-center gap-x-2 gap-y-1">
+                                          <span className="shrink-0 font-mono text-[11px] text-[#505050]">
+                                            #{ep.number}
+                                          </span>
+                                          {ep.status === "TRANSCRIBING" ? (
+                                            <span className="inline-flex shrink-0 items-center gap-[6px] text-[10px] font-[600] uppercase tracking-[0.05em] text-[#EF9F27]">
+                                              <span
+                                                className="inline-block h-[12px] w-[12px] animate-spin rounded-full border-2 border-[#EF9F27] border-t-transparent"
+                                                aria-hidden
+                                              />
+                                              Em transcrição
+                                            </span>
+                                          ) : (
+                                            <span
+                                              className={`inline-flex shrink-0 rounded-[4px] px-[8px] py-[2px] text-[10px] font-[600] uppercase tracking-[0.05em] ${badge.className}`}
+                                            >
+                                              {badge.label}
+                                            </span>
+                                          )}
+                                          {ep.editedAt ? (
+                                            <span className="inline-flex shrink-0 rounded-[4px] border border-[#0F6E56] bg-[#0d3d2a] px-[8px] py-[2px] text-[10px] font-[600] uppercase tracking-[0.05em] text-[#5DCAA5]">
+                                              Editado
+                                            </span>
+                                          ) : null}
+                                          <span
+                                            className="min-w-0 flex-1 truncate text-[13px] font-[500] text-[#e8e8e8]"
+                                            title={title}
+                                          >
+                                            {title}
+                                          </span>
+                                        </div>
+                                        {inlineErr ? (
+                                          <p className="mt-[6px] text-[11px] text-[#F09595]">
+                                            {inlineErr}
+                                          </p>
+                                        ) : null}
+                                      </div>
+                                      <div
+                                        className="relative flex shrink-0 items-start justify-end pt-[1px]"
+                                        data-episode-menu-root="1"
+                                      >
+                                        <button
+                                          type="button"
+                                          aria-label={`Ações do episódio ${ep.number}`}
+                                          aria-expanded={isMenuOpen}
+                                          onClick={(e) => {
+                                            if (openEpisodeMenuId === ep.id) {
+                                              closeEpisodeMenu();
+                                              return;
+                                            }
+                                            const rect =
+                                              e.currentTarget.getBoundingClientRect();
+                                            setEpisodeMenuFixed({
+                                              top: rect.bottom + 6,
+                                              right:
+                                                window.innerWidth - rect.right,
+                                            });
+                                            setOpenEpisodeMenuId(ep.id);
+                                          }}
+                                          className="rounded-[5px] border border-[#2e2e2e] bg-[#141414] px-[9px] py-[5px] text-[12px] leading-none text-[#909090] transition-colors hover:bg-[#252525] hover:text-[#e8e8e8]"
+                                        >
+                                          •••
+                                        </button>
+                                        {episodeMenuPanel}
+                                      </div>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {activeTab !== "info" &&
+                activeTab !== "elenco" &&
+                activeTab !== "episodios" ? (
                   <div className="flex min-h-[200px] items-center justify-center rounded-[10px] border border-[#252525] bg-[#1a1a1a] py-16 text-[13px] text-[#444]">
                     Em breve
                   </div>

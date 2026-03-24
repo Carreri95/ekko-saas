@@ -92,6 +92,8 @@ Os Blocos **5–8** fecham a linha de **HTTP do editor na API**, **BFF consisten
 | `npm run storage:bootstrap` | Buckets/storage (API) |
 | `npm run media:reconcile` | Reconciliação `MediaAsset` (API) |
 | `npm run db:down` | Parar Postgres (compose raiz) |
+| `npm run db:studio` | Prisma Studio (schema **web**) → **http://localhost:5555** |
+| `npm run db:studio:api` | Prisma Studio (schema **API**, ex. `MediaAsset`) → **http://localhost:5556** |
 
 ---
 

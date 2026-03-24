@@ -259,6 +259,7 @@ export type ProjectWhereInput = {
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   subtitleFiles?: Prisma.SubtitleFileListRelationFilter
   transcriptionJobs?: Prisma.TranscriptionJobListRelationFilter
+  dubbingEpisodeTranscription?: Prisma.XOR<Prisma.EpisodeNullableScalarRelationFilter, Prisma.EpisodeWhereInput> | null
 }
 
 export type ProjectOrderByWithRelationInput = {
@@ -275,6 +276,7 @@ export type ProjectOrderByWithRelationInput = {
   user?: Prisma.UserOrderByWithRelationInput
   subtitleFiles?: Prisma.SubtitleFileOrderByRelationAggregateInput
   transcriptionJobs?: Prisma.TranscriptionJobOrderByRelationAggregateInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeOrderByWithRelationInput
 }
 
 export type ProjectWhereUniqueInput = Prisma.AtLeast<{
@@ -294,6 +296,7 @@ export type ProjectWhereUniqueInput = Prisma.AtLeast<{
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   subtitleFiles?: Prisma.SubtitleFileListRelationFilter
   transcriptionJobs?: Prisma.TranscriptionJobListRelationFilter
+  dubbingEpisodeTranscription?: Prisma.XOR<Prisma.EpisodeNullableScalarRelationFilter, Prisma.EpisodeWhereInput> | null
 }, "id">
 
 export type ProjectOrderByWithAggregationInput = {
@@ -343,6 +346,7 @@ export type ProjectCreateInput = {
   user: Prisma.UserCreateNestedOneWithoutProjectsInput
   subtitleFiles?: Prisma.SubtitleFileCreateNestedManyWithoutProjectInput
   transcriptionJobs?: Prisma.TranscriptionJobCreateNestedManyWithoutProjectInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeCreateNestedOneWithoutTranscriptionProjectInput
 }
 
 export type ProjectUncheckedCreateInput = {
@@ -358,6 +362,7 @@ export type ProjectUncheckedCreateInput = {
   userId: string
   subtitleFiles?: Prisma.SubtitleFileUncheckedCreateNestedManyWithoutProjectInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedCreateNestedManyWithoutProjectInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUncheckedCreateNestedOneWithoutTranscriptionProjectInput
 }
 
 export type ProjectUpdateInput = {
@@ -373,6 +378,7 @@ export type ProjectUpdateInput = {
   user?: Prisma.UserUpdateOneRequiredWithoutProjectsNestedInput
   subtitleFiles?: Prisma.SubtitleFileUpdateManyWithoutProjectNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUpdateManyWithoutProjectNestedInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUpdateOneWithoutTranscriptionProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateInput = {
@@ -388,6 +394,7 @@ export type ProjectUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   subtitleFiles?: Prisma.SubtitleFileUncheckedUpdateManyWithoutProjectNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedUpdateManyWithoutProjectNestedInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUncheckedUpdateOneWithoutTranscriptionProjectNestedInput
 }
 
 export type ProjectCreateManyInput = {
@@ -490,6 +497,11 @@ export type ProjectScalarRelationFilter = {
   isNot?: Prisma.ProjectWhereInput
 }
 
+export type ProjectNullableScalarRelationFilter = {
+  is?: Prisma.ProjectWhereInput | null
+  isNot?: Prisma.ProjectWhereInput | null
+}
+
 export type ProjectCreateNestedManyWithoutUserInput = {
   create?: Prisma.XOR<Prisma.ProjectCreateWithoutUserInput, Prisma.ProjectUncheckedCreateWithoutUserInput> | Prisma.ProjectCreateWithoutUserInput[] | Prisma.ProjectUncheckedCreateWithoutUserInput[]
   connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutUserInput | Prisma.ProjectCreateOrConnectWithoutUserInput[]
@@ -576,6 +588,22 @@ export type ProjectUpdateOneRequiredWithoutTranscriptionJobsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectUpdateToOneWithWhereWithoutTranscriptionJobsInput, Prisma.ProjectUpdateWithoutTranscriptionJobsInput>, Prisma.ProjectUncheckedUpdateWithoutTranscriptionJobsInput>
 }
 
+export type ProjectCreateNestedOneWithoutDubbingEpisodeTranscriptionInput = {
+  create?: Prisma.XOR<Prisma.ProjectCreateWithoutDubbingEpisodeTranscriptionInput, Prisma.ProjectUncheckedCreateWithoutDubbingEpisodeTranscriptionInput>
+  connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutDubbingEpisodeTranscriptionInput
+  connect?: Prisma.ProjectWhereUniqueInput
+}
+
+export type ProjectUpdateOneWithoutDubbingEpisodeTranscriptionNestedInput = {
+  create?: Prisma.XOR<Prisma.ProjectCreateWithoutDubbingEpisodeTranscriptionInput, Prisma.ProjectUncheckedCreateWithoutDubbingEpisodeTranscriptionInput>
+  connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutDubbingEpisodeTranscriptionInput
+  upsert?: Prisma.ProjectUpsertWithoutDubbingEpisodeTranscriptionInput
+  disconnect?: Prisma.ProjectWhereInput | boolean
+  delete?: Prisma.ProjectWhereInput | boolean
+  connect?: Prisma.ProjectWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectUpdateToOneWithWhereWithoutDubbingEpisodeTranscriptionInput, Prisma.ProjectUpdateWithoutDubbingEpisodeTranscriptionInput>, Prisma.ProjectUncheckedUpdateWithoutDubbingEpisodeTranscriptionInput>
+}
+
 export type ProjectCreateWithoutUserInput = {
   id?: string
   name: string
@@ -588,6 +616,7 @@ export type ProjectCreateWithoutUserInput = {
   updatedAt?: Date | string
   subtitleFiles?: Prisma.SubtitleFileCreateNestedManyWithoutProjectInput
   transcriptionJobs?: Prisma.TranscriptionJobCreateNestedManyWithoutProjectInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeCreateNestedOneWithoutTranscriptionProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutUserInput = {
@@ -602,6 +631,7 @@ export type ProjectUncheckedCreateWithoutUserInput = {
   updatedAt?: Date | string
   subtitleFiles?: Prisma.SubtitleFileUncheckedCreateNestedManyWithoutProjectInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedCreateNestedManyWithoutProjectInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUncheckedCreateNestedOneWithoutTranscriptionProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutUserInput = {
@@ -658,6 +688,7 @@ export type ProjectCreateWithoutSubtitleFilesInput = {
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutProjectsInput
   transcriptionJobs?: Prisma.TranscriptionJobCreateNestedManyWithoutProjectInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeCreateNestedOneWithoutTranscriptionProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutSubtitleFilesInput = {
@@ -672,6 +703,7 @@ export type ProjectUncheckedCreateWithoutSubtitleFilesInput = {
   updatedAt?: Date | string
   userId: string
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedCreateNestedManyWithoutProjectInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUncheckedCreateNestedOneWithoutTranscriptionProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutSubtitleFilesInput = {
@@ -702,6 +734,7 @@ export type ProjectUpdateWithoutSubtitleFilesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutProjectsNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUpdateManyWithoutProjectNestedInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUpdateOneWithoutTranscriptionProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutSubtitleFilesInput = {
@@ -716,6 +749,7 @@ export type ProjectUncheckedUpdateWithoutSubtitleFilesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedUpdateManyWithoutProjectNestedInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUncheckedUpdateOneWithoutTranscriptionProjectNestedInput
 }
 
 export type ProjectCreateWithoutTranscriptionJobsInput = {
@@ -730,6 +764,7 @@ export type ProjectCreateWithoutTranscriptionJobsInput = {
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutProjectsInput
   subtitleFiles?: Prisma.SubtitleFileCreateNestedManyWithoutProjectInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeCreateNestedOneWithoutTranscriptionProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutTranscriptionJobsInput = {
@@ -744,6 +779,7 @@ export type ProjectUncheckedCreateWithoutTranscriptionJobsInput = {
   updatedAt?: Date | string
   userId: string
   subtitleFiles?: Prisma.SubtitleFileUncheckedCreateNestedManyWithoutProjectInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUncheckedCreateNestedOneWithoutTranscriptionProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutTranscriptionJobsInput = {
@@ -774,6 +810,7 @@ export type ProjectUpdateWithoutTranscriptionJobsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutProjectsNestedInput
   subtitleFiles?: Prisma.SubtitleFileUpdateManyWithoutProjectNestedInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUpdateOneWithoutTranscriptionProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutTranscriptionJobsInput = {
@@ -788,6 +825,83 @@ export type ProjectUncheckedUpdateWithoutTranscriptionJobsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   subtitleFiles?: Prisma.SubtitleFileUncheckedUpdateManyWithoutProjectNestedInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUncheckedUpdateOneWithoutTranscriptionProjectNestedInput
+}
+
+export type ProjectCreateWithoutDubbingEpisodeTranscriptionInput = {
+  id?: string
+  name: string
+  description?: string | null
+  status?: $Enums.ProjectStatus
+  storageKey?: string | null
+  mediaKind?: $Enums.MediaKind | null
+  durationMs?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutProjectsInput
+  subtitleFiles?: Prisma.SubtitleFileCreateNestedManyWithoutProjectInput
+  transcriptionJobs?: Prisma.TranscriptionJobCreateNestedManyWithoutProjectInput
+}
+
+export type ProjectUncheckedCreateWithoutDubbingEpisodeTranscriptionInput = {
+  id?: string
+  name: string
+  description?: string | null
+  status?: $Enums.ProjectStatus
+  storageKey?: string | null
+  mediaKind?: $Enums.MediaKind | null
+  durationMs?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  userId: string
+  subtitleFiles?: Prisma.SubtitleFileUncheckedCreateNestedManyWithoutProjectInput
+  transcriptionJobs?: Prisma.TranscriptionJobUncheckedCreateNestedManyWithoutProjectInput
+}
+
+export type ProjectCreateOrConnectWithoutDubbingEpisodeTranscriptionInput = {
+  where: Prisma.ProjectWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProjectCreateWithoutDubbingEpisodeTranscriptionInput, Prisma.ProjectUncheckedCreateWithoutDubbingEpisodeTranscriptionInput>
+}
+
+export type ProjectUpsertWithoutDubbingEpisodeTranscriptionInput = {
+  update: Prisma.XOR<Prisma.ProjectUpdateWithoutDubbingEpisodeTranscriptionInput, Prisma.ProjectUncheckedUpdateWithoutDubbingEpisodeTranscriptionInput>
+  create: Prisma.XOR<Prisma.ProjectCreateWithoutDubbingEpisodeTranscriptionInput, Prisma.ProjectUncheckedCreateWithoutDubbingEpisodeTranscriptionInput>
+  where?: Prisma.ProjectWhereInput
+}
+
+export type ProjectUpdateToOneWithWhereWithoutDubbingEpisodeTranscriptionInput = {
+  where?: Prisma.ProjectWhereInput
+  data: Prisma.XOR<Prisma.ProjectUpdateWithoutDubbingEpisodeTranscriptionInput, Prisma.ProjectUncheckedUpdateWithoutDubbingEpisodeTranscriptionInput>
+}
+
+export type ProjectUpdateWithoutDubbingEpisodeTranscriptionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+  storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaKind?: Prisma.NullableEnumMediaKindFieldUpdateOperationsInput | $Enums.MediaKind | null
+  durationMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutProjectsNestedInput
+  subtitleFiles?: Prisma.SubtitleFileUpdateManyWithoutProjectNestedInput
+  transcriptionJobs?: Prisma.TranscriptionJobUpdateManyWithoutProjectNestedInput
+}
+
+export type ProjectUncheckedUpdateWithoutDubbingEpisodeTranscriptionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+  storageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mediaKind?: Prisma.NullableEnumMediaKindFieldUpdateOperationsInput | $Enums.MediaKind | null
+  durationMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  subtitleFiles?: Prisma.SubtitleFileUncheckedUpdateManyWithoutProjectNestedInput
+  transcriptionJobs?: Prisma.TranscriptionJobUncheckedUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectCreateManyUserInput = {
@@ -814,6 +928,7 @@ export type ProjectUpdateWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   subtitleFiles?: Prisma.SubtitleFileUpdateManyWithoutProjectNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUpdateManyWithoutProjectNestedInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUpdateOneWithoutTranscriptionProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutUserInput = {
@@ -828,6 +943,7 @@ export type ProjectUncheckedUpdateWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   subtitleFiles?: Prisma.SubtitleFileUncheckedUpdateManyWithoutProjectNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedUpdateManyWithoutProjectNestedInput
+  dubbingEpisodeTranscription?: Prisma.EpisodeUncheckedUpdateOneWithoutTranscriptionProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateManyWithoutUserInput = {
@@ -896,6 +1012,7 @@ export type ProjectSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   subtitleFiles?: boolean | Prisma.Project$subtitleFilesArgs<ExtArgs>
   transcriptionJobs?: boolean | Prisma.Project$transcriptionJobsArgs<ExtArgs>
+  dubbingEpisodeTranscription?: boolean | Prisma.Project$dubbingEpisodeTranscriptionArgs<ExtArgs>
   _count?: boolean | Prisma.ProjectCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["project"]>
 
@@ -945,6 +1062,7 @@ export type ProjectInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   subtitleFiles?: boolean | Prisma.Project$subtitleFilesArgs<ExtArgs>
   transcriptionJobs?: boolean | Prisma.Project$transcriptionJobsArgs<ExtArgs>
+  dubbingEpisodeTranscription?: boolean | Prisma.Project$dubbingEpisodeTranscriptionArgs<ExtArgs>
   _count?: boolean | Prisma.ProjectCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProjectIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -960,6 +1078,7 @@ export type $ProjectPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     user: Prisma.$UserPayload<ExtArgs>
     subtitleFiles: Prisma.$SubtitleFilePayload<ExtArgs>[]
     transcriptionJobs: Prisma.$TranscriptionJobPayload<ExtArgs>[]
+    dubbingEpisodeTranscription: Prisma.$EpisodePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1369,6 +1488,7 @@ export interface Prisma__ProjectClient<T, Null = never, ExtArgs extends runtime.
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   subtitleFiles<T extends Prisma.Project$subtitleFilesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Project$subtitleFilesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SubtitleFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   transcriptionJobs<T extends Prisma.Project$transcriptionJobsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Project$transcriptionJobsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TranscriptionJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  dubbingEpisodeTranscription<T extends Prisma.Project$dubbingEpisodeTranscriptionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Project$dubbingEpisodeTranscriptionArgs<ExtArgs>>): Prisma.Prisma__EpisodeClient<runtime.Types.Result.GetResult<Prisma.$EpisodePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1854,6 +1974,25 @@ export type Project$transcriptionJobsArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.TranscriptionJobScalarFieldEnum | Prisma.TranscriptionJobScalarFieldEnum[]
+}
+
+/**
+ * Project.dubbingEpisodeTranscription
+ */
+export type Project$dubbingEpisodeTranscriptionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Episode
+   */
+  select?: Prisma.EpisodeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Episode
+   */
+  omit?: Prisma.EpisodeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EpisodeInclude<ExtArgs> | null
+  where?: Prisma.EpisodeWhereInput
 }
 
 /**

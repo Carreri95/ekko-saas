@@ -393,6 +393,7 @@ export const ModelName = {
   SubtitleVersion: 'SubtitleVersion',
   Client: 'Client',
   DubbingProject: 'DubbingProject',
+  Episode: 'Episode',
   CastMember: 'CastMember',
   ProjectCharacter: 'ProjectCharacter',
   MediaAsset: 'MediaAsset'
@@ -411,7 +412,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "castMember" | "projectCharacter" | "mediaAsset"
+    modelProps: "user" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "episode" | "castMember" | "projectCharacter" | "mediaAsset"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1081,6 +1082,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Episode: {
+      payload: Prisma.$EpisodePayload<ExtArgs>
+      fields: Prisma.EpisodeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EpisodeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EpisodeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        findFirst: {
+          args: Prisma.EpisodeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EpisodeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        findMany: {
+          args: Prisma.EpisodeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>[]
+        }
+        create: {
+          args: Prisma.EpisodeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        createMany: {
+          args: Prisma.EpisodeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EpisodeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>[]
+        }
+        delete: {
+          args: Prisma.EpisodeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        update: {
+          args: Prisma.EpisodeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        deleteMany: {
+          args: Prisma.EpisodeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EpisodeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EpisodeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>[]
+        }
+        upsert: {
+          args: Prisma.EpisodeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EpisodePayload>
+        }
+        aggregate: {
+          args: Prisma.EpisodeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEpisode>
+        }
+        groupBy: {
+          args: Prisma.EpisodeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EpisodeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EpisodeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EpisodeCountAggregateOutputType> | number
+        }
+      }
+    }
     CastMember: {
       payload: Prisma.$CastMemberPayload<ExtArgs>
       fields: Prisma.CastMemberFieldRefs
@@ -1471,7 +1546,7 @@ export const DubbingProjectScalarFieldEnum = {
   status: 'status',
   startDate: 'startDate',
   deadline: 'deadline',
-  episodes: 'episodes',
+  episodeCount: 'episodeCount',
   durationMin: 'durationMin',
   language: 'language',
   value: 'value',
@@ -1484,6 +1559,23 @@ export const DubbingProjectScalarFieldEnum = {
 } as const
 
 export type DubbingProjectScalarFieldEnum = (typeof DubbingProjectScalarFieldEnum)[keyof typeof DubbingProjectScalarFieldEnum]
+
+
+export const EpisodeScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  editedAt: 'editedAt',
+  number: 'number',
+  title: 'title',
+  status: 'status',
+  subtitleFileId: 'subtitleFileId',
+  audioFileId: 'audioFileId',
+  transcriptionProjectId: 'transcriptionProjectId',
+  projectId: 'projectId'
+} as const
+
+export type EpisodeScalarFieldEnum = (typeof EpisodeScalarFieldEnum)[keyof typeof EpisodeScalarFieldEnum]
 
 
 export const CastMemberScalarFieldEnum = {
@@ -1796,6 +1888,20 @@ export type ListEnumPaymentTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$
 
 
 /**
+ * Reference to a field of type 'EpisodeStatus'
+ */
+export type EnumEpisodeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EpisodeStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'EpisodeStatus[]'
+ */
+export type ListEnumEpisodeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EpisodeStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'CastMemberStatus'
  */
 export type EnumCastMemberStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CastMemberStatus'>
@@ -1996,6 +2102,7 @@ export type GlobalOmitConfig = {
   subtitleVersion?: Prisma.SubtitleVersionOmit
   client?: Prisma.ClientOmit
   dubbingProject?: Prisma.DubbingProjectOmit
+  episode?: Prisma.EpisodeOmit
   castMember?: Prisma.CastMemberOmit
   projectCharacter?: Prisma.ProjectCharacterOmit
   mediaAsset?: Prisma.MediaAssetOmit

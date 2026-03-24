@@ -71,6 +71,15 @@ export const ClientStatus = {
 export type ClientStatus = (typeof ClientStatus)[keyof typeof ClientStatus]
 
 
+export const EpisodeStatus = {
+  PENDING: 'PENDING',
+  TRANSCRIBING: 'TRANSCRIBING',
+  DONE: 'DONE'
+} as const
+
+export type EpisodeStatus = (typeof EpisodeStatus)[keyof typeof EpisodeStatus]
+
+
 export const DubbingProjectStatus = {
   SPOTTING: 'SPOTTING',
   ADAPTATION: 'ADAPTATION',

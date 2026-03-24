@@ -219,6 +219,8 @@ export type SubtitleFileWhereInput = {
   versions?: Prisma.SubtitleVersionListRelationFilter
   transcriptionJobs?: Prisma.TranscriptionJobListRelationFilter
   mediaAssets?: Prisma.MediaAssetListRelationFilter
+  episodeSubtitleOutput?: Prisma.XOR<Prisma.EpisodeNullableScalarRelationFilter, Prisma.EpisodeWhereInput> | null
+  episodeAudio?: Prisma.XOR<Prisma.EpisodeNullableScalarRelationFilter, Prisma.EpisodeWhereInput> | null
 }
 
 export type SubtitleFileOrderByWithRelationInput = {
@@ -236,6 +238,8 @@ export type SubtitleFileOrderByWithRelationInput = {
   versions?: Prisma.SubtitleVersionOrderByRelationAggregateInput
   transcriptionJobs?: Prisma.TranscriptionJobOrderByRelationAggregateInput
   mediaAssets?: Prisma.MediaAssetOrderByRelationAggregateInput
+  episodeSubtitleOutput?: Prisma.EpisodeOrderByWithRelationInput
+  episodeAudio?: Prisma.EpisodeOrderByWithRelationInput
 }
 
 export type SubtitleFileWhereUniqueInput = Prisma.AtLeast<{
@@ -256,6 +260,8 @@ export type SubtitleFileWhereUniqueInput = Prisma.AtLeast<{
   versions?: Prisma.SubtitleVersionListRelationFilter
   transcriptionJobs?: Prisma.TranscriptionJobListRelationFilter
   mediaAssets?: Prisma.MediaAssetListRelationFilter
+  episodeSubtitleOutput?: Prisma.XOR<Prisma.EpisodeNullableScalarRelationFilter, Prisma.EpisodeWhereInput> | null
+  episodeAudio?: Prisma.XOR<Prisma.EpisodeNullableScalarRelationFilter, Prisma.EpisodeWhereInput> | null
 }, "id">
 
 export type SubtitleFileOrderByWithAggregationInput = {
@@ -302,6 +308,8 @@ export type SubtitleFileCreateInput = {
   versions?: Prisma.SubtitleVersionCreateNestedManyWithoutSubtitleFileInput
   transcriptionJobs?: Prisma.TranscriptionJobCreateNestedManyWithoutSubtitleFileInput
   mediaAssets?: Prisma.MediaAssetCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileUncheckedCreateInput = {
@@ -318,6 +326,8 @@ export type SubtitleFileUncheckedCreateInput = {
   versions?: Prisma.SubtitleVersionUncheckedCreateNestedManyWithoutSubtitleFileInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedCreateNestedManyWithoutSubtitleFileInput
   mediaAssets?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeUncheckedCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileUpdateInput = {
@@ -334,6 +344,8 @@ export type SubtitleFileUpdateInput = {
   versions?: Prisma.SubtitleVersionUpdateManyWithoutSubtitleFileNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUpdateManyWithoutSubtitleFileNestedInput
   mediaAssets?: Prisma.MediaAssetUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUpdateOneWithoutAudioFileNestedInput
 }
 
 export type SubtitleFileUncheckedUpdateInput = {
@@ -350,6 +362,8 @@ export type SubtitleFileUncheckedUpdateInput = {
   versions?: Prisma.SubtitleVersionUncheckedUpdateManyWithoutSubtitleFileNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedUpdateManyWithoutSubtitleFileNestedInput
   mediaAssets?: Prisma.MediaAssetUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUncheckedUpdateOneWithoutAudioFileNestedInput
 }
 
 export type SubtitleFileCreateManyInput = {
@@ -531,6 +545,38 @@ export type SubtitleFileUpdateOneRequiredWithoutVersionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SubtitleFileUpdateToOneWithWhereWithoutVersionsInput, Prisma.SubtitleFileUpdateWithoutVersionsInput>, Prisma.SubtitleFileUncheckedUpdateWithoutVersionsInput>
 }
 
+export type SubtitleFileCreateNestedOneWithoutEpisodeSubtitleOutputInput = {
+  create?: Prisma.XOR<Prisma.SubtitleFileCreateWithoutEpisodeSubtitleOutputInput, Prisma.SubtitleFileUncheckedCreateWithoutEpisodeSubtitleOutputInput>
+  connectOrCreate?: Prisma.SubtitleFileCreateOrConnectWithoutEpisodeSubtitleOutputInput
+  connect?: Prisma.SubtitleFileWhereUniqueInput
+}
+
+export type SubtitleFileCreateNestedOneWithoutEpisodeAudioInput = {
+  create?: Prisma.XOR<Prisma.SubtitleFileCreateWithoutEpisodeAudioInput, Prisma.SubtitleFileUncheckedCreateWithoutEpisodeAudioInput>
+  connectOrCreate?: Prisma.SubtitleFileCreateOrConnectWithoutEpisodeAudioInput
+  connect?: Prisma.SubtitleFileWhereUniqueInput
+}
+
+export type SubtitleFileUpdateOneWithoutEpisodeSubtitleOutputNestedInput = {
+  create?: Prisma.XOR<Prisma.SubtitleFileCreateWithoutEpisodeSubtitleOutputInput, Prisma.SubtitleFileUncheckedCreateWithoutEpisodeSubtitleOutputInput>
+  connectOrCreate?: Prisma.SubtitleFileCreateOrConnectWithoutEpisodeSubtitleOutputInput
+  upsert?: Prisma.SubtitleFileUpsertWithoutEpisodeSubtitleOutputInput
+  disconnect?: Prisma.SubtitleFileWhereInput | boolean
+  delete?: Prisma.SubtitleFileWhereInput | boolean
+  connect?: Prisma.SubtitleFileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SubtitleFileUpdateToOneWithWhereWithoutEpisodeSubtitleOutputInput, Prisma.SubtitleFileUpdateWithoutEpisodeSubtitleOutputInput>, Prisma.SubtitleFileUncheckedUpdateWithoutEpisodeSubtitleOutputInput>
+}
+
+export type SubtitleFileUpdateOneWithoutEpisodeAudioNestedInput = {
+  create?: Prisma.XOR<Prisma.SubtitleFileCreateWithoutEpisodeAudioInput, Prisma.SubtitleFileUncheckedCreateWithoutEpisodeAudioInput>
+  connectOrCreate?: Prisma.SubtitleFileCreateOrConnectWithoutEpisodeAudioInput
+  upsert?: Prisma.SubtitleFileUpsertWithoutEpisodeAudioInput
+  disconnect?: Prisma.SubtitleFileWhereInput | boolean
+  delete?: Prisma.SubtitleFileWhereInput | boolean
+  connect?: Prisma.SubtitleFileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SubtitleFileUpdateToOneWithWhereWithoutEpisodeAudioInput, Prisma.SubtitleFileUpdateWithoutEpisodeAudioInput>, Prisma.SubtitleFileUncheckedUpdateWithoutEpisodeAudioInput>
+}
+
 export type SubtitleFileCreateNestedOneWithoutMediaAssetsInput = {
   create?: Prisma.XOR<Prisma.SubtitleFileCreateWithoutMediaAssetsInput, Prisma.SubtitleFileUncheckedCreateWithoutMediaAssetsInput>
   connectOrCreate?: Prisma.SubtitleFileCreateOrConnectWithoutMediaAssetsInput
@@ -560,6 +606,8 @@ export type SubtitleFileCreateWithoutProjectInput = {
   versions?: Prisma.SubtitleVersionCreateNestedManyWithoutSubtitleFileInput
   transcriptionJobs?: Prisma.TranscriptionJobCreateNestedManyWithoutSubtitleFileInput
   mediaAssets?: Prisma.MediaAssetCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileUncheckedCreateWithoutProjectInput = {
@@ -575,6 +623,8 @@ export type SubtitleFileUncheckedCreateWithoutProjectInput = {
   versions?: Prisma.SubtitleVersionUncheckedCreateNestedManyWithoutSubtitleFileInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedCreateNestedManyWithoutSubtitleFileInput
   mediaAssets?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeUncheckedCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileCreateOrConnectWithoutProjectInput = {
@@ -631,6 +681,8 @@ export type SubtitleFileCreateWithoutCuesInput = {
   versions?: Prisma.SubtitleVersionCreateNestedManyWithoutSubtitleFileInput
   transcriptionJobs?: Prisma.TranscriptionJobCreateNestedManyWithoutSubtitleFileInput
   mediaAssets?: Prisma.MediaAssetCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileUncheckedCreateWithoutCuesInput = {
@@ -646,6 +698,8 @@ export type SubtitleFileUncheckedCreateWithoutCuesInput = {
   versions?: Prisma.SubtitleVersionUncheckedCreateNestedManyWithoutSubtitleFileInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedCreateNestedManyWithoutSubtitleFileInput
   mediaAssets?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeUncheckedCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileCreateOrConnectWithoutCuesInput = {
@@ -677,6 +731,8 @@ export type SubtitleFileUpdateWithoutCuesInput = {
   versions?: Prisma.SubtitleVersionUpdateManyWithoutSubtitleFileNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUpdateManyWithoutSubtitleFileNestedInput
   mediaAssets?: Prisma.MediaAssetUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUpdateOneWithoutAudioFileNestedInput
 }
 
 export type SubtitleFileUncheckedUpdateWithoutCuesInput = {
@@ -692,6 +748,8 @@ export type SubtitleFileUncheckedUpdateWithoutCuesInput = {
   versions?: Prisma.SubtitleVersionUncheckedUpdateManyWithoutSubtitleFileNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedUpdateManyWithoutSubtitleFileNestedInput
   mediaAssets?: Prisma.MediaAssetUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUncheckedUpdateOneWithoutAudioFileNestedInput
 }
 
 export type SubtitleFileCreateWithoutTranscriptionJobsInput = {
@@ -707,6 +765,8 @@ export type SubtitleFileCreateWithoutTranscriptionJobsInput = {
   cues?: Prisma.SubtitleCueCreateNestedManyWithoutSubtitleFileInput
   versions?: Prisma.SubtitleVersionCreateNestedManyWithoutSubtitleFileInput
   mediaAssets?: Prisma.MediaAssetCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileUncheckedCreateWithoutTranscriptionJobsInput = {
@@ -722,6 +782,8 @@ export type SubtitleFileUncheckedCreateWithoutTranscriptionJobsInput = {
   cues?: Prisma.SubtitleCueUncheckedCreateNestedManyWithoutSubtitleFileInput
   versions?: Prisma.SubtitleVersionUncheckedCreateNestedManyWithoutSubtitleFileInput
   mediaAssets?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeUncheckedCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileCreateOrConnectWithoutTranscriptionJobsInput = {
@@ -753,6 +815,8 @@ export type SubtitleFileUpdateWithoutTranscriptionJobsInput = {
   cues?: Prisma.SubtitleCueUpdateManyWithoutSubtitleFileNestedInput
   versions?: Prisma.SubtitleVersionUpdateManyWithoutSubtitleFileNestedInput
   mediaAssets?: Prisma.MediaAssetUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUpdateOneWithoutAudioFileNestedInput
 }
 
 export type SubtitleFileUncheckedUpdateWithoutTranscriptionJobsInput = {
@@ -768,6 +832,8 @@ export type SubtitleFileUncheckedUpdateWithoutTranscriptionJobsInput = {
   cues?: Prisma.SubtitleCueUncheckedUpdateManyWithoutSubtitleFileNestedInput
   versions?: Prisma.SubtitleVersionUncheckedUpdateManyWithoutSubtitleFileNestedInput
   mediaAssets?: Prisma.MediaAssetUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUncheckedUpdateOneWithoutAudioFileNestedInput
 }
 
 export type SubtitleFileCreateWithoutVersionsInput = {
@@ -783,6 +849,8 @@ export type SubtitleFileCreateWithoutVersionsInput = {
   cues?: Prisma.SubtitleCueCreateNestedManyWithoutSubtitleFileInput
   transcriptionJobs?: Prisma.TranscriptionJobCreateNestedManyWithoutSubtitleFileInput
   mediaAssets?: Prisma.MediaAssetCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileUncheckedCreateWithoutVersionsInput = {
@@ -798,6 +866,8 @@ export type SubtitleFileUncheckedCreateWithoutVersionsInput = {
   cues?: Prisma.SubtitleCueUncheckedCreateNestedManyWithoutSubtitleFileInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedCreateNestedManyWithoutSubtitleFileInput
   mediaAssets?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeUncheckedCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileCreateOrConnectWithoutVersionsInput = {
@@ -829,6 +899,8 @@ export type SubtitleFileUpdateWithoutVersionsInput = {
   cues?: Prisma.SubtitleCueUpdateManyWithoutSubtitleFileNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUpdateManyWithoutSubtitleFileNestedInput
   mediaAssets?: Prisma.MediaAssetUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUpdateOneWithoutAudioFileNestedInput
 }
 
 export type SubtitleFileUncheckedUpdateWithoutVersionsInput = {
@@ -844,6 +916,176 @@ export type SubtitleFileUncheckedUpdateWithoutVersionsInput = {
   cues?: Prisma.SubtitleCueUncheckedUpdateManyWithoutSubtitleFileNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedUpdateManyWithoutSubtitleFileNestedInput
   mediaAssets?: Prisma.MediaAssetUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUncheckedUpdateOneWithoutAudioFileNestedInput
+}
+
+export type SubtitleFileCreateWithoutEpisodeSubtitleOutputInput = {
+  id?: string
+  filename: string
+  wavFilename?: string | null
+  wavPath?: string | null
+  language?: string | null
+  sourceType?: $Enums.SubtitleSourceType
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  project: Prisma.ProjectCreateNestedOneWithoutSubtitleFilesInput
+  cues?: Prisma.SubtitleCueCreateNestedManyWithoutSubtitleFileInput
+  versions?: Prisma.SubtitleVersionCreateNestedManyWithoutSubtitleFileInput
+  transcriptionJobs?: Prisma.TranscriptionJobCreateNestedManyWithoutSubtitleFileInput
+  mediaAssets?: Prisma.MediaAssetCreateNestedManyWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeCreateNestedOneWithoutAudioFileInput
+}
+
+export type SubtitleFileUncheckedCreateWithoutEpisodeSubtitleOutputInput = {
+  id?: string
+  filename: string
+  wavFilename?: string | null
+  wavPath?: string | null
+  language?: string | null
+  sourceType?: $Enums.SubtitleSourceType
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  projectId: string
+  cues?: Prisma.SubtitleCueUncheckedCreateNestedManyWithoutSubtitleFileInput
+  versions?: Prisma.SubtitleVersionUncheckedCreateNestedManyWithoutSubtitleFileInput
+  transcriptionJobs?: Prisma.TranscriptionJobUncheckedCreateNestedManyWithoutSubtitleFileInput
+  mediaAssets?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeUncheckedCreateNestedOneWithoutAudioFileInput
+}
+
+export type SubtitleFileCreateOrConnectWithoutEpisodeSubtitleOutputInput = {
+  where: Prisma.SubtitleFileWhereUniqueInput
+  create: Prisma.XOR<Prisma.SubtitleFileCreateWithoutEpisodeSubtitleOutputInput, Prisma.SubtitleFileUncheckedCreateWithoutEpisodeSubtitleOutputInput>
+}
+
+export type SubtitleFileCreateWithoutEpisodeAudioInput = {
+  id?: string
+  filename: string
+  wavFilename?: string | null
+  wavPath?: string | null
+  language?: string | null
+  sourceType?: $Enums.SubtitleSourceType
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  project: Prisma.ProjectCreateNestedOneWithoutSubtitleFilesInput
+  cues?: Prisma.SubtitleCueCreateNestedManyWithoutSubtitleFileInput
+  versions?: Prisma.SubtitleVersionCreateNestedManyWithoutSubtitleFileInput
+  transcriptionJobs?: Prisma.TranscriptionJobCreateNestedManyWithoutSubtitleFileInput
+  mediaAssets?: Prisma.MediaAssetCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeCreateNestedOneWithoutSubtitleFileInput
+}
+
+export type SubtitleFileUncheckedCreateWithoutEpisodeAudioInput = {
+  id?: string
+  filename: string
+  wavFilename?: string | null
+  wavPath?: string | null
+  language?: string | null
+  sourceType?: $Enums.SubtitleSourceType
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  projectId: string
+  cues?: Prisma.SubtitleCueUncheckedCreateNestedManyWithoutSubtitleFileInput
+  versions?: Prisma.SubtitleVersionUncheckedCreateNestedManyWithoutSubtitleFileInput
+  transcriptionJobs?: Prisma.TranscriptionJobUncheckedCreateNestedManyWithoutSubtitleFileInput
+  mediaAssets?: Prisma.MediaAssetUncheckedCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedCreateNestedOneWithoutSubtitleFileInput
+}
+
+export type SubtitleFileCreateOrConnectWithoutEpisodeAudioInput = {
+  where: Prisma.SubtitleFileWhereUniqueInput
+  create: Prisma.XOR<Prisma.SubtitleFileCreateWithoutEpisodeAudioInput, Prisma.SubtitleFileUncheckedCreateWithoutEpisodeAudioInput>
+}
+
+export type SubtitleFileUpsertWithoutEpisodeSubtitleOutputInput = {
+  update: Prisma.XOR<Prisma.SubtitleFileUpdateWithoutEpisodeSubtitleOutputInput, Prisma.SubtitleFileUncheckedUpdateWithoutEpisodeSubtitleOutputInput>
+  create: Prisma.XOR<Prisma.SubtitleFileCreateWithoutEpisodeSubtitleOutputInput, Prisma.SubtitleFileUncheckedCreateWithoutEpisodeSubtitleOutputInput>
+  where?: Prisma.SubtitleFileWhereInput
+}
+
+export type SubtitleFileUpdateToOneWithWhereWithoutEpisodeSubtitleOutputInput = {
+  where?: Prisma.SubtitleFileWhereInput
+  data: Prisma.XOR<Prisma.SubtitleFileUpdateWithoutEpisodeSubtitleOutputInput, Prisma.SubtitleFileUncheckedUpdateWithoutEpisodeSubtitleOutputInput>
+}
+
+export type SubtitleFileUpdateWithoutEpisodeSubtitleOutputInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  wavFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wavPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceType?: Prisma.EnumSubtitleSourceTypeFieldUpdateOperationsInput | $Enums.SubtitleSourceType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  project?: Prisma.ProjectUpdateOneRequiredWithoutSubtitleFilesNestedInput
+  cues?: Prisma.SubtitleCueUpdateManyWithoutSubtitleFileNestedInput
+  versions?: Prisma.SubtitleVersionUpdateManyWithoutSubtitleFileNestedInput
+  transcriptionJobs?: Prisma.TranscriptionJobUpdateManyWithoutSubtitleFileNestedInput
+  mediaAssets?: Prisma.MediaAssetUpdateManyWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUpdateOneWithoutAudioFileNestedInput
+}
+
+export type SubtitleFileUncheckedUpdateWithoutEpisodeSubtitleOutputInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  wavFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wavPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceType?: Prisma.EnumSubtitleSourceTypeFieldUpdateOperationsInput | $Enums.SubtitleSourceType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  cues?: Prisma.SubtitleCueUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  versions?: Prisma.SubtitleVersionUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  transcriptionJobs?: Prisma.TranscriptionJobUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  mediaAssets?: Prisma.MediaAssetUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUncheckedUpdateOneWithoutAudioFileNestedInput
+}
+
+export type SubtitleFileUpsertWithoutEpisodeAudioInput = {
+  update: Prisma.XOR<Prisma.SubtitleFileUpdateWithoutEpisodeAudioInput, Prisma.SubtitleFileUncheckedUpdateWithoutEpisodeAudioInput>
+  create: Prisma.XOR<Prisma.SubtitleFileCreateWithoutEpisodeAudioInput, Prisma.SubtitleFileUncheckedCreateWithoutEpisodeAudioInput>
+  where?: Prisma.SubtitleFileWhereInput
+}
+
+export type SubtitleFileUpdateToOneWithWhereWithoutEpisodeAudioInput = {
+  where?: Prisma.SubtitleFileWhereInput
+  data: Prisma.XOR<Prisma.SubtitleFileUpdateWithoutEpisodeAudioInput, Prisma.SubtitleFileUncheckedUpdateWithoutEpisodeAudioInput>
+}
+
+export type SubtitleFileUpdateWithoutEpisodeAudioInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  wavFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wavPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceType?: Prisma.EnumSubtitleSourceTypeFieldUpdateOperationsInput | $Enums.SubtitleSourceType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  project?: Prisma.ProjectUpdateOneRequiredWithoutSubtitleFilesNestedInput
+  cues?: Prisma.SubtitleCueUpdateManyWithoutSubtitleFileNestedInput
+  versions?: Prisma.SubtitleVersionUpdateManyWithoutSubtitleFileNestedInput
+  transcriptionJobs?: Prisma.TranscriptionJobUpdateManyWithoutSubtitleFileNestedInput
+  mediaAssets?: Prisma.MediaAssetUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUpdateOneWithoutSubtitleFileNestedInput
+}
+
+export type SubtitleFileUncheckedUpdateWithoutEpisodeAudioInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  wavFilename?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  wavPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceType?: Prisma.EnumSubtitleSourceTypeFieldUpdateOperationsInput | $Enums.SubtitleSourceType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  cues?: Prisma.SubtitleCueUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  versions?: Prisma.SubtitleVersionUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  transcriptionJobs?: Prisma.TranscriptionJobUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  mediaAssets?: Prisma.MediaAssetUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedUpdateOneWithoutSubtitleFileNestedInput
 }
 
 export type SubtitleFileCreateWithoutMediaAssetsInput = {
@@ -859,6 +1101,8 @@ export type SubtitleFileCreateWithoutMediaAssetsInput = {
   cues?: Prisma.SubtitleCueCreateNestedManyWithoutSubtitleFileInput
   versions?: Prisma.SubtitleVersionCreateNestedManyWithoutSubtitleFileInput
   transcriptionJobs?: Prisma.TranscriptionJobCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileUncheckedCreateWithoutMediaAssetsInput = {
@@ -874,6 +1118,8 @@ export type SubtitleFileUncheckedCreateWithoutMediaAssetsInput = {
   cues?: Prisma.SubtitleCueUncheckedCreateNestedManyWithoutSubtitleFileInput
   versions?: Prisma.SubtitleVersionUncheckedCreateNestedManyWithoutSubtitleFileInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedCreateNestedManyWithoutSubtitleFileInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedCreateNestedOneWithoutSubtitleFileInput
+  episodeAudio?: Prisma.EpisodeUncheckedCreateNestedOneWithoutAudioFileInput
 }
 
 export type SubtitleFileCreateOrConnectWithoutMediaAssetsInput = {
@@ -905,6 +1151,8 @@ export type SubtitleFileUpdateWithoutMediaAssetsInput = {
   cues?: Prisma.SubtitleCueUpdateManyWithoutSubtitleFileNestedInput
   versions?: Prisma.SubtitleVersionUpdateManyWithoutSubtitleFileNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUpdateOneWithoutAudioFileNestedInput
 }
 
 export type SubtitleFileUncheckedUpdateWithoutMediaAssetsInput = {
@@ -920,6 +1168,8 @@ export type SubtitleFileUncheckedUpdateWithoutMediaAssetsInput = {
   cues?: Prisma.SubtitleCueUncheckedUpdateManyWithoutSubtitleFileNestedInput
   versions?: Prisma.SubtitleVersionUncheckedUpdateManyWithoutSubtitleFileNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUncheckedUpdateOneWithoutAudioFileNestedInput
 }
 
 export type SubtitleFileCreateManyProjectInput = {
@@ -946,6 +1196,8 @@ export type SubtitleFileUpdateWithoutProjectInput = {
   versions?: Prisma.SubtitleVersionUpdateManyWithoutSubtitleFileNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUpdateManyWithoutSubtitleFileNestedInput
   mediaAssets?: Prisma.MediaAssetUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUpdateOneWithoutAudioFileNestedInput
 }
 
 export type SubtitleFileUncheckedUpdateWithoutProjectInput = {
@@ -961,6 +1213,8 @@ export type SubtitleFileUncheckedUpdateWithoutProjectInput = {
   versions?: Prisma.SubtitleVersionUncheckedUpdateManyWithoutSubtitleFileNestedInput
   transcriptionJobs?: Prisma.TranscriptionJobUncheckedUpdateManyWithoutSubtitleFileNestedInput
   mediaAssets?: Prisma.MediaAssetUncheckedUpdateManyWithoutSubtitleFileNestedInput
+  episodeSubtitleOutput?: Prisma.EpisodeUncheckedUpdateOneWithoutSubtitleFileNestedInput
+  episodeAudio?: Prisma.EpisodeUncheckedUpdateOneWithoutAudioFileNestedInput
 }
 
 export type SubtitleFileUncheckedUpdateManyWithoutProjectInput = {
@@ -1047,6 +1301,8 @@ export type SubtitleFileSelect<ExtArgs extends runtime.Types.Extensions.Internal
   versions?: boolean | Prisma.SubtitleFile$versionsArgs<ExtArgs>
   transcriptionJobs?: boolean | Prisma.SubtitleFile$transcriptionJobsArgs<ExtArgs>
   mediaAssets?: boolean | Prisma.SubtitleFile$mediaAssetsArgs<ExtArgs>
+  episodeSubtitleOutput?: boolean | Prisma.SubtitleFile$episodeSubtitleOutputArgs<ExtArgs>
+  episodeAudio?: boolean | Prisma.SubtitleFile$episodeAudioArgs<ExtArgs>
   _count?: boolean | Prisma.SubtitleFileCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["subtitleFile"]>
 
@@ -1095,6 +1351,8 @@ export type SubtitleFileInclude<ExtArgs extends runtime.Types.Extensions.Interna
   versions?: boolean | Prisma.SubtitleFile$versionsArgs<ExtArgs>
   transcriptionJobs?: boolean | Prisma.SubtitleFile$transcriptionJobsArgs<ExtArgs>
   mediaAssets?: boolean | Prisma.SubtitleFile$mediaAssetsArgs<ExtArgs>
+  episodeSubtitleOutput?: boolean | Prisma.SubtitleFile$episodeSubtitleOutputArgs<ExtArgs>
+  episodeAudio?: boolean | Prisma.SubtitleFile$episodeAudioArgs<ExtArgs>
   _count?: boolean | Prisma.SubtitleFileCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SubtitleFileIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1112,6 +1370,8 @@ export type $SubtitleFilePayload<ExtArgs extends runtime.Types.Extensions.Intern
     versions: Prisma.$SubtitleVersionPayload<ExtArgs>[]
     transcriptionJobs: Prisma.$TranscriptionJobPayload<ExtArgs>[]
     mediaAssets: Prisma.$MediaAssetPayload<ExtArgs>[]
+    episodeSubtitleOutput: Prisma.$EpisodePayload<ExtArgs> | null
+    episodeAudio: Prisma.$EpisodePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1522,6 +1782,8 @@ export interface Prisma__SubtitleFileClient<T, Null = never, ExtArgs extends run
   versions<T extends Prisma.SubtitleFile$versionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SubtitleFile$versionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SubtitleVersionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   transcriptionJobs<T extends Prisma.SubtitleFile$transcriptionJobsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SubtitleFile$transcriptionJobsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TranscriptionJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   mediaAssets<T extends Prisma.SubtitleFile$mediaAssetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SubtitleFile$mediaAssetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  episodeSubtitleOutput<T extends Prisma.SubtitleFile$episodeSubtitleOutputArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SubtitleFile$episodeSubtitleOutputArgs<ExtArgs>>): Prisma.Prisma__EpisodeClient<runtime.Types.Result.GetResult<Prisma.$EpisodePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  episodeAudio<T extends Prisma.SubtitleFile$episodeAudioArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SubtitleFile$episodeAudioArgs<ExtArgs>>): Prisma.Prisma__EpisodeClient<runtime.Types.Result.GetResult<Prisma.$EpisodePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2054,6 +2316,44 @@ export type SubtitleFile$mediaAssetsArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.MediaAssetScalarFieldEnum | Prisma.MediaAssetScalarFieldEnum[]
+}
+
+/**
+ * SubtitleFile.episodeSubtitleOutput
+ */
+export type SubtitleFile$episodeSubtitleOutputArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Episode
+   */
+  select?: Prisma.EpisodeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Episode
+   */
+  omit?: Prisma.EpisodeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EpisodeInclude<ExtArgs> | null
+  where?: Prisma.EpisodeWhereInput
+}
+
+/**
+ * SubtitleFile.episodeAudio
+ */
+export type SubtitleFile$episodeAudioArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Episode
+   */
+  select?: Prisma.EpisodeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Episode
+   */
+  omit?: Prisma.EpisodeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EpisodeInclude<ExtArgs> | null
+  where?: Prisma.EpisodeWhereInput
 }
 
 /**

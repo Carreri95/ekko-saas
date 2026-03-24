@@ -109,6 +109,8 @@ docs/          → Documentação operacional e migração
 | `npm run db:seed` | Seed da base |
 | `npm run storage:bootstrap` | Cria buckets (API) |
 | `npm run media:reconcile` | Reconciliação `MediaAsset` (API) |
+| `npm run db:studio` | Prisma Studio (schema web) → http://localhost:5555 |
+| `npm run db:studio:api` | Prisma Studio (schema API) → http://localhost:5556 |
 
 ---
 

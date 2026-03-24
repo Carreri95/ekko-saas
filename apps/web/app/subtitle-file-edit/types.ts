@@ -515,7 +515,6 @@ export type UseWaveformLifecycleParams = {
   waveformMoveDragRef: MutableRefObject<unknown>;
   suppressWaveformInteractionUntilRef: MutableRefObject<number>;
   suppressPlayheadFollowUntilRef: MutableRefObject<number>;
-  audioRouteFallbackTriedRef: MutableRefObject<boolean>;
   setWaveformDurationSec: Dispatch<SetStateAction<number | null>>;
   setWaveformCueOverlayHostEl: Dispatch<SetStateAction<HTMLElement | null>>;
   setWaveformViewport: Dispatch<SetStateAction<WaveformViewport>>;
@@ -523,7 +522,6 @@ export type UseWaveformLifecycleParams = {
   setMediaSourceUrl: Dispatch<SetStateAction<string | null>>;
   seekPlaybackToTimeSec: (nextTimeSec: number) => void;
   logBrowserError: (context: string, error: unknown) => void;
-  normalizeBrowserMediaPath: (raw: string | null | undefined) => string | null;
   injectWaveformCueShadowStyles: (rootNode: Node) => void;
 };
 
