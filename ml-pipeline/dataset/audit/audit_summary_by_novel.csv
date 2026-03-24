@@ -1,4 +1,0 @@
-﻿novel_id,total_pairs,keep,retime,split,merge,resegment,delete_noise,delete_text,insert,rewrite_minor,rewrite_major,split_rewrite,merge_rewrite,resegment_rewrite,keep_like_ratio,delete_text_ratio,insert_ratio,review_pairs,review_ratio
-novela001,2169,96,943,258,10,12,14,413,293,41,53,21,7,8,0.6081,0.1904,0.1351,72,0.0332
-novela002,2997,21,419,339,5,9,0,727,1213,71,95,80,10,8,0.2646,0.2426,0.4047,129,0.043
-novela003,758,2,80,124,5,3,1,166,315,10,22,27,3,0,0.2823,0.219,0.4156,48,0.0633

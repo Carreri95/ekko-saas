@@ -1,0 +1,36 @@
+# Desenvolvimento local: Postgres + MinIO (Bloco 4).
+# Subir: na raiz, npm run dev:infra  (ou docker compose -f infra/docker/docker-compose.dev.yml up -d)
+# MinIO: API S3 na porta 9000, consola na 9001. Credenciais dev em docs/architecture/storage.md
+services:
+  postgres:
+    image: postgres:16
+    container_name: subtitle_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: subtitle_studio
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    container_name: subtitle_minio
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    # Healthcheck omitido: nem todas as tags incluem curl no contentor.
+    # Validar a partir do host: curl -f http://127.0.0.1:9000/minio/health/live
+
+volumes:
+  postgres_data:
+  minio_data:
