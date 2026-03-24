@@ -1,14 +1,71 @@
+import AdmZip from "adm-zip";
+import { EpisodeStatus } from "../../generated/prisma/client.js";
+import { prisma } from "../../infrastructure/db/prisma.client.js";
+import { getDefaultUserId } from "../../infrastructure/demo-user.js";
+import { spawn } from "node:child_process";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { DubbingProjectsRepository } from "./repository.js";
 import {
   type CharacterCreateData,
   type CharacterPatchData,
   type DubbingProjectCreateData,
   type DubbingProjectPatchData,
+  type EpisodePatchData,
 } from "./schemas.js";
-import { serializeDubbingProject, serializeProjectCharacter } from "./mapper.js";
+import { serializeDubbingProject, serializeEpisode, serializeProjectCharacter } from "./mapper.js";
 import { CastMembersService } from "../cast-members/service.js";
+import { ProjectsService } from "../projects/service.js";
+import { TranscriptionJobService } from "../transcription-jobs/transcription-job.service.js";
+import { getSubtitleFileSrtExport } from "../subtitle-files/subtitle-file-export.service.js";
 
 const PROJECTS_PAGE_SIZE = 8;
+
+function isWavForEpisodeUpload(params: { mimeType: string; originalFilename: string | null }): boolean {
+  const mime = params.mimeType.trim().toLowerCase();
+  if (mime === "audio/wav" || mime === "audio/x-wav" || mime === "audio/wave") {
+    return true;
+  }
+  const name = (params.originalFilename ?? "").trim().toLowerCase();
+  return name.endsWith(".wav");
+}
+
+async function convertWavBufferToPcm16(input: Buffer): Promise<Buffer> {
+  const dir = await mkdtemp(path.join(tmpdir(), "subtitlebot-epwav-"));
+  const inPath = path.join(dir, "input.wav");
+  const outPath = path.join(dir, "output.wav");
+  try {
+    await writeFile(inPath, input);
+
+    const args = [
+      "-y",
+      "-nostdin",
+      "-i",
+      inPath,
+      "-acodec",
+      "pcm_s16le",
+      "-ar",
+      "48000",
+      outPath,
+    ];
+    const proc = spawn("ffmpeg", args, { windowsHide: true });
+    let stderr = "";
+    proc.stderr.on("data", (d) => {
+      stderr += d.toString();
+    });
+    const exitCode = await new Promise<number>((resolve, reject) => {
+      proc.on("error", reject);
+      proc.on("close", (code) => resolve(code ?? 1));
+    });
+    if (exitCode !== 0) {
+      throw new Error(stderr.trim() || "ffmpeg falhou ao converter WAV");
+    }
+    return await readFile(outPath);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
 
 function roundMoney2(n: number): number {
   if (!Number.isFinite(n)) return 0;
@@ -21,7 +78,7 @@ function normalizeMoneyForStorage(n: number): number {
 
 function computeProjectMetrics(
   projects: Array<{
-    episodes: number | null;
+    episodeCount: number | null;
     durationMin: number | null;
     value: string | null;
     valueCurrency: "BRL" | "USD";
@@ -29,7 +86,7 @@ function computeProjectMetrics(
     deadline: string | null;
   }>,
 ) {
-  const totalEp = projects.reduce((s, p) => s + (p.episodes ?? 0), 0);
+  const totalEp = projects.reduce((s, p) => s + (p.episodeCount ?? 0), 0);
   const totalMin = projects.reduce((s, p) => s + (p.durationMin ?? 0), 0);
   const totalVal = projects.reduce((s, p) => s + Number(p.value ?? 0), 0);
 
@@ -100,7 +157,7 @@ export class DubbingProjectsService {
 
     const metrics = computeProjectMetrics(
       metricRows.map((r) => ({
-        episodes: r.episodes,
+        episodeCount: r.episodeCount,
         durationMin: r.durationMin,
         value: r.value != null ? r.value.toString() : null,
         valueCurrency: r.valueCurrency,
@@ -125,14 +182,15 @@ export class DubbingProjectsService {
       return { badRequest: { error: "Datas inválidas" } };
     }
 
-    const created = await this.repo.create({
+    const created = await this.repo.createProjectWithEpisodes(
+      {
       name: input.name,
       client: input.client,
       clientId: input.clientId ?? null,
       status: "SPOTTING",
       startDate,
       deadline,
-      episodes: Math.floor(input.episodes),
+      episodeCount: Math.floor(input.episodes),
       durationMin: Math.floor(input.durationMin),
       language: input.language.trim() ? input.language.trim() : null,
       value: normalizeMoneyForStorage(Number(input.value)),
@@ -143,7 +201,9 @@ export class DubbingProjectsService {
           ? String(input.notes).trim()
           : null,
       userId: typeof rawUserId === "string" && rawUserId.trim() ? rawUserId.trim() : null,
-    });
+    },
+      input.episodes,
+    );
     return { project: serializeDubbingProject(created) };
   }
 
@@ -198,7 +258,7 @@ export class DubbingProjectsService {
         data.deadline = dt;
       }
     }
-    if (input.episodes !== undefined) data.episodes = Math.floor(input.episodes);
+    if (input.episodes !== undefined) data.episodeCount = Math.floor(input.episodes);
     if (input.durationMin !== undefined) data.durationMin = Math.floor(input.durationMin);
     if (input.language !== undefined) data.language = input.language.trim() ? input.language.trim() : null;
     if (input.value !== undefined) data.value = input.value === null ? null : normalizeMoneyForStorage(Number(input.value));
@@ -281,6 +341,101 @@ export class DubbingProjectsService {
     return { character: serializeProjectCharacter(updated) };
   }
 
+  async listEpisodes(projectId: string) {
+    const project = await this.repo.findById(projectId);
+    if (!project) return null;
+    const rows = await this.repo.findEpisodesByProjectId(projectId);
+    return { episodes: rows.map(serializeEpisode) };
+  }
+
+  /**
+   * Empacota SRTs de episódios DONE (com legenda) num ZIP.
+   * Nomes: ep01.srt, ep02.srt, … com padding conforme o total planeado de episódios.
+   */
+  async exportDoneEpisodesSrtZip(projectId: string): Promise<
+    | { notFound: true }
+    | { noDoneEpisodes: true }
+    | { subtitleReadFailed: { episodeNumber: number } }
+    | { ok: { buffer: Buffer; filename: string } }
+  > {
+    const project = await this.repo.findById(projectId);
+    if (!project) return { notFound: true as const };
+
+    const episodeRowCount = await prisma.episode.count({ where: { projectId } });
+    const plannedTotal = project.episodeCount ?? episodeRowCount;
+    const padWidth = Math.max(2, String(Math.max(plannedTotal, 1)).length);
+
+    const doneEpisodes = await prisma.episode.findMany({
+      where: {
+        projectId,
+        status: EpisodeStatus.DONE,
+        subtitleFileId: { not: null },
+      },
+      orderBy: { number: "asc" },
+      select: { number: true, subtitleFileId: true },
+    });
+
+    if (doneEpisodes.length === 0) {
+      return { noDoneEpisodes: true as const };
+    }
+
+    const zip = new AdmZip();
+    for (const ep of doneEpisodes) {
+      const subtitleFileId = ep.subtitleFileId as string;
+      const exp = await getSubtitleFileSrtExport(subtitleFileId);
+      if ("notFound" in exp || "badRequest" in exp) {
+        return { subtitleReadFailed: { episodeNumber: ep.number } as const };
+      }
+      const entryName = `ep${String(ep.number).padStart(padWidth, "0")}.srt`;
+      zip.addFile(entryName, exp.ok.body);
+    }
+
+    const buffer = zip.toBuffer();
+    const filename = `projeto-${projectId}-srts.zip`;
+    return { ok: { buffer, filename } };
+  }
+
+  async patchEpisode(projectId: string, episodeId: string, input: EpisodePatchData) {
+    const existing = await this.repo.findEpisodeInProject(projectId, episodeId);
+    if (!existing) return { notFound: true as const };
+    const parseEditedAt = (raw: string | null) => {
+      if (raw === null) return null;
+      const dt = new Date(raw);
+      if (Number.isNaN(dt.getTime())) return undefined;
+      return dt;
+    };
+    const data: Record<string, unknown> = {};
+    if (input.status !== undefined) {
+      data.status = input.status;
+      if (input.status === "DONE") {
+        if (input.editedAt) {
+          const parsed = parseEditedAt(input.editedAt);
+          if (parsed === undefined) return { badRequest: { error: "editedAt inválido" } };
+          data.editedAt = parsed;
+        } else {
+          data.editedAt = new Date();
+        }
+      }
+      if (input.status !== "DONE" && input.editedAt !== undefined) {
+        const parsed = parseEditedAt(input.editedAt);
+        if (parsed === undefined) return { badRequest: { error: "editedAt inválido" } };
+        data.editedAt = parsed;
+      }
+    } else if (input.editedAt !== undefined) {
+      const parsed = parseEditedAt(input.editedAt);
+      if (parsed === undefined) return { badRequest: { error: "editedAt inválido" } };
+      data.editedAt = parsed;
+    }
+    if (input.title !== undefined) data.title = input.title;
+    if (input.subtitleFileId !== undefined) data.subtitleFileId = input.subtitleFileId;
+    if (input.audioFileId !== undefined) data.audioFileId = input.audioFileId;
+    if (Object.keys(data).length === 0) {
+      return { episode: serializeEpisode(existing) };
+    }
+    const updated = await this.repo.updateEpisode(episodeId, data);
+    return { episode: serializeEpisode(updated) };
+  }
+
   async deleteCharacter(projectId: string, charId: string) {
     const existing = await this.repo.findCharacterInProject(projectId, charId);
     if (!existing) return { notFound: true as const };
@@ -290,5 +445,116 @@ export class DubbingProjectsService {
       await this.castService.syncCastMemberStatus([castMemberId]);
     }
     return { ok: true };
+  }
+
+  async uploadEpisodeAudio(
+    dubbingId: string,
+    epId: string,
+    params: { buffer: Buffer; mimeType: string; originalFilename: string | null },
+  ) {
+    const dub = await prisma.dubbingProject.findUnique({ where: { id: dubbingId } });
+    if (!dub) return { notFound: true as const };
+
+    const ep = await prisma.episode.findFirst({
+      where: { id: epId, projectId: dubbingId },
+    });
+    if (!ep) return { notFound: true as const };
+
+    let tpId = ep.transcriptionProjectId;
+    if (!tpId) {
+      const userId = dub.userId ?? (await getDefaultUserId());
+      if (!userId) {
+        return {
+          badRequest: {
+            error:
+              "Não há utilizador para criar projeto de transcrição. Com Postgres a correr, execute npm run db:seed na pasta web.",
+          } as const,
+        };
+      }
+      const proj = await prisma.project.create({
+        data: { name: `${dub.name} · Ep.${ep.number}`, userId },
+      });
+      tpId = proj.id;
+      await prisma.episode.update({
+        where: { id: ep.id },
+        data: { transcriptionProjectId: tpId },
+      });
+    }
+
+    const shouldConvertWav = isWavForEpisodeUpload(params);
+    let uploadBuffer = params.buffer;
+    if (shouldConvertWav) {
+      try {
+        uploadBuffer = await convertWavBufferToPcm16(params.buffer);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return {
+          unprocessable: {
+            error: `Falha na conversão WAV para PCM 16-bit: ${msg}`,
+          } as const,
+        };
+      }
+    }
+
+    const projectsSvc = new ProjectsService();
+    const result = await projectsSvc.postProjectMedia(tpId, {
+      ...params,
+      buffer: uploadBuffer,
+      mimeType: shouldConvertWav ? "audio/wav" : params.mimeType,
+    });
+    if ("notFound" in result) return result;
+    if ("badRequest" in result) return result;
+
+    const subtitleFileId = result.ok.subtitleFileId;
+    const updated = await prisma.episode.update({
+      where: { id: ep.id },
+      data: { audioFileId: subtitleFileId },
+    });
+
+    return { episode: serializeEpisode(updated) };
+  }
+
+  async startEpisodeTranscription(
+    dubbingId: string,
+    epId: string,
+    body: { language?: string | null },
+  ) {
+    const ep = await prisma.episode.findFirst({
+      where: { id: epId, projectId: dubbingId },
+    });
+    if (!ep) return { notFound: true as const };
+
+    if (!ep.audioFileId || !ep.transcriptionProjectId) {
+      return {
+        badRequest: { error: "Episódio sem áudio de transcrição. Faça upload primeiro." } as const,
+      };
+    }
+
+    const proj = await prisma.project.findUnique({
+      where: { id: ep.transcriptionProjectId },
+      select: { storageKey: true },
+    });
+    if (!proj?.storageKey) {
+      return { badRequest: { error: "Projeto de transcrição sem média." } as const };
+    }
+
+    const tj = new TranscriptionJobService(prisma);
+    const job = await tj.createAndEnqueue({
+      projectId: ep.transcriptionProjectId,
+      subtitleFileId: ep.audioFileId,
+      language: body.language ?? null,
+    });
+
+    await prisma.episode.update({
+      where: { id: ep.id },
+      data: { status: EpisodeStatus.TRANSCRIBING },
+    });
+
+    const row = await prisma.episode.findUnique({ where: { id: ep.id } });
+    return {
+      jobId: job.id,
+      status: job.status,
+      episode: row ? serializeEpisode(row) : undefined,
+    };
   }
 }

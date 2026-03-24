@@ -131,7 +131,22 @@ export const characterPatchSchema = z.object({
   notes: optionalStringField(500),
 });
 
+export const episodePatchSchema = z.object({
+  status: z.enum(["PENDING", "TRANSCRIBING", "DONE"]).optional(),
+  title: z.union([z.string().max(500), z.null()]).optional(),
+  subtitleFileId: z.union([z.string().min(1), z.null()]).optional(),
+  audioFileId: z.union([z.string().min(1), z.null()]).optional(),
+  editedAt: z.union([z.string().datetime(), z.null()]).optional(),
+});
+
+export const episodeTranscriptionBodySchema = z
+  .object({
+    language: z.string().min(1).max(32).optional(),
+  })
+  .strict();
+
 export type DubbingProjectCreateData = z.output<typeof dubbingProjectFormSchema>;
 export type DubbingProjectPatchData = z.output<typeof dubbingProjectPatchRequestSchema>;
 export type CharacterCreateData = z.output<typeof characterCreateSchema>;
 export type CharacterPatchData = z.output<typeof characterPatchSchema>;
+export type EpisodePatchData = z.output<typeof episodePatchSchema>;

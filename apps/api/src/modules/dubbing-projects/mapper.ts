@@ -6,7 +6,7 @@ export type DubbingProjectSerializeInput = {
   status: string;
   startDate: Date | null;
   deadline: Date | null;
-  episodes: number | null;
+  episodeCount: number | null;
   durationMin: number | null;
   language: string | null;
   value: { toString(): string } | number | null;
@@ -27,7 +27,7 @@ export function serializeDubbingProject(p: DubbingProjectSerializeInput) {
     status: p.status,
     startDate: p.startDate?.toISOString() ?? null,
     deadline: p.deadline?.toISOString() ?? null,
-    episodes: p.episodes,
+    episodes: p.episodeCount,
     durationMin: p.durationMin,
     language: p.language,
     value: p.value != null ? p.value.toString() : null,
@@ -52,6 +52,34 @@ type CharacterRow = {
   notes: string | null;
   createdAt: Date;
 };
+
+export type EpisodeSerializeInput = {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  editedAt: Date | null;
+  number: number;
+  title: string | null;
+  status: string;
+  subtitleFileId: string | null;
+  audioFileId: string | null;
+  projectId: string;
+};
+
+export function serializeEpisode(e: EpisodeSerializeInput) {
+  return {
+    id: e.id,
+    createdAt: e.createdAt.toISOString(),
+    updatedAt: e.updatedAt.toISOString(),
+    editedAt: e.editedAt?.toISOString() ?? null,
+    number: e.number,
+    title: e.title,
+    status: e.status,
+    subtitleFileId: e.subtitleFileId,
+    audioFileId: e.audioFileId,
+    projectId: e.projectId,
+  };
+}
 
 export function serializeProjectCharacter(c: CharacterRow) {
   return {

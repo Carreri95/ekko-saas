@@ -11,7 +11,7 @@
     "db:validate": "prisma validate --config prisma.config.ts",
     "db:migrate": "prisma migrate dev --config prisma.config.ts",
     "db:deploy": "prisma migrate deploy --config prisma.config.ts",
-    "db:studio": "prisma studio --config prisma.config.ts",
+    "db:studio": "prisma studio --config prisma.config.ts --port 5556",
     "storage:bootstrap": "tsx src/scripts/bootstrap-storage-buckets.ts",
     "media:reconcile": "tsx src/scripts/reconcile-media-assets.ts"
   },

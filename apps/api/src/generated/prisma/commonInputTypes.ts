@@ -437,6 +437,23 @@ export type EnumPaymentTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumPaymentTypeFilter<$PrismaModel>
 }
 
+export type EnumEpisodeStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.EpisodeStatus | Prisma.EnumEpisodeStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.EpisodeStatus[] | Prisma.ListEnumEpisodeStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.EpisodeStatus[] | Prisma.ListEnumEpisodeStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumEpisodeStatusFilter<$PrismaModel> | $Enums.EpisodeStatus
+}
+
+export type EnumEpisodeStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.EpisodeStatus | Prisma.EnumEpisodeStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.EpisodeStatus[] | Prisma.ListEnumEpisodeStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.EpisodeStatus[] | Prisma.ListEnumEpisodeStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumEpisodeStatusWithAggregatesFilter<$PrismaModel> | $Enums.EpisodeStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumEpisodeStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumEpisodeStatusFilter<$PrismaModel>
+}
+
 export type EnumCastMemberStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.CastMemberStatus | Prisma.EnumCastMemberStatusFieldRefInput<$PrismaModel>
   in?: $Enums.CastMemberStatus[] | Prisma.ListEnumCastMemberStatusFieldRefInput<$PrismaModel>
@@ -956,6 +973,23 @@ export type NestedEnumPaymentTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumPaymentTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumPaymentTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumEpisodeStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.EpisodeStatus | Prisma.EnumEpisodeStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.EpisodeStatus[] | Prisma.ListEnumEpisodeStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.EpisodeStatus[] | Prisma.ListEnumEpisodeStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumEpisodeStatusFilter<$PrismaModel> | $Enums.EpisodeStatus
+}
+
+export type NestedEnumEpisodeStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.EpisodeStatus | Prisma.EnumEpisodeStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.EpisodeStatus[] | Prisma.ListEnumEpisodeStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.EpisodeStatus[] | Prisma.ListEnumEpisodeStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumEpisodeStatusWithAggregatesFilter<$PrismaModel> | $Enums.EpisodeStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumEpisodeStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumEpisodeStatusFilter<$PrismaModel>
 }
 
 export type NestedEnumCastMemberStatusFilter<$PrismaModel = never> = {

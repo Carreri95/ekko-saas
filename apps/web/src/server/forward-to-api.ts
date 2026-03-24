@@ -32,6 +32,10 @@ async function forwardUpstreamBinaryToNextResponse(upstream: Response): Promise<
   if (cc) headers["cache-control"] = cc;
   const cl = upstream.headers.get("content-length");
   if (cl) headers["content-length"] = cl;
+  const ar = upstream.headers.get("accept-ranges");
+  if (ar) headers["accept-ranges"] = ar;
+  const cr = upstream.headers.get("content-range");
+  if (cr) headers["content-range"] = cr;
   return new NextResponse(buf, {
     status: upstream.status,
     headers,
@@ -86,6 +90,10 @@ export async function forwardBinaryToApi(request: Request, apiPath: string): Pro
     const openaiKey = request.headers.get("x-openai-key");
     if (openaiKey) {
       upstreamHeaders["x-openai-key"] = openaiKey;
+    }
+    const range = request.headers.get("range");
+    if (range) {
+      upstreamHeaders["range"] = range;
     }
     if (Object.keys(upstreamHeaders).length > 0) {
       init.headers = upstreamHeaders;

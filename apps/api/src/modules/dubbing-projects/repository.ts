@@ -1,4 +1,5 @@
 import { prisma } from "../../infrastructure/db/prisma.client.js";
+import { EpisodeStatus, Prisma } from "../../generated/prisma/client.js";
 
 export class DubbingProjectsRepository {
   count(where: object) {
@@ -17,7 +18,7 @@ export class DubbingProjectsRepository {
     return prisma.dubbingProject.findMany({
       where,
       select: {
-        episodes: true,
+        episodeCount: true,
         durationMin: true,
         value: true,
         valueCurrency: true,
@@ -33,6 +34,49 @@ export class DubbingProjectsRepository {
 
   create(data: Record<string, unknown>) {
     return prisma.dubbingProject.create({ data });
+  }
+
+  /**
+   * Cria o projeto e N linhas `Episode` (números 1..N) na mesma transação.
+   */
+  createProjectWithEpisodes(
+    data: Record<string, unknown>,
+    plannedEpisodeCount: number,
+  ) {
+    const n = Math.max(0, Math.floor(plannedEpisodeCount));
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const project = await tx.dubbingProject.create({ data });
+      if (n > 0) {
+        await tx.episode.createMany({
+          data: Array.from({ length: n }, (_, i) => ({
+            projectId: project.id,
+            number: i + 1,
+            status: EpisodeStatus.PENDING,
+          })),
+        });
+      }
+      return project;
+    });
+  }
+
+  findEpisodesByProjectId(projectId: string) {
+    return prisma.episode.findMany({
+      where: { projectId },
+      orderBy: { number: "asc" },
+    });
+  }
+
+  findEpisodeInProject(projectId: string, episodeId: string) {
+    return prisma.episode.findFirst({
+      where: { id: episodeId, projectId },
+    });
+  }
+
+  updateEpisode(episodeId: string, data: Record<string, unknown>) {
+    return prisma.episode.update({
+      where: { id: episodeId },
+      data,
+    });
   }
 
   update(id: string, data: Record<string, unknown>) {

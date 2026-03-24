@@ -32,6 +32,7 @@ model Project {
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   subtitleFiles     SubtitleFile[]
   transcriptionJobs TranscriptionJob[]
+  dubbingEpisodeTranscription Episode? @relation("EpisodeTranscriptionProject")
 }
 
 model SubtitleFile {
@@ -49,6 +50,8 @@ model SubtitleFile {
   versions          SubtitleVersion[]
   transcriptionJobs TranscriptionJob[]
   mediaAssets       MediaAsset[]
+  episodeSubtitleOutput Episode? @relation("EpisodeSubtitleOutput")
+  episodeAudio          Episode? @relation("EpisodeAudio")
 }
 
 model SubtitleCue {
@@ -184,7 +187,8 @@ model DubbingProject {
   status        DubbingProjectStatus @default(SPOTTING)
   startDate     DateTime?
   deadline      DateTime?
-  episodes      Int?
+  /// Número planeado de episódios (coluna `episodes` na BD).
+  episodeCount  Int?                 @map("episodes")
   durationMin   Int?
   language      String?
   value         Decimal?             @db.Decimal(10, 2)
@@ -195,9 +199,38 @@ model DubbingProject {
   updatedAt     DateTime             @updatedAt
   userId        String?
   characters    ProjectCharacter[]
+  episodes      Episode[]
 
   @@index([status])
   @@index([deadline])
+}
+
+/// Episódio de projeto de dublagem (linha editoral por número).
+model Episode {
+  id             String         @id @default(cuid())
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  editedAt       DateTime?
+  number         Int
+  title          String?
+  status         EpisodeStatus  @default(PENDING)
+  subtitleFileId String?        @unique
+  subtitleFile   SubtitleFile?  @relation("EpisodeSubtitleOutput", fields: [subtitleFileId], references: [id], onDelete: SetNull)
+  audioFileId    String?        @unique
+  audioFile      SubtitleFile?  @relation("EpisodeAudio", fields: [audioFileId], references: [id], onDelete: SetNull)
+  transcriptionProjectId String? @unique
+  transcriptionProject     Project? @relation("EpisodeTranscriptionProject", fields: [transcriptionProjectId], references: [id], onDelete: SetNull)
+  projectId      String
+  project        DubbingProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, number])
+  @@index([projectId])
+}
+
+enum EpisodeStatus {
+  PENDING
+  TRANSCRIBING
+  DONE
 }
 
 enum DubbingProjectStatus {

@@ -5,11 +5,14 @@ import {
   dubbingProjectFormSchema,
   dubbingProjectPatchRequestSchema,
   dubbingProjectStatusEnum,
+  episodePatchSchema,
+  episodeTranscriptionBodySchema,
 } from "./schemas.js";
 import { DubbingProjectsService } from "./service.js";
 
 type ParamsId = { id: string };
 type ParamsCharacter = { id: string; charId: string };
+type ParamsEpisode = { id: string; epId: string };
 type QueryList = { status?: string; q?: string; page?: string };
 
 export async function registerDubbingProjectRoutes(app: FastifyInstance) {
@@ -44,6 +47,100 @@ export async function registerDubbingProjectRoutes(app: FastifyInstance) {
   app.get<{ Params: ParamsId }>("/api/dubbing-projects/:id", async (request, reply) => {
     const result = await service.getById(request.params.id);
     if (!result) return reply.code(404).send({ error: "Não encontrado" });
+    return reply.send(result);
+  });
+
+  app.get<{ Params: ParamsId }>("/api/dubbing-projects/:id/episodes", async (request, reply) => {
+    const result = await service.listEpisodes(request.params.id);
+    if (!result) return reply.code(404).send({ error: "Não encontrado" });
+    return reply.send(result);
+  });
+
+  app.get<{ Params: ParamsId }>("/api/dubbing-projects/:id/episodes/export", async (request, reply) => {
+    const result = await service.exportDoneEpisodesSrtZip(request.params.id);
+    if ("notFound" in result) {
+      return reply.code(404).send({ error: "Não encontrado" });
+    }
+    if ("noDoneEpisodes" in result) {
+      return reply.code(404).send({ error: "Nenhum episódio concluído para exportar" });
+    }
+    if ("subtitleReadFailed" in result) {
+      const n = result.subtitleReadFailed.episodeNumber;
+      return reply.code(500).send({
+        error: `Falha ao ler legenda do episódio ${n}.`,
+      });
+    }
+    return reply
+      .header("Content-Type", "application/zip")
+      .header("Content-Disposition", `attachment; filename="${result.ok.filename}"`)
+      .send(result.ok.buffer);
+  });
+
+  app.post<{ Params: ParamsEpisode }>(
+    "/api/dubbing-projects/:id/episodes/:epId/audio",
+    async (request, reply) => {
+      const dubbingId = request.params.id;
+      const epId = request.params.epId;
+      if (!request.isMultipart()) {
+        return reply.code(400).send({ error: "multipart invalido" });
+      }
+      let file;
+      try {
+        file = await request.file();
+      } catch {
+        return reply.code(400).send({ error: "multipart invalido" });
+      }
+      if (!file || file.fieldname !== "file") {
+        return reply.code(400).send({ error: "Campo file e obrigatorio" });
+      }
+      const buffer = await file.toBuffer();
+      const mimeType = file.mimetype || "application/octet-stream";
+      const originalFilename = file.filename || null;
+      const result = await service.uploadEpisodeAudio(dubbingId, epId, {
+        buffer,
+        mimeType,
+        originalFilename,
+      });
+      if ("notFound" in result) return reply.code(404).send({ error: "Não encontrado" });
+      if ("badRequest" in result) return reply.code(400).send(result.badRequest);
+      if ("unprocessable" in result) return reply.code(422).send(result.unprocessable);
+      return reply.send(result);
+    },
+  );
+
+  app.post<{ Params: ParamsEpisode }>(
+    "/api/dubbing-projects/:id/episodes/:epId/transcriptions",
+    async (request, reply) => {
+      const openaiKey = request.headers["x-openai-key"];
+      if (!openaiKey || typeof openaiKey !== "string" || !openaiKey.trim()) {
+        return reply.code(400).send({ error: "Cabeçalho x-openai-key obrigatório" });
+      }
+      const parsed = episodeTranscriptionBodySchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: "Dados inválidos",
+          details: parsed.error.flatten().fieldErrors,
+        });
+      }
+      const result = await service.startEpisodeTranscription(request.params.id, request.params.epId, {
+        language: parsed.data.language ?? null,
+      });
+      if ("notFound" in result) return reply.code(404).send({ error: "Não encontrado" });
+      if ("badRequest" in result) return reply.code(400).send(result.badRequest);
+      return reply.send(result);
+    },
+  );
+
+  app.patch<{ Params: ParamsEpisode }>("/api/dubbing-projects/:id/episodes/:epId", async (request, reply) => {
+    const parsed = episodePatchSchema.safeParse(request.body ?? {});
+    if (!parsed.success) {
+      return reply.code(400).send({
+        error: "Dados inválidos",
+        details: parsed.error.flatten().fieldErrors,
+      });
+    }
+    const result = await service.patchEpisode(request.params.id, request.params.epId, parsed.data);
+    if ("notFound" in result) return reply.code(404).send({ error: "Não encontrado" });
     return reply.send(result);
   });
 

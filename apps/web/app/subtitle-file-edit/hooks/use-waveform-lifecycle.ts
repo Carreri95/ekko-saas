@@ -24,7 +24,6 @@ export function useWaveformLifecycle({
   waveformMoveDragRef,
   suppressWaveformInteractionUntilRef,
   suppressPlayheadFollowUntilRef,
-  audioRouteFallbackTriedRef,
   setWaveformDurationSec,
   setWaveformCueOverlayHostEl,
   setWaveformViewport,
@@ -32,11 +31,9 @@ export function useWaveformLifecycle({
   setMediaSourceUrl,
   seekPlaybackToTimeSec,
   logBrowserError,
-  normalizeBrowserMediaPath,
   injectWaveformCueShadowStyles,
 }: UseWaveformLifecycleParams): void {
   const wavPathRef = useRef(wavPath);
-  const normalizePathRef = useRef(normalizeBrowserMediaPath);
   const seekPlaybackRef = useRef(seekPlaybackToTimeSec);
   const logErrorRef = useRef(logBrowserError);
   const lastWaveErrorKeyRef = useRef<string>("");
@@ -55,6 +52,11 @@ export function useWaveformLifecycle({
     return String(err);
   }
 
+  function isAbortLikeWaveError(detail: string): boolean {
+    const d = detail.toLowerCase();
+    return d.includes("abort") || d.includes("aborted");
+  }
+
   function summarizeMediaSource(url: string | null): string {
     if (!url) return "null";
     if (url.startsWith("blob:")) return `blob:${url.slice(5, 45)}...`;
@@ -64,15 +66,9 @@ export function useWaveformLifecycle({
 
   useEffect(() => {
     wavPathRef.current = wavPath;
-    normalizePathRef.current = normalizeBrowserMediaPath;
     seekPlaybackRef.current = seekPlaybackToTimeSec;
     logErrorRef.current = logBrowserError;
-  }, [
-    wavPath,
-    normalizeBrowserMediaPath,
-    seekPlaybackToTimeSec,
-    logBrowserError,
-  ]);
+  }, [wavPath, seekPlaybackToTimeSec, logBrowserError]);
 
   useEffect(() => {
     if (!waveformContainerRef.current) return;
@@ -109,8 +105,6 @@ export function useWaveformLifecycle({
       return;
     }
 
-    audioRouteFallbackTriedRef.current = false;
-
     setWaveformDurationSec(null);
     setWaveformCueOverlayHostEl(null);
     waveformCueOverlayHostRef.current = null;
@@ -122,14 +116,54 @@ export function useWaveformLifecycle({
 
     const mediaEl = mediaElementRef.current;
 
+    const usingExternalMediaElement = Boolean(mediaEl && mediaKind === "audio");
+
     // Garante que o elemento de mídia esteja sincronizado antes de criar o WaveSurfer.
-    // Em alguns navegadores, criar a instância durante a troca de blob URL pode disparar
-    // "Failed to fetch" se o elemento ainda não aplicou o src internamente.
-    if (mediaEl && mediaKind === "audio") {
+    // Em alguns navegadores, criar a instância durante a troca de URL pode disparar
+    // abort/fetch race se o src ainda não foi aplicado no elemento.
+    if (usingExternalMediaElement && mediaEl) {
+      // Evita reiniciar o pipeline de decode quando o src já está aplicado:
+      // chamar load() sem troca de src aborta o fetch atual em alguns browsers.
       if (mediaEl.src !== mediaSourceUrl) {
         mediaEl.src = mediaSourceUrl;
+        mediaEl.load();
       }
-      mediaEl.load();
+    }
+
+    let detachMediaDebugListeners: (() => void) | null = null;
+    if (usingExternalMediaElement && mediaEl) {
+      const onMediaError = () => {
+        const err = mediaEl.error;
+        const code =
+          err?.code === MediaError.MEDIA_ERR_ABORTED
+            ? "MEDIA_ERR_ABORTED"
+            : err?.code === MediaError.MEDIA_ERR_NETWORK
+              ? "MEDIA_ERR_NETWORK"
+              : err?.code === MediaError.MEDIA_ERR_DECODE
+                ? "MEDIA_ERR_DECODE"
+                : err?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED
+                  ? "MEDIA_ERR_SRC_NOT_SUPPORTED"
+                  : "MEDIA_ERR_UNKNOWN";
+        logErrorRef.current("audio element error", {
+          code,
+          message: err?.message ?? null,
+          mediaSourceUrl: summarizeMediaSource(mediaSourceUrl),
+          wavPath: wavPathRef.current,
+          canPlayWav: mediaEl.canPlayType("audio/wav"),
+          canPlayPcm: mediaEl.canPlayType("audio/wav; codecs=1"),
+          readyState: mediaEl.readyState,
+          networkState: mediaEl.networkState,
+        });
+      };
+      const onCanPlay = () => {
+        setError(null);
+      };
+      mediaEl.addEventListener("error", onMediaError);
+      mediaEl.addEventListener("canplay", onCanPlay);
+      detachMediaDebugListeners = () => {
+        mediaEl.removeEventListener("error", onMediaError);
+        mediaEl.removeEventListener("canplay", onCanPlay);
+      };
     }
 
     const waveBaseOptions = {
@@ -169,12 +203,12 @@ export function useWaveformLifecycle({
             duration: localWaveformData.duration,
           }
         : {}),
-      ...(mediaEl && mediaKind === "audio" ? { media: mediaEl } : {}),
+      ...(usingExternalMediaElement && mediaEl ? { media: mediaEl } : {}),
     });
 
     waveSurferRef.current = waveSurfer;
 
-    if (!useLocalWaveformData) {
+    if (!useLocalWaveformData && !usingExternalMediaElement) {
       void waveSurfer.load(mediaSourceUrl).catch((loadError) => {
         logErrorRef.current("waveSurfer load url error", {
           detail: getWaveErrorDetail(loadError),
@@ -326,6 +360,11 @@ export function useWaveformLifecycle({
 
     waveSurfer.on("error", (err) => {
       const detail = getWaveErrorDetail(err);
+      if (isAbortLikeWaveError(detail)) {
+        // Em dev (StrictMode/HMR), o WaveSurfer pode abortar um load intermediário
+        // durante remount/cleanup do efeito. Não tratar como erro fatal de UI.
+        return;
+      }
       const waveErrorKey = `${detail}|${mediaKind}|${mediaSourceUrl ?? "null"}`;
       if (lastWaveErrorKeyRef.current !== waveErrorKey) {
         lastWaveErrorKeyRef.current = waveErrorKey;
@@ -337,22 +376,14 @@ export function useWaveformLifecycle({
           usedExternalMediaElement: Boolean(mediaEl && mediaKind === "audio"),
         });
       }
-      const directWavPath = normalizePathRef.current(wavPathRef.current);
-      const canTryDirectWavPath =
-        !audioRouteFallbackTriedRef.current &&
-        mediaSourceUrl?.includes("/api/subtitle-files/") &&
-        typeof directWavPath === "string";
-
-      if (canTryDirectWavPath) {
-        audioRouteFallbackTriedRef.current = true;
-        setError(
-          `Falha ao renderizar waveform via API (${detail}). Tentando caminho direto do áudio...`,
-        );
-        setMediaSourceUrl(directWavPath);
-        return;
-      }
-
-      setError(`Falha ao renderizar waveform: ${detail}`);
+      // Não fazer fallback para `wavPath` (/uploads/media/...): esse caminho só funciona se o
+      // ficheiro existir em `apps/web/public`, enquanto a fonte correcta na arquitectura actual
+      // é sempre GET /api/subtitle-files/:id/audio (BFF → apps/api, leitura no disco/storage).
+      // Trocar a URL recria o WaveSurfer, aborta o pedido anterior ("signal is aborted") e mascara
+      // o erro real da rota de áudio.
+      setError(
+        `Falha ao renderizar waveform: ${detail}. Confirme que GET /api/subtitle-files/.../audio devolve 200 (API em :4000, BFF no Next). wavPath na BD: ${wavPathRef.current ?? "—"}`,
+      );
     });
 
     waveSurfer.on("scroll", () => {
@@ -360,6 +391,8 @@ export function useWaveformLifecycle({
     });
 
     return () => {
+      detachMediaDebugListeners?.();
+      detachMediaDebugListeners = null;
       cleanupPanSeekHandlers?.();
       cleanupPanSeekHandlers = null;
       waveformOverviewDragRef.current = null;
@@ -377,13 +410,21 @@ export function useWaveformLifecycle({
       }
       setWaveformDurationSec(null);
     };
-    // `waveformPx` incluído: altura do mount medida por ResizeObserver — deve coincidir com o WaveSurfer.
   }, [
     waveformEnabled,
     localWaveformData,
     bindPanSeekHandlers,
     mediaSourceUrl,
     mediaKind,
-    waveformPx,
   ]);
+
+  useEffect(() => {
+    const ws = waveSurferRef.current;
+    if (!ws) return;
+    try {
+      ws.setOptions({ height: waveformPx });
+    } catch {
+      // sem impacto funcional: apenas evita crash em ambientes onde setOptions falhar.
+    }
+  }, [waveformPx, waveSurferRef]);
 }
