@@ -1,17 +1,29 @@
 {
   "name": "subtitlebot",
   "private": true,
-  "description": "Raiz do repositório — a app Next.js vive em web/",
+  "description": "Raiz do monorepo SubtitleBot",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "npm run dev --prefix web",
-    "build": "npm run build --prefix web",
-    "start": "npm run start --prefix web",
-    "lint": "npm run lint --prefix web",
-    "seed": "npm run seed --prefix web",
-    "db:seed": "npm run db:seed --prefix web",
+    "dev": "npm run dev:web",
+    "dev:web": "npm run dev --prefix apps/web",
+    "dev:api": "npm run dev --prefix apps/api",
+    "dev:worker": "npm run dev --prefix apps/worker",
+    "dev:infra": "docker compose -f infra/docker/docker-compose.dev.yml up -d",
+    "build": "npm run build:web",
+    "build:web": "npm run build --prefix apps/web",
+    "start": "npm run start --prefix apps/web",
+    "lint": "npm run lint:web",
+    "lint:web": "npm run lint --prefix apps/web",
+    "seed": "npm run seed --prefix apps/web",
+    "db:seed": "npm run db:seed --prefix apps/web",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "db:migrate": "npm run db:migrate --prefix web",
-    "db:deploy": "npm run db:deploy --prefix web"
+    "db:migrate": "npm run db:migrate --prefix apps/web",
+    "db:deploy": "npm run db:deploy --prefix apps/web",
+    "storage:bootstrap": "npm run storage:bootstrap --prefix apps/api",
+    "media:reconcile": "npm run media:reconcile --prefix apps/api"
   }
 }

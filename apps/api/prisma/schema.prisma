@@ -1,0 +1,310 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  name      String?
+  email     String?   @unique
+  password  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  projects  Project[]
+  batchJobs BatchJob[]
+}
+
+model Project {
+  id                String             @id @default(cuid())
+  name              String
+  description       String?
+  status            ProjectStatus      @default(DRAFT)
+  storageKey        String?
+  mediaKind         MediaKind?
+  durationMs        Int?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subtitleFiles     SubtitleFile[]
+  transcriptionJobs TranscriptionJob[]
+}
+
+model SubtitleFile {
+  id                String             @id @default(cuid())
+  filename          String
+  wavFilename       String?
+  wavPath           String?
+  language          String?
+  sourceType        SubtitleSourceType @default(UPLOADED_SRT)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  projectId         String
+  project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  cues              SubtitleCue[]
+  versions          SubtitleVersion[]
+  transcriptionJobs TranscriptionJob[]
+  mediaAssets       MediaAsset[]
+}
+
+model SubtitleCue {
+  id                 String           @id @default(cuid())
+  cueIndex           Int
+  startMs            Int
+  endMs              Int
+  text               String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  subtitleFileId     String
+  subtitleFile       SubtitleFile     @relation(fields: [subtitleFileId], references: [id], onDelete: Cascade)
+  transcriptionJobId String?
+  transcriptionJob   TranscriptionJob? @relation(fields: [transcriptionJobId], references: [id], onDelete: SetNull)
+
+  @@index([subtitleFileId, cueIndex])
+  @@index([subtitleFileId, startMs])
+}
+
+model BatchJob {
+  id            String              @id @default(cuid())
+  status        BatchJobStatus      @default(PENDING)
+  engine        TranscriptionEngine @default(OPENAI_WHISPER)
+  language      String?
+  zipStorageKey String?
+  totalFiles    Int                 @default(0)
+  userId        String
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime            @default(now())
+  completedAt   DateTime?
+  jobs          TranscriptionJob[]
+}
+
+model TranscriptionJob {
+  id               String                 @id @default(cuid())
+  projectId        String
+  project          Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  subtitleFileId   String
+  subtitleFile     SubtitleFile           @relation(fields: [subtitleFileId], references: [id], onDelete: Cascade)
+  batchId          String?
+  batch            BatchJob?              @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  originalFilename String?
+  exportFormat     String?                @default("SRT")
+  status           TranscriptionJobStatus @default(PENDING)
+  engine           TranscriptionEngine    @default(OPENAI_WHISPER)
+  language         String?
+  errorMessage     String?
+  attemptCount     Int                    @default(0)
+  rawResponse      Json?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime               @default(now())
+  cues             SubtitleCue[]
+
+  @@index([projectId])
+  @@index([subtitleFileId])
+  @@index([batchId])
+}
+
+model SubtitleVersion {
+  id             String       @id @default(cuid())
+  versionNumber  Int
+  label          String?
+  srtContent     String
+  createdAt      DateTime     @default(now())
+  subtitleFileId String
+  subtitleFile   SubtitleFile @relation(fields: [subtitleFileId], references: [id], onDelete: Cascade)
+
+  @@unique([subtitleFileId, versionNumber])
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum SubtitleSourceType {
+  UPLOADED_SRT
+  IMPORTED_BUZZ
+  IMPORTED_WHISPER
+}
+
+enum MediaKind {
+  audio
+  video
+}
+
+enum BatchJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum TranscriptionJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum TranscriptionEngine {
+  OPENAI_WHISPER
+  MOCK
+}
+
+model Client {
+  id        String       @id @default(cuid())
+  name      String
+  email     String?      @unique
+  phone     String?      @unique
+  country   String?
+  notes     String?
+  status    ClientStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  projects DubbingProject[]
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model DubbingProject {
+  id            String               @id @default(cuid())
+  name          String
+  client        String?
+  clientId      String?
+  clientRef     Client?              @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  status        DubbingProjectStatus @default(SPOTTING)
+  startDate     DateTime?
+  deadline      DateTime?
+  episodes      Int?
+  durationMin   Int?
+  language      String?
+  value         Decimal?             @db.Decimal(10, 2)
+  valueCurrency ValueCurrency        @default(BRL)
+  paymentType   PaymentType          @default(PER_PROJECT)
+  notes         String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  userId        String?
+  characters    ProjectCharacter[]
+
+  @@index([status])
+  @@index([deadline])
+}
+
+enum DubbingProjectStatus {
+  SPOTTING
+  ADAPTATION
+  REVIEW
+  RECORDING
+  DELIVERY
+  DONE
+  PAUSED
+}
+
+enum PaymentType {
+  PER_PROJECT
+  PER_EPISODE
+  PER_MINUTE
+}
+
+enum ValueCurrency {
+  BRL
+  USD
+}
+
+model CastMember {
+  id          String           @id @default(cuid())
+  name        String
+  role        String?
+  whatsapp    String?          @unique
+  email       String?          @unique
+  specialties String[]
+  status      CastMemberStatus @default(AVAILABLE)
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  characters  ProjectCharacter[]
+}
+
+model ProjectCharacter {
+  id           String              @id @default(cuid())
+  projectId    String
+  project      DubbingProject      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name         String
+  type         String?
+  voiceType    String?
+  importance   CharacterImportance @default(SUPPORT)
+  castMemberId String?
+  castMember   CastMember?         @relation(fields: [castMemberId], references: [id], onDelete: SetNull)
+  notes        String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([projectId])
+}
+
+enum CharacterImportance {
+  MAIN
+  SUPPORT
+  EXTRA
+}
+
+enum CastMemberStatus {
+  AVAILABLE
+  BUSY
+  INACTIVE
+}
+
+/// Registo canónico de ficheiros em object storage (S3-compatible). PR 4.3 — sem rotas de produto ainda.
+model MediaAsset {
+  id               String            @id @default(cuid())
+  kind             MediaAssetKind
+  status           MediaAssetStatus  @default(PENDING)
+  visibility       MediaVisibility   @default(PRIVATE)
+  /// Ex.: "s3-compatible", "local" — valor livre nesta fase.
+  storageProvider  String
+  bucket           String
+  objectKey        String
+  originalFilename String
+  mimeType         String?
+  sizeBytes        BigInt?
+  checksumSha256   String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  /// PR 5.4 — vínculo opcional ao `SubtitleFile` ativo após upload; histórico pode ficar sem FK.
+  subtitleFileId   String?
+  subtitleFile     SubtitleFile?     @relation(fields: [subtitleFileId], references: [id], onDelete: SetNull)
+
+  @@unique([bucket, objectKey])
+  @@index([status])
+  @@index([kind])
+  @@index([subtitleFileId])
+}
+
+enum MediaAssetKind {
+  AUDIO
+  VIDEO
+  OTHER
+}
+
+enum MediaAssetStatus {
+  PENDING
+  READY
+  FAILED
+  ARCHIVED
+}
+
+enum MediaVisibility {
+  PRIVATE
+  INTERNAL
+  PUBLIC
+}
