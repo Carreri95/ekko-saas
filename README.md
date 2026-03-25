@@ -52,7 +52,9 @@ Ordem recomendada na **raiz** do repositório:
 npm run db:up
 
 # 2. Migrações e seed (schema e migrations canónicos em apps/api; comandos na raiz)
+#    Cadeia alinhada a docs/ENGINEERING-RULES.md §13.5 (primeiro clone / BD vazia)
 npm run db:deploy
+npm run db:generate
 npm run db:seed
 
 # 3. Três terminais (ou em background):
@@ -61,7 +63,7 @@ npm run dev:web     # Next → http://localhost:3000
 npm run dev:worker  # worker de jobs
 ```
 
-**Prisma:** `db:deploy` aplica migrações já versionadas (fluxo típico após clone ou em CI). Para **criar** uma migração nova ao alterar `apps/api/prisma/schema.prisma`, use `npm run db:migrate`. Após pull com mudanças em schema/migrations, `npm run db:generate` quando o client estiver desactualizado. Cenários (BD nova, histórico antigo, staging): **[`docs/monorepo-operacao.md`](docs/monorepo-operacao.md)** (secção *Prisma (pós-consolidação): operação segura*).
+**Prisma:** `db:deploy` aplica migrações já versionadas (fluxo típico após clone ou em CI). `db:generate` regenera o client (API + web); no arranque acima já entra após `db:deploy`, em linha com **[`docs/ENGINEERING-RULES.md`](docs/ENGINEERING-RULES.md) §13.5**. Para **criar** uma migração nova ao alterar `apps/api/prisma/schema.prisma`, use `npm run db:migrate` (§13.2 / §13.5). A **ordem “arranque local habitual”** com `db:migrate` em vez de `db:deploy` está em §13.4 quando estás a desenvolver alterações ao schema. Cenários (BD nova, histórico antigo, staging): **[`docs/monorepo-operacao.md`](docs/monorepo-operacao.md)** (secção *Prisma (pós-consolidação): operação segura*).
 
 **Nota:** O fluxo típico do browser é `http://localhost:3000` → rotas `/api/*` no Next (**BFF**) → **forward** para `apps/api` (por defeito `http://localhost:4000`). Os contratos HTTP de negócio vivem na API.
 
