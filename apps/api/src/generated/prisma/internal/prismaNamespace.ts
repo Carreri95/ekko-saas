@@ -400,6 +400,8 @@ export const ModelName = {
   CastMember: 'CastMember',
   ProjectCharacter: 'ProjectCharacter',
   ProjectCharacterAssignment: 'ProjectCharacterAssignment',
+  RecordingSession: 'RecordingSession',
+  RecordingSessionEpisode: 'RecordingSessionEpisode',
   MediaAsset: 'MediaAsset'
 } as const
 
@@ -416,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "invite" | "inviteEmailDispatch" | "session" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "episode" | "castMember" | "projectCharacter" | "projectCharacterAssignment" | "mediaAsset"
+    modelProps: "user" | "invite" | "inviteEmailDispatch" | "session" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "episode" | "castMember" | "projectCharacter" | "projectCharacterAssignment" | "recordingSession" | "recordingSessionEpisode" | "mediaAsset"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1604,6 +1606,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    RecordingSession: {
+      payload: Prisma.$RecordingSessionPayload<ExtArgs>
+      fields: Prisma.RecordingSessionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RecordingSessionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RecordingSessionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionPayload>
+        }
+        findFirst: {
+          args: Prisma.RecordingSessionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RecordingSessionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionPayload>
+        }
+        findMany: {
+          args: Prisma.RecordingSessionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionPayload>[]
+        }
+        create: {
+          args: Prisma.RecordingSessionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionPayload>
+        }
+        createMany: {
+          args: Prisma.RecordingSessionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RecordingSessionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionPayload>[]
+        }
+        delete: {
+          args: Prisma.RecordingSessionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionPayload>
+        }
+        update: {
+          args: Prisma.RecordingSessionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionPayload>
+        }
+        deleteMany: {
+          args: Prisma.RecordingSessionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RecordingSessionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RecordingSessionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionPayload>[]
+        }
+        upsert: {
+          args: Prisma.RecordingSessionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionPayload>
+        }
+        aggregate: {
+          args: Prisma.RecordingSessionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRecordingSession>
+        }
+        groupBy: {
+          args: Prisma.RecordingSessionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RecordingSessionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RecordingSessionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RecordingSessionCountAggregateOutputType> | number
+        }
+      }
+    }
+    RecordingSessionEpisode: {
+      payload: Prisma.$RecordingSessionEpisodePayload<ExtArgs>
+      fields: Prisma.RecordingSessionEpisodeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RecordingSessionEpisodeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionEpisodePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RecordingSessionEpisodeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionEpisodePayload>
+        }
+        findFirst: {
+          args: Prisma.RecordingSessionEpisodeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionEpisodePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RecordingSessionEpisodeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionEpisodePayload>
+        }
+        findMany: {
+          args: Prisma.RecordingSessionEpisodeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionEpisodePayload>[]
+        }
+        create: {
+          args: Prisma.RecordingSessionEpisodeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionEpisodePayload>
+        }
+        createMany: {
+          args: Prisma.RecordingSessionEpisodeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RecordingSessionEpisodeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionEpisodePayload>[]
+        }
+        delete: {
+          args: Prisma.RecordingSessionEpisodeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionEpisodePayload>
+        }
+        update: {
+          args: Prisma.RecordingSessionEpisodeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionEpisodePayload>
+        }
+        deleteMany: {
+          args: Prisma.RecordingSessionEpisodeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RecordingSessionEpisodeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RecordingSessionEpisodeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionEpisodePayload>[]
+        }
+        upsert: {
+          args: Prisma.RecordingSessionEpisodeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecordingSessionEpisodePayload>
+        }
+        aggregate: {
+          args: Prisma.RecordingSessionEpisodeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRecordingSessionEpisode>
+        }
+        groupBy: {
+          args: Prisma.RecordingSessionEpisodeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RecordingSessionEpisodeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RecordingSessionEpisodeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RecordingSessionEpisodeCountAggregateOutputType> | number
+        }
+      }
+    }
     MediaAsset: {
       payload: Prisma.$MediaAssetPayload<ExtArgs>
       fields: Prisma.MediaAssetFieldRefs
@@ -1974,6 +2124,35 @@ export const ProjectCharacterAssignmentScalarFieldEnum = {
 } as const
 
 export type ProjectCharacterAssignmentScalarFieldEnum = (typeof ProjectCharacterAssignmentScalarFieldEnum)[keyof typeof ProjectCharacterAssignmentScalarFieldEnum]
+
+
+export const RecordingSessionScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  episodeId: 'episodeId',
+  characterId: 'characterId',
+  castMemberId: 'castMemberId',
+  title: 'title',
+  startAt: 'startAt',
+  endAt: 'endAt',
+  status: 'status',
+  format: 'format',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RecordingSessionScalarFieldEnum = (typeof RecordingSessionScalarFieldEnum)[keyof typeof RecordingSessionScalarFieldEnum]
+
+
+export const RecordingSessionEpisodeScalarFieldEnum = {
+  id: 'id',
+  sessionId: 'sessionId',
+  episodeId: 'episodeId',
+  createdAt: 'createdAt'
+} as const
+
+export type RecordingSessionEpisodeScalarFieldEnum = (typeof RecordingSessionEpisodeScalarFieldEnum)[keyof typeof RecordingSessionEpisodeScalarFieldEnum]
 
 
 export const MediaAssetScalarFieldEnum = {
@@ -2359,6 +2538,34 @@ export type ListEnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel> 
 
 
 /**
+ * Reference to a field of type 'RecordingSessionStatus'
+ */
+export type EnumRecordingSessionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RecordingSessionStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'RecordingSessionStatus[]'
+ */
+export type ListEnumRecordingSessionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RecordingSessionStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RecordingSessionFormat'
+ */
+export type EnumRecordingSessionFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RecordingSessionFormat'>
+    
+
+
+/**
+ * Reference to a field of type 'RecordingSessionFormat[]'
+ */
+export type ListEnumRecordingSessionFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RecordingSessionFormat[]'>
+    
+
+
+/**
  * Reference to a field of type 'MediaAssetKind'
  */
 export type EnumMediaAssetKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MediaAssetKind'>
@@ -2538,6 +2745,8 @@ export type GlobalOmitConfig = {
   castMember?: Prisma.CastMemberOmit
   projectCharacter?: Prisma.ProjectCharacterOmit
   projectCharacterAssignment?: Prisma.ProjectCharacterAssignmentOmit
+  recordingSession?: Prisma.RecordingSessionOmit
+  recordingSessionEpisode?: Prisma.RecordingSessionEpisodeOmit
   mediaAsset?: Prisma.MediaAssetOmit
 }
 

@@ -225,6 +225,7 @@ export type ProjectCharacterWhereInput = {
   project?: Prisma.XOR<Prisma.DubbingProjectScalarRelationFilter, Prisma.DubbingProjectWhereInput>
   castMember?: Prisma.XOR<Prisma.CastMemberNullableScalarRelationFilter, Prisma.CastMemberWhereInput> | null
   assignments?: Prisma.ProjectCharacterAssignmentListRelationFilter
+  recordingSessions?: Prisma.RecordingSessionListRelationFilter
 }
 
 export type ProjectCharacterOrderByWithRelationInput = {
@@ -241,6 +242,7 @@ export type ProjectCharacterOrderByWithRelationInput = {
   project?: Prisma.DubbingProjectOrderByWithRelationInput
   castMember?: Prisma.CastMemberOrderByWithRelationInput
   assignments?: Prisma.ProjectCharacterAssignmentOrderByRelationAggregateInput
+  recordingSessions?: Prisma.RecordingSessionOrderByRelationAggregateInput
 }
 
 export type ProjectCharacterWhereUniqueInput = Prisma.AtLeast<{
@@ -260,6 +262,7 @@ export type ProjectCharacterWhereUniqueInput = Prisma.AtLeast<{
   project?: Prisma.XOR<Prisma.DubbingProjectScalarRelationFilter, Prisma.DubbingProjectWhereInput>
   castMember?: Prisma.XOR<Prisma.CastMemberNullableScalarRelationFilter, Prisma.CastMemberWhereInput> | null
   assignments?: Prisma.ProjectCharacterAssignmentListRelationFilter
+  recordingSessions?: Prisma.RecordingSessionListRelationFilter
 }, "id">
 
 export type ProjectCharacterOrderByWithAggregationInput = {
@@ -306,6 +309,7 @@ export type ProjectCharacterCreateInput = {
   project: Prisma.DubbingProjectCreateNestedOneWithoutCharactersInput
   castMember?: Prisma.CastMemberCreateNestedOneWithoutCharactersInput
   assignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCharacterInput
+  recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterUncheckedCreateInput = {
@@ -320,6 +324,7 @@ export type ProjectCharacterUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCharacterInput
+  recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterUpdateInput = {
@@ -334,6 +339,7 @@ export type ProjectCharacterUpdateInput = {
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutCharactersNestedInput
   castMember?: Prisma.CastMemberUpdateOneWithoutCharactersNestedInput
   assignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCharacterNestedInput
+  recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterUncheckedUpdateInput = {
@@ -348,6 +354,7 @@ export type ProjectCharacterUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCharacterNestedInput
+  recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterCreateManyInput = {
@@ -439,6 +446,11 @@ export type ProjectCharacterMinOrderByAggregateInput = {
 export type ProjectCharacterScalarRelationFilter = {
   is?: Prisma.ProjectCharacterWhereInput
   isNot?: Prisma.ProjectCharacterWhereInput
+}
+
+export type ProjectCharacterNullableScalarRelationFilter = {
+  is?: Prisma.ProjectCharacterWhereInput | null
+  isNot?: Prisma.ProjectCharacterWhereInput | null
 }
 
 export type ProjectCharacterCreateNestedManyWithoutProjectInput = {
@@ -543,6 +555,22 @@ export type ProjectCharacterUpdateOneRequiredWithoutAssignmentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectCharacterUpdateToOneWithWhereWithoutAssignmentsInput, Prisma.ProjectCharacterUpdateWithoutAssignmentsInput>, Prisma.ProjectCharacterUncheckedUpdateWithoutAssignmentsInput>
 }
 
+export type ProjectCharacterCreateNestedOneWithoutRecordingSessionsInput = {
+  create?: Prisma.XOR<Prisma.ProjectCharacterCreateWithoutRecordingSessionsInput, Prisma.ProjectCharacterUncheckedCreateWithoutRecordingSessionsInput>
+  connectOrCreate?: Prisma.ProjectCharacterCreateOrConnectWithoutRecordingSessionsInput
+  connect?: Prisma.ProjectCharacterWhereUniqueInput
+}
+
+export type ProjectCharacterUpdateOneWithoutRecordingSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.ProjectCharacterCreateWithoutRecordingSessionsInput, Prisma.ProjectCharacterUncheckedCreateWithoutRecordingSessionsInput>
+  connectOrCreate?: Prisma.ProjectCharacterCreateOrConnectWithoutRecordingSessionsInput
+  upsert?: Prisma.ProjectCharacterUpsertWithoutRecordingSessionsInput
+  disconnect?: Prisma.ProjectCharacterWhereInput | boolean
+  delete?: Prisma.ProjectCharacterWhereInput | boolean
+  connect?: Prisma.ProjectCharacterWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectCharacterUpdateToOneWithWhereWithoutRecordingSessionsInput, Prisma.ProjectCharacterUpdateWithoutRecordingSessionsInput>, Prisma.ProjectCharacterUncheckedUpdateWithoutRecordingSessionsInput>
+}
+
 export type ProjectCharacterCreateWithoutProjectInput = {
   id?: string
   name: string
@@ -554,6 +582,7 @@ export type ProjectCharacterCreateWithoutProjectInput = {
   updatedAt?: Date | string
   castMember?: Prisma.CastMemberCreateNestedOneWithoutCharactersInput
   assignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCharacterInput
+  recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterUncheckedCreateWithoutProjectInput = {
@@ -567,6 +596,7 @@ export type ProjectCharacterUncheckedCreateWithoutProjectInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCharacterInput
+  recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterCreateOrConnectWithoutProjectInput = {
@@ -622,6 +652,7 @@ export type ProjectCharacterCreateWithoutCastMemberInput = {
   updatedAt?: Date | string
   project: Prisma.DubbingProjectCreateNestedOneWithoutCharactersInput
   assignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCharacterInput
+  recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterUncheckedCreateWithoutCastMemberInput = {
@@ -635,6 +666,7 @@ export type ProjectCharacterUncheckedCreateWithoutCastMemberInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCharacterInput
+  recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterCreateOrConnectWithoutCastMemberInput = {
@@ -674,6 +706,7 @@ export type ProjectCharacterCreateWithoutAssignmentsInput = {
   updatedAt?: Date | string
   project: Prisma.DubbingProjectCreateNestedOneWithoutCharactersInput
   castMember?: Prisma.CastMemberCreateNestedOneWithoutCharactersInput
+  recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterUncheckedCreateWithoutAssignmentsInput = {
@@ -687,6 +720,7 @@ export type ProjectCharacterUncheckedCreateWithoutAssignmentsInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterCreateOrConnectWithoutAssignmentsInput = {
@@ -716,6 +750,7 @@ export type ProjectCharacterUpdateWithoutAssignmentsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutCharactersNestedInput
   castMember?: Prisma.CastMemberUpdateOneWithoutCharactersNestedInput
+  recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterUncheckedUpdateWithoutAssignmentsInput = {
@@ -729,6 +764,79 @@ export type ProjectCharacterUncheckedUpdateWithoutAssignmentsInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutCharacterNestedInput
+}
+
+export type ProjectCharacterCreateWithoutRecordingSessionsInput = {
+  id?: string
+  name: string
+  type?: string | null
+  voiceType?: string | null
+  importance?: $Enums.CharacterImportance
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  project: Prisma.DubbingProjectCreateNestedOneWithoutCharactersInput
+  castMember?: Prisma.CastMemberCreateNestedOneWithoutCharactersInput
+  assignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCharacterInput
+}
+
+export type ProjectCharacterUncheckedCreateWithoutRecordingSessionsInput = {
+  id?: string
+  projectId: string
+  name: string
+  type?: string | null
+  voiceType?: string | null
+  importance?: $Enums.CharacterImportance
+  castMemberId?: string | null
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCharacterInput
+}
+
+export type ProjectCharacterCreateOrConnectWithoutRecordingSessionsInput = {
+  where: Prisma.ProjectCharacterWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProjectCharacterCreateWithoutRecordingSessionsInput, Prisma.ProjectCharacterUncheckedCreateWithoutRecordingSessionsInput>
+}
+
+export type ProjectCharacterUpsertWithoutRecordingSessionsInput = {
+  update: Prisma.XOR<Prisma.ProjectCharacterUpdateWithoutRecordingSessionsInput, Prisma.ProjectCharacterUncheckedUpdateWithoutRecordingSessionsInput>
+  create: Prisma.XOR<Prisma.ProjectCharacterCreateWithoutRecordingSessionsInput, Prisma.ProjectCharacterUncheckedCreateWithoutRecordingSessionsInput>
+  where?: Prisma.ProjectCharacterWhereInput
+}
+
+export type ProjectCharacterUpdateToOneWithWhereWithoutRecordingSessionsInput = {
+  where?: Prisma.ProjectCharacterWhereInput
+  data: Prisma.XOR<Prisma.ProjectCharacterUpdateWithoutRecordingSessionsInput, Prisma.ProjectCharacterUncheckedUpdateWithoutRecordingSessionsInput>
+}
+
+export type ProjectCharacterUpdateWithoutRecordingSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  voiceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importance?: Prisma.EnumCharacterImportanceFieldUpdateOperationsInput | $Enums.CharacterImportance
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  project?: Prisma.DubbingProjectUpdateOneRequiredWithoutCharactersNestedInput
+  castMember?: Prisma.CastMemberUpdateOneWithoutCharactersNestedInput
+  assignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCharacterNestedInput
+}
+
+export type ProjectCharacterUncheckedUpdateWithoutRecordingSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  voiceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importance?: Prisma.EnumCharacterImportanceFieldUpdateOperationsInput | $Enums.CharacterImportance
+  castMemberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterCreateManyProjectInput = {
@@ -754,6 +862,7 @@ export type ProjectCharacterUpdateWithoutProjectInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   castMember?: Prisma.CastMemberUpdateOneWithoutCharactersNestedInput
   assignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCharacterNestedInput
+  recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterUncheckedUpdateWithoutProjectInput = {
@@ -767,6 +876,7 @@ export type ProjectCharacterUncheckedUpdateWithoutProjectInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCharacterNestedInput
+  recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterUncheckedUpdateManyWithoutProjectInput = {
@@ -804,6 +914,7 @@ export type ProjectCharacterUpdateWithoutCastMemberInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutCharactersNestedInput
   assignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCharacterNestedInput
+  recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterUncheckedUpdateWithoutCastMemberInput = {
@@ -817,6 +928,7 @@ export type ProjectCharacterUncheckedUpdateWithoutCastMemberInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCharacterNestedInput
+  recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterUncheckedUpdateManyWithoutCastMemberInput = {
@@ -838,10 +950,12 @@ export type ProjectCharacterUncheckedUpdateManyWithoutCastMemberInput = {
 
 export type ProjectCharacterCountOutputType = {
   assignments: number
+  recordingSessions: number
 }
 
 export type ProjectCharacterCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assignments?: boolean | ProjectCharacterCountOutputTypeCountAssignmentsArgs
+  recordingSessions?: boolean | ProjectCharacterCountOutputTypeCountRecordingSessionsArgs
 }
 
 /**
@@ -861,6 +975,13 @@ export type ProjectCharacterCountOutputTypeCountAssignmentsArgs<ExtArgs extends 
   where?: Prisma.ProjectCharacterAssignmentWhereInput
 }
 
+/**
+ * ProjectCharacterCountOutputType without action
+ */
+export type ProjectCharacterCountOutputTypeCountRecordingSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RecordingSessionWhereInput
+}
+
 
 export type ProjectCharacterSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -876,6 +997,7 @@ export type ProjectCharacterSelect<ExtArgs extends runtime.Types.Extensions.Inte
   project?: boolean | Prisma.DubbingProjectDefaultArgs<ExtArgs>
   castMember?: boolean | Prisma.ProjectCharacter$castMemberArgs<ExtArgs>
   assignments?: boolean | Prisma.ProjectCharacter$assignmentsArgs<ExtArgs>
+  recordingSessions?: boolean | Prisma.ProjectCharacter$recordingSessionsArgs<ExtArgs>
   _count?: boolean | Prisma.ProjectCharacterCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["projectCharacter"]>
 
@@ -927,6 +1049,7 @@ export type ProjectCharacterInclude<ExtArgs extends runtime.Types.Extensions.Int
   project?: boolean | Prisma.DubbingProjectDefaultArgs<ExtArgs>
   castMember?: boolean | Prisma.ProjectCharacter$castMemberArgs<ExtArgs>
   assignments?: boolean | Prisma.ProjectCharacter$assignmentsArgs<ExtArgs>
+  recordingSessions?: boolean | Prisma.ProjectCharacter$recordingSessionsArgs<ExtArgs>
   _count?: boolean | Prisma.ProjectCharacterCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProjectCharacterIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -944,6 +1067,7 @@ export type $ProjectCharacterPayload<ExtArgs extends runtime.Types.Extensions.In
     project: Prisma.$DubbingProjectPayload<ExtArgs>
     castMember: Prisma.$CastMemberPayload<ExtArgs> | null
     assignments: Prisma.$ProjectCharacterAssignmentPayload<ExtArgs>[]
+    recordingSessions: Prisma.$RecordingSessionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1353,6 +1477,7 @@ export interface Prisma__ProjectCharacterClient<T, Null = never, ExtArgs extends
   project<T extends Prisma.DubbingProjectDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DubbingProjectDefaultArgs<ExtArgs>>): Prisma.Prisma__DubbingProjectClient<runtime.Types.Result.GetResult<Prisma.$DubbingProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   castMember<T extends Prisma.ProjectCharacter$castMemberArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectCharacter$castMemberArgs<ExtArgs>>): Prisma.Prisma__CastMemberClient<runtime.Types.Result.GetResult<Prisma.$CastMemberPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   assignments<T extends Prisma.ProjectCharacter$assignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectCharacter$assignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectCharacterAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  recordingSessions<T extends Prisma.ProjectCharacter$recordingSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectCharacter$recordingSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecordingSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1833,6 +1958,30 @@ export type ProjectCharacter$assignmentsArgs<ExtArgs extends runtime.Types.Exten
   take?: number
   skip?: number
   distinct?: Prisma.ProjectCharacterAssignmentScalarFieldEnum | Prisma.ProjectCharacterAssignmentScalarFieldEnum[]
+}
+
+/**
+ * ProjectCharacter.recordingSessions
+ */
+export type ProjectCharacter$recordingSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RecordingSession
+   */
+  select?: Prisma.RecordingSessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RecordingSession
+   */
+  omit?: Prisma.RecordingSessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RecordingSessionInclude<ExtArgs> | null
+  where?: Prisma.RecordingSessionWhereInput
+  orderBy?: Prisma.RecordingSessionOrderByWithRelationInput | Prisma.RecordingSessionOrderByWithRelationInput[]
+  cursor?: Prisma.RecordingSessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RecordingSessionScalarFieldEnum | Prisma.RecordingSessionScalarFieldEnum[]
 }
 
 /**

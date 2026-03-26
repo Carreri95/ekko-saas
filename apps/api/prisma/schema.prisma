@@ -277,6 +277,7 @@ model DubbingProject {
   userId        String?
   characters    ProjectCharacter[]
   characterAssignments ProjectCharacterAssignment[]
+  recordingSessions RecordingSession[]
   episodes      Episode[]
 
   @@index([status])
@@ -300,6 +301,8 @@ model Episode {
   transcriptionProject     Project? @relation("EpisodeTranscriptionProject", fields: [transcriptionProjectId], references: [id], onDelete: SetNull)
   projectId      String
   project        DubbingProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  recordingSessions RecordingSession[]
+  recordingSessionEpisodes RecordingSessionEpisode[]
 
   @@unique([projectId, number])
   @@index([projectId])
@@ -363,6 +366,7 @@ model CastMember {
   updatedAt   DateTime         @updatedAt
   characters  ProjectCharacter[]
   characterAssignments ProjectCharacterAssignment[]
+  recordingSessions RecordingSession[]
 }
 
 model ProjectCharacter {
@@ -376,6 +380,7 @@ model ProjectCharacter {
   castMemberId String?
   castMember   CastMember?         @relation(fields: [castMemberId], references: [id], onDelete: SetNull)
   assignments  ProjectCharacterAssignment[]
+  recordingSessions RecordingSession[]
   notes        String?
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
@@ -417,6 +422,60 @@ enum CastMemberStatus {
   AVAILABLE
   BUSY
   INACTIVE
+}
+
+enum RecordingSessionStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+enum RecordingSessionFormat {
+  REMOTE
+  IN_PERSON
+}
+
+model RecordingSession {
+  id           String                 @id @default(uuid())
+  projectId    String
+  project      DubbingProject         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  episodeId    String?
+  episode      Episode?               @relation(fields: [episodeId], references: [id], onDelete: SetNull)
+  characterId  String?
+  character    ProjectCharacter?      @relation(fields: [characterId], references: [id], onDelete: SetNull)
+  castMemberId String
+  castMember   CastMember             @relation(fields: [castMemberId], references: [id], onDelete: Restrict)
+  title        String
+  startAt      DateTime
+  endAt        DateTime
+  status       RecordingSessionStatus @default(PENDING)
+  format       RecordingSessionFormat
+  notes        String?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  sessionEpisodes RecordingSessionEpisode[]
+
+  @@index([projectId])
+  @@index([castMemberId])
+  @@index([episodeId])
+  @@index([characterId])
+  @@index([projectId, startAt])
+}
+
+/// Liga sessão de gravação a um ou mais episódios (N:N).
+model RecordingSessionEpisode {
+  id        String           @id @default(uuid())
+  sessionId String
+  session   RecordingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  episodeId String
+  episode   Episode          @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+
+  @@unique([sessionId, episodeId])
+  @@index([sessionId])
+  @@index([episodeId])
 }
 
 /// Registo canónico de ficheiros em object storage (S3-compatible). PR 4.3 — sem rotas de produto ainda.

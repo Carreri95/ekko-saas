@@ -122,6 +122,16 @@ export type ProjectCharacter = Prisma.ProjectCharacterModel
  */
 export type ProjectCharacterAssignment = Prisma.ProjectCharacterAssignmentModel
 /**
+ * Model RecordingSession
+ * 
+ */
+export type RecordingSession = Prisma.RecordingSessionModel
+/**
+ * Model RecordingSessionEpisode
+ * Liga sessão de gravação a um ou mais episódios (N:N).
+ */
+export type RecordingSessionEpisode = Prisma.RecordingSessionEpisodeModel
+/**
  * Model MediaAsset
  * Registo canónico de ficheiros em object storage (S3-compatible). PR 4.3 — sem rotas de produto ainda.
  */

@@ -67,6 +67,8 @@ export const ModelName = {
   CastMember: 'CastMember',
   ProjectCharacter: 'ProjectCharacter',
   ProjectCharacterAssignment: 'ProjectCharacterAssignment',
+  RecordingSession: 'RecordingSession',
+  RecordingSessionEpisode: 'RecordingSessionEpisode',
   MediaAsset: 'MediaAsset'
 } as const
 
@@ -343,6 +345,35 @@ export const ProjectCharacterAssignmentScalarFieldEnum = {
 } as const
 
 export type ProjectCharacterAssignmentScalarFieldEnum = (typeof ProjectCharacterAssignmentScalarFieldEnum)[keyof typeof ProjectCharacterAssignmentScalarFieldEnum]
+
+
+export const RecordingSessionScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  episodeId: 'episodeId',
+  characterId: 'characterId',
+  castMemberId: 'castMemberId',
+  title: 'title',
+  startAt: 'startAt',
+  endAt: 'endAt',
+  status: 'status',
+  format: 'format',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RecordingSessionScalarFieldEnum = (typeof RecordingSessionScalarFieldEnum)[keyof typeof RecordingSessionScalarFieldEnum]
+
+
+export const RecordingSessionEpisodeScalarFieldEnum = {
+  id: 'id',
+  sessionId: 'sessionId',
+  episodeId: 'episodeId',
+  createdAt: 'createdAt'
+} as const
+
+export type RecordingSessionEpisodeScalarFieldEnum = (typeof RecordingSessionEpisodeScalarFieldEnum)[keyof typeof RecordingSessionEpisodeScalarFieldEnum]
 
 
 export const MediaAssetScalarFieldEnum = {

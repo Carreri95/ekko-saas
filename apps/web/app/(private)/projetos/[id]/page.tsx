@@ -8,6 +8,7 @@ import { DateInput } from "@/app/components/date-input";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -25,6 +26,11 @@ import type { DubbingProjectStatus } from "../domain";
 import type { ProjectCharacterDto } from "@/app/types/project-character";
 import type { CastMemberDto } from "@/app/types/cast-member";
 import type { DubbingEpisodeDto } from "@/app/types/dubbing-episode";
+import type {
+  RecordingSessionDto,
+  RecordingSessionFormat,
+  RecordingSessionStatus,
+} from "@/app/types/recording-session";
 import { CharacterCard } from "./components/character-card";
 import { CharacterModal } from "./components/character-modal";
 import { LanguageCombobox } from "../components/language-combobox";
@@ -44,7 +50,7 @@ const TABS = [
   { id: "info", label: "Informações", enabled: true },
   { id: "elenco", label: "Elenco", enabled: true },
   { id: "episodios", label: "Episódios", enabled: true },
-  { id: "agenda", label: "Agenda", enabled: false },
+  { id: "agenda", label: "Agenda", enabled: true },
   { id: "gravacoes", label: "Gravações", enabled: false },
   { id: "financeiro", label: "Financeiro", enabled: false },
 ] as const;
@@ -81,9 +87,16 @@ function getWorkflowBadge(ep: DubbingEpisodeDto): {
   spinning?: boolean;
 } {
   if (ep.status === "TRANSCRIBING") {
-    return { className: "badge-transcribing", label: "Em transcrição", spinning: true };
+    return {
+      className: "badge-transcribing",
+      label: "Em transcrição",
+      spinning: true,
+    };
   }
-  const map: Record<typeof ep.workflowState, { className: string; label: string }> = {
+  const map: Record<
+    typeof ep.workflowState,
+    { className: string; label: string }
+  > = {
     sem_audio: { className: "badge-no-audio", label: "Sem áudio" },
     audio_enviado: { className: "badge-audio", label: "Áudio enviado" },
     transcrevendo: { className: "badge-transcribing", label: "Transcrevendo" },
@@ -106,6 +119,289 @@ function isoToInput(iso?: string | null) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   return d.toISOString().slice(0, 10);
+}
+
+function isoToDateInput(iso?: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function isoToTimeInput(iso?: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+function parseTimeTo12hParts(time24: string): {
+  hour12: string;
+  minute: string;
+  period: "AM" | "PM";
+} {
+  const [hRaw, mRaw] = time24.split(":");
+  const hNum = Number(hRaw);
+  const mNum = Number(mRaw);
+  if (!Number.isFinite(hNum) || !Number.isFinite(mNum)) {
+    return { hour12: "12", minute: "00", period: "AM" };
+  }
+  const period = hNum >= 12 ? "PM" : "AM";
+  const hour12 = ((hNum + 11) % 12) + 1;
+  return {
+    hour12: String(hour12).padStart(2, "0"),
+    minute: String(Math.max(0, Math.min(59, mNum))).padStart(2, "0"),
+    period,
+  };
+}
+
+function composeDateAndTimeToIso(
+  dateYmd: string,
+  hour12: string,
+  minute: string,
+  period: "AM" | "PM",
+) {
+  if (!dateYmd || !hour12 || !minute) return "";
+  const hNum = Number(hour12);
+  const mNum = Number(minute);
+  if (!Number.isFinite(hNum) || !Number.isFinite(mNum)) return "";
+  if (hNum < 1 || hNum > 12 || mNum < 0 || mNum > 59) return "";
+  let h24 = hNum % 12;
+  if (period === "PM") h24 += 12;
+  const hh = String(h24).padStart(2, "0");
+  const mm = String(mNum).padStart(2, "0");
+  const d = new Date(`${dateYmd}T${hh}:${mm}:00`);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString();
+}
+
+type SessionFormState = {
+  title: string;
+  castMemberId: string;
+  startDate: string;
+  startHour: string;
+  startMinute: string;
+  startPeriod: "AM" | "PM";
+  endDate: string;
+  endHour: string;
+  endMinute: string;
+  endPeriod: "AM" | "PM";
+  status: RecordingSessionStatus;
+  format: RecordingSessionFormat;
+  notes: string;
+  episodeIds: string[];
+  characterId: string;
+};
+
+const SESSION_STATUS_OPTIONS: Array<{
+  value: RecordingSessionStatus;
+  label: string;
+}> = [
+  { value: "PENDING", label: "Pendente" },
+  { value: "CONFIRMED", label: "Confirmada" },
+  { value: "IN_PROGRESS", label: "Em andamento" },
+  { value: "COMPLETED", label: "Concluída" },
+  { value: "CANCELED", label: "Cancelada" },
+];
+
+const SESSION_FORMAT_OPTIONS: Array<{
+  value: RecordingSessionFormat;
+  label: string;
+}> = [
+  { value: "REMOTE", label: "Remoto" },
+  { value: "IN_PERSON", label: "Presencial" },
+];
+
+const EMPTY_SESSION_FORM: SessionFormState = {
+  title: "",
+  castMemberId: "",
+  startDate: "",
+  startHour: "12",
+  startMinute: "00",
+  startPeriod: "AM",
+  endDate: "",
+  endHour: "12",
+  endMinute: "00",
+  endPeriod: "AM",
+  status: "PENDING",
+  format: "REMOTE",
+  notes: "",
+  episodeIds: [],
+  characterId: "",
+};
+
+const HOUR_OPTIONS_12H = Array.from({ length: 12 }, (_, i) =>
+  String(i + 1).padStart(2, "0"),
+);
+const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) =>
+  String(i).padStart(2, "0"),
+);
+
+/** ~12 linhas; em telas baixas limita à viewport (hora e minuto iguais). */
+const SESSION_TIME_DROPDOWN_MAX_H = "max-h-[min(27rem,_45vh)]";
+
+const SESSION_TIME_LIST_PANEL =
+  "rounded-[6px] border border-[#3d3d3d] bg-[#1f1f1f] py-0.5 shadow-[0_8px_24px_rgba(0,0,0,0.45)]";
+const SESSION_TIME_ROW_BASE =
+  "flex w-full min-h-[36px] items-center px-[10px] text-left text-[13px] text-white";
+const SESSION_TIME_ROW_HOVER = "hover:bg-[#2a3444]";
+const SESSION_TIME_ROW_SELECTED = "bg-[#3d6ea8] hover:bg-[#4a7ab8]";
+
+function SessionTimeOptionSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: readonly string[];
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !listRef.current) return;
+    const row = listRef.current.querySelector(`[data-opt="${value}"]`);
+    row?.scrollIntoView({ block: "nearest" });
+  }, [open, value]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        className={`${inputCls} flex w-full items-center text-left ${
+          open ? "border-[#1D9E75]" : ""
+        }`}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {value}
+      </button>
+      {open ? (
+        <div
+          ref={listRef}
+          className={`absolute left-0 right-0 top-full z-50 mt-px ${SESSION_TIME_DROPDOWN_MAX_H} overflow-y-auto ${SESSION_TIME_LIST_PANEL}`}
+          role="listbox"
+        >
+          {options.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              data-opt={opt}
+              role="option"
+              aria-selected={opt === value}
+              className={`${SESSION_TIME_ROW_BASE} ${SESSION_TIME_ROW_HOVER} ${
+                opt === value ? SESSION_TIME_ROW_SELECTED : ""
+              }`}
+              onClick={() => {
+                onChange(opt);
+                setOpen(false);
+              }}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+const AGENDA_PAGE_SIZE = 8;
+
+type SessionPeriodFilter = "ALL" | "TODAY" | "NEXT_7_DAYS" | "PAST";
+
+function getSessionStatusLabel(status: RecordingSessionStatus): string {
+  return (
+    SESSION_STATUS_OPTIONS.find((s) => s.value === status)?.label ?? status
+  );
+}
+
+function getSessionFormatLabel(format: RecordingSessionFormat): string {
+  return (
+    SESSION_FORMAT_OPTIONS.find((s) => s.value === format)?.label ?? format
+  );
+}
+
+function getSessionStatusBadgeClass(status: RecordingSessionStatus): string {
+  const map: Record<RecordingSessionStatus, string> = {
+    PENDING: "border-[#404040] bg-[#2a2a2a] text-[#b5b5b5]",
+    CONFIRMED: "border-[#1a4d6e] bg-[#152a3d] text-[#7EC8E3]",
+    IN_PROGRESS: "border-[#5c4a20] bg-[#3d3520] text-[#EF9F27]",
+    COMPLETED: "border-[#0F6E56] bg-[#0d3d2a] text-[#5DCAA5]",
+    CANCELED: "border-[#5a1515] bg-[#2a0a0a] text-[#F09595]",
+  };
+  return map[status];
+}
+
+function getSessionFormatBadgeClass(format: RecordingSessionFormat): string {
+  const map: Record<RecordingSessionFormat, string> = {
+    REMOTE: "border-[#3d4450] bg-[#2a3140] text-[#A8B4CC]",
+    IN_PERSON: "border-[#5c4a20] bg-[#3d3520] text-[#E9C17A]",
+  };
+  return map[format];
+}
+
+function getLocalDayKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getDayHeaderLabel(dayKey: string, now: Date): string {
+  const [yRaw, mRaw, dRaw] = dayKey.split("-").map(Number);
+  const date = new Date(yRaw, (mRaw ?? 1) - 1, dRaw ?? 1);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  if (getLocalDayKey(date) === getLocalDayKey(today)) return "Hoje";
+  if (getLocalDayKey(date) === getLocalDayKey(tomorrow)) return "Amanhã";
+  const label = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function isSessionInPeriod(
+  iso: string,
+  period: SessionPeriodFilter,
+  now: Date,
+): boolean {
+  if (period === "ALL") return true;
+  const start = new Date(iso);
+  if (Number.isNaN(start.getTime())) return false;
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const next7End = new Date(todayStart);
+  next7End.setDate(todayStart.getDate() + 7);
+  if (period === "TODAY") {
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(todayStart.getDate() + 1);
+    return start >= todayStart && start < tomorrowStart;
+  }
+  if (period === "NEXT_7_DAYS") {
+    return start >= todayStart && start < next7End;
+  }
+  return start < todayStart;
 }
 
 function getEditDefaults(p: DubbingProjectDto): DubbingProjectEditFormInput {
@@ -165,8 +461,33 @@ export default function ProjectEditPage() {
   >({});
   const [exportSrtsBusy, setExportSrtsBusy] = useState(false);
   const [exportSrtsError, setExportSrtsError] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<RecordingSessionDto[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [sessionForm, setSessionForm] =
+    useState<SessionFormState>(EMPTY_SESSION_FORM);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [sessionSaving, setSessionSaving] = useState(false);
+  const [sessionDeletingId, setSessionDeletingId] = useState<string | null>(
+    null,
+  );
+  const [sessionFeedback, setSessionFeedback] = useState<string | null>(null);
+  const [sessionFeedbackTone, setSessionFeedbackTone] = useState<
+    "success" | "error"
+  >("success");
+  const [sessionTitleTouched, setSessionTitleTouched] = useState(false);
+  const [sessionStatusFilter, setSessionStatusFilter] = useState<
+    "ALL" | RecordingSessionStatus
+  >("ALL");
+  const [sessionCastFilter, setSessionCastFilter] = useState<string>("ALL");
+  const [sessionPeriodFilter, setSessionPeriodFilter] =
+    useState<SessionPeriodFilter>("ALL");
+  const [sessionVisibleCount, setSessionVisibleCount] =
+    useState(AGENDA_PAGE_SIZE);
+  const [episodeDropdownOpen, setEpisodeDropdownOpen] = useState(false);
   const audioTargetEpRef = useRef<string | null>(null);
   const audioFileInputRef = useRef<HTMLInputElement>(null);
+  const episodeDropdownRef = useRef<HTMLDivElement>(null);
   const transcriptionPollRef = useRef<
     Record<string, ReturnType<typeof setInterval>>
   >({});
@@ -243,6 +564,30 @@ export default function ProjectEditPage() {
     }
   }, [id]);
 
+  const loadSessions = useCallback(async () => {
+    if (!id) return;
+    setSessionsLoading(true);
+    setSessionsError(null);
+    try {
+      const res = await fetch(`/api/dubbing-projects/${id}/sessions`, {
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        setSessions([]);
+        setSessionsError("Não foi possível carregar as sessões.");
+        return;
+      }
+      const data = (await res.json()) as { sessions: RecordingSessionDto[] };
+      setSessions(data.sessions ?? []);
+      setSessionVisibleCount(AGENDA_PAGE_SIZE);
+    } catch {
+      setSessions([]);
+      setSessionsError("Não foi possível carregar as sessões.");
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (activeTab === "elenco") {
       void loadCharacters();
@@ -257,6 +602,15 @@ export default function ProjectEditPage() {
   }, [activeTab, loadEpisodes]);
 
   useEffect(() => {
+    if (activeTab === "agenda") {
+      void loadSessions();
+      void loadEpisodes();
+      void loadCharacters();
+      void loadCastMembers();
+    }
+  }, [activeTab, loadSessions, loadEpisodes, loadCharacters, loadCastMembers]);
+
+  useEffect(() => {
     return () => {
       const polls = transcriptionPollRef.current;
       for (const iv of Object.values(polls)) {
@@ -265,6 +619,17 @@ export default function ProjectEditPage() {
       transcriptionPollRef.current = {};
     };
   }, []);
+
+  useEffect(() => {
+    if (!episodeDropdownOpen) return;
+    const onDocMouseDown = (e: MouseEvent) => {
+      if (!episodeDropdownRef.current?.contains(e.target as Node)) {
+        setEpisodeDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [episodeDropdownOpen]);
 
   const patchEpisodeRow = useCallback(
     async (epId: string, body: Record<string, unknown>) => {
@@ -328,19 +693,13 @@ export default function ProjectEditPage() {
           stopTranscriptionPoll(epId);
           await patchEpisodeRow(epId, { status: "PENDING" });
           setEpisodes((prev) =>
-            prev.map((e) =>
-              e.id === epId ? { ...e, status: "PENDING" } : e,
-            ),
+            prev.map((e) => (e.id === epId ? { ...e, status: "PENDING" } : e)),
           );
-          const msg =
-            data.errorMessage?.trim() || "A transcrição falhou.";
+          const msg = data.errorMessage?.trim() || "A transcrição falhou.";
           setEpisodeInlineError((prev) => ({ ...prev, [epId]: msg }));
         }
       };
-      transcriptionPollRef.current[epId] = setInterval(
-        () => void tick(),
-        3000,
-      );
+      transcriptionPollRef.current[epId] = setInterval(() => void tick(), 3000);
       void tick();
     },
     [patchEpisodeRow, stopTranscriptionPoll],
@@ -497,6 +856,203 @@ export default function ProjectEditPage() {
     }));
   };
 
+  const resetSessionForm = useCallback(() => {
+    setEditingSessionId(null);
+    setSessionForm(EMPTY_SESSION_FORM);
+    setSessionTitleTouched(false);
+  }, []);
+
+  const onEditSession = useCallback((session: RecordingSessionDto) => {
+    const startParts = parseTimeTo12hParts(isoToTimeInput(session.startAt));
+    const endParts = parseTimeTo12hParts(isoToTimeInput(session.endAt));
+    setEditingSessionId(session.id);
+    setSessionForm({
+      title: session.title,
+      castMemberId: session.castMemberId,
+      startDate: isoToDateInput(session.startAt),
+      startHour: startParts.hour12,
+      startMinute: startParts.minute,
+      startPeriod: startParts.period,
+      endDate: isoToDateInput(session.endAt),
+      endHour: endParts.hour12,
+      endMinute: endParts.minute,
+      endPeriod: endParts.period,
+      status: session.status,
+      format: session.format,
+      notes: session.notes ?? "",
+      episodeIds:
+        session.episodes && session.episodes.length > 0
+          ? session.episodes.map((e) => e.id)
+          : session.episodeId
+            ? [session.episodeId]
+            : [],
+      characterId: session.characterId ?? "",
+    });
+    setSessionFeedback(null);
+    setSessionsError(null);
+    setSessionTitleTouched(true);
+  }, []);
+
+  useEffect(() => {
+    if (editingSessionId) return;
+    if (sessionTitleTouched) return;
+    const pickedCharacter = characters.find(
+      (c) => c.id === sessionForm.characterId,
+    );
+    if (pickedCharacter?.name?.trim()) {
+      const suggested = `Gravação — ${pickedCharacter.name.trim()}`;
+      if (sessionForm.title !== suggested) {
+        setSessionForm((prev) => ({ ...prev, title: suggested }));
+      }
+      return;
+    }
+    const firstEpisodeId = sessionForm.episodeIds[0];
+    const pickedEpisode = episodes.find((ep) => ep.id === firstEpisodeId);
+    if (pickedEpisode) {
+      const episodeTitle = pickedEpisode.title?.trim()
+        ? `EP ${pickedEpisode.number} — ${pickedEpisode.title.trim()}`
+        : `EP ${pickedEpisode.number}`;
+      const suggested = `Gravação — ${episodeTitle}`;
+      if (sessionForm.title !== suggested) {
+        setSessionForm((prev) => ({ ...prev, title: suggested }));
+      }
+      return;
+    }
+    if (sessionForm.title !== "") {
+      setSessionForm((prev) => ({ ...prev, title: "" }));
+    }
+  }, [
+    characters,
+    editingSessionId,
+    episodes,
+    sessionForm.characterId,
+    sessionForm.episodeIds,
+    sessionForm.title,
+    sessionTitleTouched,
+  ]);
+
+  const onSaveSession = useCallback(async () => {
+    if (!id) return;
+    setSessionFeedback(null);
+    setSessionsError(null);
+    if (!sessionForm.title.trim()) {
+      setSessionFeedbackTone("error");
+      setSessionFeedback("Informe o título da sessão.");
+      return;
+    }
+    if (!sessionForm.castMemberId) {
+      setSessionFeedbackTone("error");
+      setSessionFeedback("Selecione o dublador.");
+      return;
+    }
+    const startIso = composeDateAndTimeToIso(
+      sessionForm.startDate,
+      sessionForm.startHour,
+      sessionForm.startMinute,
+      sessionForm.startPeriod,
+    );
+    const endIso = composeDateAndTimeToIso(
+      sessionForm.endDate,
+      sessionForm.endHour,
+      sessionForm.endMinute,
+      sessionForm.endPeriod,
+    );
+    if (!startIso || !endIso) {
+      setSessionFeedbackTone("error");
+      setSessionFeedback("Informe início e fim válidos.");
+      return;
+    }
+    const basePayload = {
+      title: sessionForm.title.trim(),
+      castMemberId: sessionForm.castMemberId,
+      startAt: startIso,
+      endAt: endIso,
+      status: sessionForm.status,
+      format: sessionForm.format,
+      notes: sessionForm.notes.trim() ? sessionForm.notes.trim() : null,
+      characterId: sessionForm.characterId || null,
+    };
+    setSessionSaving(true);
+    try {
+      const isEdit = Boolean(editingSessionId);
+      const url = isEdit
+        ? `/api/dubbing-projects/${id}/sessions/${encodeURIComponent(editingSessionId!)}`
+        : `/api/dubbing-projects/${id}/sessions`;
+      const method = isEdit ? "PATCH" : "POST";
+      const payload = {
+        ...basePayload,
+        episodeIds: sessionForm.episodeIds,
+      };
+      const res = await fetch(url, {
+        method,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const raw = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg =
+          typeof raw === "object" && raw && "error" in raw
+            ? String((raw as { error?: unknown }).error)
+            : "Não foi possível salvar a sessão.";
+        setSessionFeedbackTone("error");
+        setSessionFeedback(msg);
+        return;
+      }
+      setSessionFeedbackTone("success");
+      setSessionFeedback(isEdit ? "Sessão atualizada." : "Sessão criada.");
+      resetSessionForm();
+      await loadSessions();
+    } catch {
+      setSessionFeedbackTone("error");
+      setSessionFeedback("Falha de rede ao salvar sessão.");
+    } finally {
+      setSessionSaving(false);
+    }
+  }, [editingSessionId, id, loadSessions, resetSessionForm, sessionForm]);
+
+  const onDeleteSession = useCallback(
+    async (session: RecordingSessionDto) => {
+      if (!id) return;
+      const ok = await confirm({
+        title: "Remover sessão",
+        description: `Confirma remover a sessão "${session.title}"?`,
+        variant: "danger",
+        confirmLabel: "Remover",
+        cancelLabel: "Cancelar",
+      });
+      if (!ok) return;
+      setSessionDeletingId(session.id);
+      setSessionFeedback(null);
+      setSessionsError(null);
+      try {
+        const res = await fetch(
+          `/api/dubbing-projects/${id}/sessions/${encodeURIComponent(session.id)}`,
+          { method: "DELETE" },
+        );
+        if (!res.ok) {
+          const raw = await res.json().catch(() => ({}));
+          const msg =
+            typeof raw === "object" && raw && "error" in raw
+              ? String((raw as { error?: unknown }).error)
+              : "Não foi possível remover a sessão.";
+          setSessionFeedbackTone("error");
+          setSessionFeedback(msg);
+          return;
+        }
+        if (editingSessionId === session.id) resetSessionForm();
+        setSessionFeedbackTone("success");
+        setSessionFeedback("Sessão removida.");
+        await loadSessions();
+      } catch {
+        setSessionFeedbackTone("error");
+        setSessionFeedback("Falha de rede ao remover sessão.");
+      } finally {
+        setSessionDeletingId(null);
+      }
+    },
+    [confirm, editingSessionId, id, loadSessions, resetSessionForm],
+  );
+
   const openNewChar = () => {
     setEditingChar(null);
     setCharModalOpen(true);
@@ -562,8 +1118,7 @@ export default function ProjectEditPage() {
   const episodeProgressPct =
     episodeTotal > 0
       ? Math.round(
-          ((episodeDoneCount + episodeTranscribingCount * 0.5) /
-            episodeTotal) *
+          ((episodeDoneCount + episodeTranscribingCount * 0.5) / episodeTotal) *
             100,
         )
       : 0;
@@ -596,6 +1151,81 @@ export default function ProjectEditPage() {
   const statusSubtitle =
     STATUS_LABELS.find((s) => s.value === currentStatus)?.label ??
     String(currentStatus);
+
+  const groupedSessions = useMemo(() => {
+    const now = new Date();
+    const filtered = sessions.filter((session) => {
+      if (
+        sessionStatusFilter !== "ALL" &&
+        session.status !== sessionStatusFilter
+      )
+        return false;
+      if (
+        sessionCastFilter !== "ALL" &&
+        session.castMemberId !== sessionCastFilter
+      )
+        return false;
+      if (!isSessionInPeriod(session.startAt, sessionPeriodFilter, now))
+        return false;
+      return true;
+    });
+    const sorted = [...filtered].sort((a, b) => {
+      const aStart = new Date(a.startAt).getTime();
+      const bStart = new Date(b.startAt).getTime();
+      if (aStart !== bStart) return aStart - bStart;
+      const aCreated = new Date(a.createdAt).getTime();
+      const bCreated = new Date(b.createdAt).getTime();
+      return aCreated - bCreated;
+    });
+    const visible = sorted.slice(0, sessionVisibleCount);
+    const groups: Array<{
+      dayKey: string;
+      label: string;
+      items: RecordingSessionDto[];
+    }> = [];
+    for (const session of visible) {
+      const dt = new Date(session.startAt);
+      if (Number.isNaN(dt.getTime())) continue;
+      const dayKey = getLocalDayKey(dt);
+      const last = groups[groups.length - 1];
+      if (!last || last.dayKey !== dayKey) {
+        groups.push({
+          dayKey,
+          label: getDayHeaderLabel(dayKey, now),
+          items: [session],
+        });
+      } else {
+        last.items.push(session);
+      }
+    }
+    return {
+      total: sessions.length,
+      filteredCount: sorted.length,
+      visibleCount: visible.length,
+      hasMore: visible.length < sorted.length,
+      groups,
+    };
+  }, [
+    sessionCastFilter,
+    sessionPeriodFilter,
+    sessionStatusFilter,
+    sessionVisibleCount,
+    sessions,
+  ]);
+
+  useEffect(() => {
+    setSessionVisibleCount(AGENDA_PAGE_SIZE);
+  }, [sessionStatusFilter, sessionCastFilter, sessionPeriodFilter]);
+
+  const selectedEpisodeLabel = useMemo(() => {
+    if (sessionForm.episodeIds.length === 0) return "Nenhum";
+    if (sessionForm.episodeIds.length === 1) {
+      const ep = episodes.find((item) => item.id === sessionForm.episodeIds[0]);
+      if (!ep) return "1 episódio";
+      return `EP ${ep.number}${ep.title?.trim() ? ` - ${ep.title.trim()}` : ""}`;
+    }
+    return `${sessionForm.episodeIds.length} episódios selecionados`;
+  }, [episodes, sessionForm.episodeIds]);
 
   const onSubmit = async (data: DubbingProjectEditFormData) => {
     if (activeTab !== "info") return;
@@ -787,7 +1417,8 @@ export default function ProjectEditPage() {
                     render={({ field }) => (
                       <ProjectStatusStepper
                         currentStatus={
-                          (field.value ?? project.status) as DubbingProjectStatus
+                          (field.value ??
+                            project.status) as DubbingProjectStatus
                         }
                         deadline={
                           typeof watchedDeadline === "string"
@@ -823,8 +1454,7 @@ export default function ProjectEditPage() {
                               Identificação
                             </span>
                             <span className="font-mono text-[10px] text-[#404040]">
-                              ID:{" "}
-                              {id.length > 12 ? `${id.slice(0, 8)}…` : id}
+                              ID: {id.length > 12 ? `${id.slice(0, 8)}…` : id}
                             </span>
                           </div>
                           <div className="flex flex-col gap-[10px] p-[14px]">
@@ -839,9 +1469,7 @@ export default function ProjectEditPage() {
                               <input
                                 id="edit-project-name"
                                 {...register("name")}
-                                className={
-                                  errors.name ? inputErrCls : inputCls
-                                }
+                                className={errors.name ? inputErrCls : inputCls}
                                 placeholder="Nome do projeto"
                               />
                               {errors.name ? (
@@ -925,12 +1553,8 @@ export default function ProjectEditPage() {
                           </div>
                           <div className="grid grid-cols-1 gap-[10px] p-[14px] sm:grid-cols-2">
                             <div>
-                              <label
-                                className={labelCls}
-                                htmlFor="edit-start"
-                              >
-                                Início{" "}
-                                <span className="text-[#E24B4A]">*</span>
+                              <label className={labelCls} htmlFor="edit-start">
+                                Início <span className="text-[#E24B4A]">*</span>
                               </label>
                               <Controller
                                 name="startDate"
@@ -947,9 +1571,7 @@ export default function ProjectEditPage() {
                                     onChange={field.onChange}
                                     placeholder="dd/mm/aaaa"
                                     className={
-                                      errors.startDate
-                                        ? inputErrCls
-                                        : inputCls
+                                      errors.startDate ? inputErrCls : inputCls
                                     }
                                   />
                                 )}
@@ -983,9 +1605,7 @@ export default function ProjectEditPage() {
                                     onChange={field.onChange}
                                     placeholder="dd/mm/aaaa"
                                     className={
-                                      errors.deadline
-                                        ? inputErrCls
-                                        : inputCls
+                                      errors.deadline ? inputErrCls : inputCls
                                     }
                                   />
                                 )}
@@ -1023,9 +1643,7 @@ export default function ProjectEditPage() {
                               {notesLen} / 2000
                             </div>
                             {errors.notes ? (
-                              <p className={errorCls}>
-                                {errors.notes.message}
-                              </p>
+                              <p className={errorCls}>{errors.notes.message}</p>
                             ) : null}
                           </div>
                         </div>
@@ -1117,10 +1735,7 @@ export default function ProjectEditPage() {
                               </select>
                             </div>
                             <div>
-                              <label
-                                className={labelCls}
-                                htmlFor="edit-value"
-                              >
+                              <label className={labelCls} htmlFor="edit-value">
                                 {valueFieldLabel(paymentType)}{" "}
                                 <span className="text-[#E24B4A]">*</span>
                               </label>
@@ -1179,13 +1794,17 @@ export default function ProjectEditPage() {
                             {characters.length} personagem
                             {characters.length !== 1 ? "s" : ""}
                             {" · "}
-                            {characters.filter((c) => c.castMemberId).length}{" "}
+                            {
+                              characters.filter((c) => c.castMemberId).length
+                            }{" "}
                             dublador
-                            {characters.filter((c) => c.castMemberId).length !== 1
+                            {characters.filter((c) => c.castMemberId).length !==
+                            1
                               ? "es"
                               : ""}{" "}
                             escalado
-                            {characters.filter((c) => c.castMemberId).length !== 1
+                            {characters.filter((c) => c.castMemberId).length !==
+                            1
                               ? "s"
                               : ""}
                           </p>
@@ -1294,8 +1913,12 @@ export default function ProjectEditPage() {
                       {/* cabeçalho da seção */}
                       <div className="mb-[16px] flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <h2 className="text-[14px] font-[600] text-[#e8e8e8]">Episódios</h2>
-                          <p className="mt-[2px] text-[11px] text-[#505050]">Lista editorial por número</p>
+                          <h2 className="text-[14px] font-[600] text-[#e8e8e8]">
+                            Episódios
+                          </h2>
+                          <p className="mt-[2px] text-[11px] text-[#505050]">
+                            Lista editorial por número
+                          </p>
                         </div>
                         {hasAnyDoneEpisode ? (
                           <button
@@ -1310,7 +1933,9 @@ export default function ProjectEditPage() {
                       </div>
 
                       {exportSrtsError ? (
-                        <p className="mb-[12px] text-[11px] text-[#F09595]">{exportSrtsError}</p>
+                        <p className="mb-[12px] text-[11px] text-[#F09595]">
+                          {exportSrtsError}
+                        </p>
                       ) : null}
 
                       {episodesLoading ? (
@@ -1335,11 +1960,14 @@ export default function ProjectEditPage() {
                           {/* barra de progresso */}
                           <div className="mb-[12px] overflow-hidden rounded-[10px] border border-[#252525] bg-[#1a1a1a]">
                             <div className="border-b border-[#252525] px-[14px] py-[10px]">
-                              <span className="text-[12px] font-[600] text-[#e8e8e8]">Progresso</span>
+                              <span className="text-[12px] font-[600] text-[#e8e8e8]">
+                                Progresso
+                              </span>
                             </div>
                             <div className="p-[14px]">
                               <p className="mb-[8px] text-[12px] text-[#909090]">
-                                {episodeDoneCount} de {episodeTotal} episódios concluídos
+                                {episodeDoneCount} de {episodeTotal} episódios
+                                concluídos
                               </p>
                               <div className="h-[6px] w-full overflow-hidden rounded-full bg-[#252525]">
                                 <div
@@ -1370,30 +1998,48 @@ export default function ProjectEditPage() {
 
                               <ul className="divide-y divide-[#252525]">
                                 {episodes.map((ep) => {
-                                  const title = ep.title?.trim() || `Episódio ${ep.number}`;
+                                  const title =
+                                    ep.title?.trim() || `Episódio ${ep.number}`;
                                   const badge = getWorkflowBadge(ep);
-                                  const busy = ep.status === "TRANSCRIBING" || uploadingEpisodeId === ep.id;
+                                  const busy =
+                                    ep.status === "TRANSCRIBING" ||
+                                    uploadingEpisodeId === ep.id;
                                   const inlineErr = episodeInlineError[ep.id];
-                                  const editedStr = formatEpisodeTimestamp(ep.editedAt);
-                                  const updatedStr = formatEpisodeTimestamp(ep.updatedAt);
+                                  const editedStr = formatEpisodeTimestamp(
+                                    ep.editedAt,
+                                  );
+                                  const updatedStr = formatEpisodeTimestamp(
+                                    ep.updatedAt,
+                                  );
 
                                   // ações possíveis
                                   const canSendAudio = !busy;
-                                  const canStartTx = Boolean(ep.audioFileId) && !busy && !ep.subtitleFileId;
-                                  const canOpenEditor = Boolean(ep.subtitleFileId);
+                                  const canStartTx =
+                                    Boolean(ep.audioFileId) &&
+                                    !busy &&
+                                    !ep.subtitleFileId;
+                                  const canOpenEditor = Boolean(
+                                    ep.subtitleFileId,
+                                  );
                                   const canMarkDone = false;
 
                                   // qual é a ação principal do momento?
-                                  const primaryAction =
-                                    !ep.audioFileId ? "audio" :
-                                    !ep.subtitleFileId ? "transcribe" :
-                                    ep.status !== "DONE" ? "editor" : null;
+                                  const primaryAction = !ep.audioFileId
+                                    ? "audio"
+                                    : !ep.subtitleFileId
+                                      ? "transcribe"
+                                      : ep.status !== "DONE"
+                                        ? "editor"
+                                        : null;
 
                                   const baseBtnCls =
                                     "rounded-[5px] border border-[#2e2e2e] bg-[#141414] px-[8px] py-[4px] text-[10px] font-[500] text-[#cfcfcf] transition-colors hover:bg-[#252525] hover:text-[#e8e8e8] disabled:cursor-not-allowed disabled:opacity-35";
 
                                   return (
-                                    <li key={ep.id} className="ep-item flex flex-col gap-[10px] px-[14px] py-[12px]">
+                                    <li
+                                      key={ep.id}
+                                      className="ep-item flex flex-col gap-[10px] px-[14px] py-[12px]"
+                                    >
                                       {/* linha principal: número · conteúdo */}
                                       <div className="flex min-w-0 items-start gap-[10px]">
                                         {/* número */}
@@ -1407,14 +2053,19 @@ export default function ProjectEditPage() {
                                           <div className="mb-[6px] flex flex-wrap items-center gap-x-[8px] gap-y-[4px]">
                                             {badge.spinning ? (
                                               <span className="inline-flex items-center gap-[5px] rounded-[4px] border border-[#5c4a20] bg-[#3d3520] px-[8px] py-[2px] text-[10px] font-[600] uppercase tracking-[0.05em] text-[#EF9F27]">
-                                                <span className="ep-spin" aria-hidden />
+                                                <span
+                                                  className="ep-spin"
+                                                  aria-hidden
+                                                />
                                                 Em transcrição
                                               </span>
                                             ) : (
                                               <span
                                                 className={`inline-flex items-center rounded-[4px] px-[8px] py-[2px] text-[10px] font-[600] uppercase tracking-[0.05em] ${badge.className}`}
                                               >
-                                                {badge.label === "Concluído" ? "✓ " : ""}
+                                                {badge.label === "Concluído"
+                                                  ? "✓ "
+                                                  : ""}
                                                 {badge.label}
                                               </span>
                                             )}
@@ -1430,32 +2081,57 @@ export default function ProjectEditPage() {
                                           <div className="mb-[6px] flex flex-wrap gap-[5px]">
                                             {(
                                               [
-                                                { key: "audio", has: Boolean(ep.audioFileId), label: "Áudio" },
-                                                { key: "tx", has: Boolean(ep.transcriptionProjectId), label: "Transcrição" },
-                                                { key: "legenda", has: Boolean(ep.subtitleFileId), label: "Legenda" },
+                                                {
+                                                  key: "audio",
+                                                  has: Boolean(ep.audioFileId),
+                                                  label: "Áudio",
+                                                },
+                                                {
+                                                  key: "tx",
+                                                  has: Boolean(
+                                                    ep.transcriptionProjectId,
+                                                  ),
+                                                  label: "Transcrição",
+                                                },
+                                                {
+                                                  key: "legenda",
+                                                  has: Boolean(
+                                                    ep.subtitleFileId,
+                                                  ),
+                                                  label: "Legenda",
+                                                },
                                               ] as const
                                             ).map(({ key, has, label }) => (
                                               <span
                                                 key={key}
                                                 className={`rounded-[3px] border border-[#333] bg-[#1e1e1e] px-[6px] py-[1px] text-[10px] text-[#606060] ${has ? "meta-chip-has" : ""}`}
                                               >
-                                                {has ? "✓ " : ""}{label}
+                                                {has ? "✓ " : ""}
+                                                {label}
                                               </span>
                                             ))}
                                           </div>
 
                                           {/* timestamp */}
-                                          {(editedStr || updatedStr) ? (
+                                          {editedStr || updatedStr ? (
                                             <p className="mb-[6px] text-[10px] text-[#505050]">
-                                              {editedStr ? <>Editado: {editedStr}</> : null}
-                                              {editedStr && updatedStr ? " · " : null}
-                                              {!editedStr && updatedStr ? <>Atualizado: {updatedStr}</> : null}
+                                              {editedStr ? (
+                                                <>Editado: {editedStr}</>
+                                              ) : null}
+                                              {editedStr && updatedStr
+                                                ? " · "
+                                                : null}
+                                              {!editedStr && updatedStr ? (
+                                                <>Atualizado: {updatedStr}</>
+                                              ) : null}
                                             </p>
                                           ) : null}
 
                                           {/* erro inline */}
                                           {inlineErr ? (
-                                            <p className="mb-[6px] text-[11px] text-[#F09595]">{inlineErr}</p>
+                                            <p className="mb-[6px] text-[11px] text-[#F09595]">
+                                              {inlineErr}
+                                            </p>
                                           ) : null}
                                         </div>
                                       </div>
@@ -1465,16 +2141,22 @@ export default function ProjectEditPage() {
                                         <button
                                           type="button"
                                           disabled={!canSendAudio}
-                                          onClick={() => onPickEpisodeAudio(ep.id)}
+                                          onClick={() =>
+                                            onPickEpisodeAudio(ep.id)
+                                          }
                                           className={`${baseBtnCls} ${primaryAction === "audio" ? "act-btn-primary" : ""}`}
                                         >
-                                          {ep.audioFileId ? "Substituir áudio" : "Enviar áudio"}
+                                          {ep.audioFileId
+                                            ? "Substituir áudio"
+                                            : "Enviar áudio"}
                                         </button>
 
                                         <button
                                           type="button"
                                           disabled={!canStartTx}
-                                          onClick={() => void onGenerateEpisodeSrt(ep)}
+                                          onClick={() =>
+                                            void onGenerateEpisodeSrt(ep)
+                                          }
                                           className={`${baseBtnCls} ${primaryAction === "transcribe" ? "act-btn-primary" : ""}`}
                                         >
                                           Iniciar transcrição
@@ -1499,7 +2181,9 @@ export default function ProjectEditPage() {
                                             }}
                                             className={`${baseBtnCls} ${primaryAction === "editor" ? "act-btn-primary" : ""}`}
                                           >
-                                            {canOpenEditor ? "Abrir editor" : "Aguardando transcrição"}
+                                            {canOpenEditor
+                                              ? "Abrir editor"
+                                              : "Aguardando transcrição"}
                                           </button>
                                         </span>
 
@@ -1533,9 +2217,611 @@ export default function ProjectEditPage() {
                     </div>
                   </div>
                 )}
+                {activeTab === "agenda" && (
+                  <div className="flex-1 overflow-y-auto px-[24px] py-[20px]">
+                    <div className="mx-auto flex max-w-[980px] flex-col gap-[12px]">
+                      <div className="rounded-[10px] border border-[#252525] bg-[#1a1a1a] p-[14px]">
+                        <h2 className="text-[14px] font-[600] text-[#e8e8e8]">
+                          Sessões de gravação
+                        </h2>
+                        <p className="mt-[2px] text-[11px] text-[#505050]">
+                          Cadastro simples de sessões do projeto (sem calendário
+                          visual).
+                        </p>
+                      </div>
+
+                      <div className="rounded-[10px] border border-[#252525] bg-[#1a1a1a] p-[14px]">
+                        <div className="mb-[10px] flex items-center justify-between gap-[10px]">
+                          <h3 className="text-[12px] font-[600] text-[#e8e8e8]">
+                            {editingSessionId ? "Editar sessão" : "Nova sessão"}
+                          </h3>
+                          {editingSessionId ? (
+                            <button
+                              type="button"
+                              onClick={resetSessionForm}
+                              className="rounded-[5px] border border-[#2e2e2e] px-[10px] py-[5px] text-[11px] text-[#909090] hover:bg-[#252525]"
+                            >
+                              Cancelar edição
+                            </button>
+                          ) : null}
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-[10px] md:grid-cols-2">
+                          <div>
+                            <label className={labelCls}>Título</label>
+                            <input
+                              className={inputCls}
+                              value={sessionForm.title}
+                              onChange={(e) => {
+                                setSessionTitleTouched(true);
+                                setSessionForm((prev) => ({
+                                  ...prev,
+                                  title: e.target.value,
+                                }));
+                              }}
+                              placeholder="Ex: Gravação principal EP 01"
+                            />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Dublador</label>
+                            <select
+                              className={inputCls}
+                              value={sessionForm.castMemberId}
+                              onChange={(e) =>
+                                setSessionForm((prev) => ({
+                                  ...prev,
+                                  castMemberId: e.target.value,
+                                }))
+                              }
+                            >
+                              <option value="">Selecione</option>
+                              {castMembers.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className={labelCls}>Início</label>
+                            <div className="grid grid-cols-4 gap-[6px]">
+                              <DateInput
+                                value={sessionForm.startDate}
+                                onChange={(v) =>
+                                  setSessionForm((prev) => ({
+                                    ...prev,
+                                    startDate: v,
+                                  }))
+                                }
+                                className={inputCls}
+                              />
+                              <SessionTimeOptionSelect
+                                value={sessionForm.startHour}
+                                options={HOUR_OPTIONS_12H}
+                                onChange={(hour) =>
+                                  setSessionForm((prev) => ({
+                                    ...prev,
+                                    startHour: hour,
+                                  }))
+                                }
+                              />
+                              <SessionTimeOptionSelect
+                                value={sessionForm.startMinute}
+                                options={MINUTE_OPTIONS}
+                                onChange={(minute) =>
+                                  setSessionForm((prev) => ({
+                                    ...prev,
+                                    startMinute: minute,
+                                  }))
+                                }
+                              />
+                              <select
+                                className={inputCls}
+                                value={sessionForm.startPeriod}
+                                onChange={(e) =>
+                                  setSessionForm((prev) => ({
+                                    ...prev,
+                                    startPeriod: e.target.value as "AM" | "PM",
+                                  }))
+                                }
+                              >
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div>
+                            <label className={labelCls}>Fim</label>
+                            <div className="grid grid-cols-4 gap-[6px]">
+                              <DateInput
+                                value={sessionForm.endDate}
+                                onChange={(v) =>
+                                  setSessionForm((prev) => ({
+                                    ...prev,
+                                    endDate: v,
+                                  }))
+                                }
+                                className={inputCls}
+                              />
+                              <SessionTimeOptionSelect
+                                value={sessionForm.endHour}
+                                options={HOUR_OPTIONS_12H}
+                                onChange={(hour) =>
+                                  setSessionForm((prev) => ({
+                                    ...prev,
+                                    endHour: hour,
+                                  }))
+                                }
+                              />
+                              <SessionTimeOptionSelect
+                                value={sessionForm.endMinute}
+                                options={MINUTE_OPTIONS}
+                                onChange={(minute) =>
+                                  setSessionForm((prev) => ({
+                                    ...prev,
+                                    endMinute: minute,
+                                  }))
+                                }
+                              />
+                              <select
+                                className={inputCls}
+                                value={sessionForm.endPeriod}
+                                onChange={(e) =>
+                                  setSessionForm((prev) => ({
+                                    ...prev,
+                                    endPeriod: e.target.value as "AM" | "PM",
+                                  }))
+                                }
+                              >
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div>
+                            <label className={labelCls}>Status</label>
+                            <select
+                              className={inputCls}
+                              value={sessionForm.status}
+                              onChange={(e) =>
+                                setSessionForm((prev) => ({
+                                  ...prev,
+                                  status: e.target
+                                    .value as RecordingSessionStatus,
+                                }))
+                              }
+                            >
+                              {SESSION_STATUS_OPTIONS.map((s) => (
+                                <option key={s.value} value={s.value}>
+                                  {s.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className={labelCls}>Formato</label>
+                            <select
+                              className={inputCls}
+                              value={sessionForm.format}
+                              onChange={(e) =>
+                                setSessionForm((prev) => ({
+                                  ...prev,
+                                  format: e.target
+                                    .value as RecordingSessionFormat,
+                                }))
+                              }
+                            >
+                              {SESSION_FORMAT_OPTIONS.map((s) => (
+                                <option key={s.value} value={s.value}>
+                                  {s.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className={labelCls}>
+                              Episódios (opcional)
+                            </label>
+                            <div ref={episodeDropdownRef} className="relative">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEpisodeDropdownOpen((prev) => !prev)
+                                }
+                                className={`${inputCls} flex items-center justify-between`}
+                              >
+                                <span
+                                  className={
+                                    sessionForm.episodeIds.length > 0
+                                      ? "text-[#e8e8e8]"
+                                      : "text-[#909090]"
+                                  }
+                                >
+                                  {selectedEpisodeLabel}
+                                </span>
+                                <span className="text-[#606060]">
+                                  {episodeDropdownOpen ? "▲" : "▼"}
+                                </span>
+                              </button>
+                              {episodeDropdownOpen ? (
+                                <div className="absolute z-20 mt-[6px] max-h-[180px] w-full overflow-y-auto rounded-[6px] border border-[#2e2e2e] bg-[#111] p-[6px]">
+                                  {episodes.length === 0 ? (
+                                    <p className="px-[8px] py-[6px] text-[11px] text-[#606060]">
+                                      Nenhum episódio disponível
+                                    </p>
+                                  ) : (
+                                    episodes.map((ep) => {
+                                      const checked =
+                                        sessionForm.episodeIds.includes(ep.id);
+                                      return (
+                                        <label
+                                          key={ep.id}
+                                          className="flex cursor-pointer items-center gap-[8px] rounded-[4px] px-[8px] py-[6px] text-[12px] text-[#d6d6d6] hover:bg-[#1e1e1e]"
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() =>
+                                              setSessionForm((prev) => ({
+                                                ...prev,
+                                                episodeIds: checked
+                                                  ? prev.episodeIds.filter(
+                                                      (id) => id !== ep.id,
+                                                    )
+                                                  : [...prev.episodeIds, ep.id],
+                                              }))
+                                            }
+                                          />
+                                          <span>
+                                            EP {ep.number}{" "}
+                                            {ep.title?.trim()
+                                              ? `- ${ep.title}`
+                                              : ""}
+                                          </span>
+                                        </label>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div>
+                            <label className={labelCls}>
+                              Personagem (opcional)
+                            </label>
+                            <select
+                              className={inputCls}
+                              value={sessionForm.characterId}
+                              onChange={(e) =>
+                                setSessionForm((prev) => ({
+                                  ...prev,
+                                  characterId: e.target.value,
+                                }))
+                              }
+                            >
+                              <option value="">Nenhum</option>
+                              {characters.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <div className="mt-[10px]">
+                          <label className={labelCls}>Notas</label>
+                          <textarea
+                            rows={3}
+                            maxLength={2000}
+                            className={`${inputCls} min-h-[74px] resize-y`}
+                            value={sessionForm.notes}
+                            onChange={(e) =>
+                              setSessionForm((prev) => ({
+                                ...prev,
+                                notes: e.target.value,
+                              }))
+                            }
+                            placeholder="Observações da sessão"
+                          />
+                        </div>
+                        {sessionFeedback ? (
+                          <p
+                            className={`mt-[8px] text-[11px] ${
+                              sessionFeedbackTone === "error"
+                                ? "text-[#F09595]"
+                                : "text-[#5DCAA5]"
+                            }`}
+                          >
+                            {sessionFeedback}
+                          </p>
+                        ) : null}
+                        <div className="mt-[12px] flex items-center gap-[8px]">
+                          <button
+                            type="button"
+                            disabled={
+                              sessionSaving || Boolean(sessionDeletingId)
+                            }
+                            onClick={() => void onSaveSession()}
+                            className="rounded-[5px] border border-[#0F6E56] bg-[#1D9E75] px-[12px] py-[6px] text-[11px] font-[500] text-white hover:bg-[#0F6E56] disabled:opacity-40"
+                          >
+                            {sessionSaving
+                              ? "Salvando..."
+                              : editingSessionId
+                                ? "Salvar edição"
+                                : "Criar sessão"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={
+                              sessionSaving || Boolean(sessionDeletingId)
+                            }
+                            onClick={resetSessionForm}
+                            className="rounded-[5px] border border-[#2e2e2e] px-[12px] py-[6px] text-[11px] text-[#909090] hover:bg-[#252525] disabled:opacity-40"
+                          >
+                            Limpar
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="rounded-[10px] border border-[#252525] bg-[#1a1a1a] p-[14px]">
+                        <div className="mb-[8px] flex flex-wrap items-center justify-between gap-[8px]">
+                          <h3 className="text-[12px] font-[600] text-[#e8e8e8]">
+                            Sessões cadastradas ({groupedSessions.visibleCount}/
+                            {groupedSessions.filteredCount})
+                          </h3>
+                          <div className="grid w-full grid-cols-1 gap-[6px] md:w-auto md:grid-cols-3">
+                            <select
+                              className={inputCls}
+                              value={sessionStatusFilter}
+                              onChange={(e) =>
+                                setSessionStatusFilter(
+                                  e.target.value as
+                                    | "ALL"
+                                    | RecordingSessionStatus,
+                                )
+                              }
+                            >
+                              <option value="ALL">Todos os status</option>
+                              {SESSION_STATUS_OPTIONS.map((s) => (
+                                <option key={s.value} value={s.value}>
+                                  {s.label}
+                                </option>
+                              ))}
+                            </select>
+                            <select
+                              className={inputCls}
+                              value={sessionCastFilter}
+                              onChange={(e) =>
+                                setSessionCastFilter(e.target.value)
+                              }
+                            >
+                              <option value="ALL">Todos os dubladores</option>
+                              {castMembers.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.name}
+                                </option>
+                              ))}
+                            </select>
+                            <select
+                              className={inputCls}
+                              value={sessionPeriodFilter}
+                              onChange={(e) =>
+                                setSessionPeriodFilter(
+                                  e.target.value as SessionPeriodFilter,
+                                )
+                              }
+                            >
+                              <option value="ALL">Todos os períodos</option>
+                              <option value="TODAY">Hoje</option>
+                              <option value="NEXT_7_DAYS">
+                                Próximos 7 dias
+                              </option>
+                              <option value="PAST">Passadas</option>
+                            </select>
+                          </div>
+                        </div>
+                        {sessionsLoading ? (
+                          <p className="text-[12px] text-[#505050]">
+                            Carregando sessões...
+                          </p>
+                        ) : sessionsError ? (
+                          <p className="text-[12px] text-[#F09595]">
+                            {sessionsError}
+                          </p>
+                        ) : groupedSessions.filteredCount === 0 ? (
+                          <p className="text-[12px] text-[#505050]">
+                            Nenhuma sessão encontrada para os filtros
+                            selecionados.
+                          </p>
+                        ) : (
+                          <div className="flex flex-col gap-[8px]">
+                            {groupedSessions.groups.map((group) => (
+                              <div
+                                key={group.dayKey}
+                                className="flex flex-col gap-[8px]"
+                              >
+                                <p className="text-[11px] font-[600] uppercase tracking-[0.06em] text-[#7b7b7b]">
+                                  {group.label}
+                                </p>
+                                {group.items.map((session) => {
+                                  const epSummaries =
+                                    session.episodes &&
+                                    session.episodes.length > 0
+                                      ? session.episodes.map((e) => ({
+                                          key: e.id,
+                                          number: e.number,
+                                          title: e.title,
+                                        }))
+                                      : session.episodeId
+                                        ? (() => {
+                                            const local = episodes.find(
+                                              (x) => x.id === session.episodeId,
+                                            );
+                                            if (local) {
+                                              return [
+                                                {
+                                                  key: local.id,
+                                                  number: local.number,
+                                                  title: local.title,
+                                                },
+                                              ];
+                                            }
+                                            if (session.episode) {
+                                              return [
+                                                {
+                                                  key: session.episode.id,
+                                                  number: session.episode.number,
+                                                  title: session.episode.title,
+                                                },
+                                              ];
+                                            }
+                                            return [];
+                                          })()
+                                        : [];
+                                  const ch = characters.find(
+                                    (item) => item.id === session.characterId,
+                                  );
+                                  return (
+                                    <div
+                                      key={session.id}
+                                      className="rounded-[8px] border border-[#252525] bg-[#141414] p-[10px]"
+                                    >
+                                      <div className="flex flex-wrap items-start justify-between gap-[8px]">
+                                        <div className="min-w-0">
+                                          <p className="truncate text-[13px] font-[600] text-[#e8e8e8]">
+                                            {session.title}
+                                          </p>
+                                          <p className="mt-[2px] text-[11px] text-[#909090]">
+                                            {session.castMember?.name ??
+                                              "Dublador não informado"}
+                                          </p>
+                                        </div>
+                                        <div className="flex items-center gap-[6px]">
+                                          <button
+                                            type="button"
+                                            disabled={
+                                              sessionSaving ||
+                                              Boolean(sessionDeletingId)
+                                            }
+                                            onClick={() =>
+                                              onEditSession(session)
+                                            }
+                                            className="rounded-[5px] border border-[#2e2e2e] px-[8px] py-[4px] text-[10px] text-[#909090] hover:bg-[#252525] disabled:opacity-40"
+                                          >
+                                            Editar
+                                          </button>
+                                          <button
+                                            type="button"
+                                            disabled={
+                                              sessionSaving ||
+                                              Boolean(sessionDeletingId)
+                                            }
+                                            onClick={() =>
+                                              void onDeleteSession(session)
+                                            }
+                                            className="rounded-[5px] border border-[#5a1515] px-[8px] py-[4px] text-[10px] text-[#F09595] hover:bg-[#2a0a0a] disabled:opacity-40"
+                                          >
+                                            {sessionDeletingId === session.id
+                                              ? "Removendo..."
+                                              : "Remover"}
+                                          </button>
+                                        </div>
+                                      </div>
+                                      <div className="mt-[8px] flex flex-wrap gap-[6px] text-[10px] text-[#606060]">
+                                        <span>
+                                          Início:{" "}
+                                          {formatEpisodeTimestamp(
+                                            session.startAt,
+                                          ) ?? "-"}
+                                        </span>
+                                        <span>
+                                          Fim:{" "}
+                                          {formatEpisodeTimestamp(
+                                            session.endAt,
+                                          ) ?? "-"}
+                                        </span>
+                                        <span
+                                          className={`rounded-[10px] border px-[6px] py-[1px] ${getSessionStatusBadgeClass(
+                                            session.status,
+                                          )}`}
+                                        >
+                                          Status:{" "}
+                                          {getSessionStatusLabel(
+                                            session.status,
+                                          )}
+                                        </span>
+                                        <span
+                                          className={`rounded-[10px] border px-[6px] py-[1px] ${getSessionFormatBadgeClass(
+                                            session.format,
+                                          )}`}
+                                        >
+                                          Formato:{" "}
+                                          {getSessionFormatLabel(
+                                            session.format,
+                                          )}
+                                        </span>
+                                        {epSummaries.length === 1 ? (
+                                          <span>
+                                            Episódio: EP{" "}
+                                            {epSummaries[0].number ?? "—"}
+                                            {epSummaries[0].title?.trim()
+                                              ? ` - ${epSummaries[0].title}`
+                                              : ""}
+                                          </span>
+                                        ) : epSummaries.length > 1 ? (
+                                          <span>
+                                            Episódios:{" "}
+                                            {epSummaries.map((e, idx) => (
+                                              <span key={e.key}>
+                                                {idx > 0 ? ", " : ""}
+                                                EP {e.number ?? "—"}
+                                                {e.title?.trim()
+                                                  ? ` (${e.title})`
+                                                  : ""}
+                                              </span>
+                                            ))}
+                                          </span>
+                                        ) : null}
+                                        {ch ? (
+                                          <span>Personagem: {ch.name}</span>
+                                        ) : null}
+                                      </div>
+                                      {session.notes?.trim() ? (
+                                        <p className="mt-[6px] text-[11px] text-[#909090]">
+                                          {session.notes}
+                                        </p>
+                                      ) : null}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ))}
+                            {groupedSessions.hasMore ? (
+                              <div className="pt-[4px]">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSessionVisibleCount(
+                                      (prev) => prev + AGENDA_PAGE_SIZE,
+                                    )
+                                  }
+                                  className="rounded-[5px] border border-[#2e2e2e] px-[12px] py-[6px] text-[11px] text-[#909090] hover:bg-[#252525]"
+                                >
+                                  Carregar mais
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {activeTab !== "info" &&
                 activeTab !== "elenco" &&
-                activeTab !== "episodios" ? (
+                activeTab !== "episodios" &&
+                activeTab !== "agenda" ? (
                   <div className="flex min-h-[200px] items-center justify-center rounded-[10px] border border-[#252525] bg-[#1a1a1a] py-16 text-[13px] text-[#444]">
                     Em breve
                   </div>

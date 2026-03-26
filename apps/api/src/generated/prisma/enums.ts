@@ -170,6 +170,25 @@ export const CastMemberStatus = {
 export type CastMemberStatus = (typeof CastMemberStatus)[keyof typeof CastMemberStatus]
 
 
+export const RecordingSessionStatus = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  CANCELED: 'CANCELED'
+} as const
+
+export type RecordingSessionStatus = (typeof RecordingSessionStatus)[keyof typeof RecordingSessionStatus]
+
+
+export const RecordingSessionFormat = {
+  REMOTE: 'REMOTE',
+  IN_PERSON: 'IN_PERSON'
+} as const
+
+export type RecordingSessionFormat = (typeof RecordingSessionFormat)[keyof typeof RecordingSessionFormat]
+
+
 export const MediaAssetKind = {
   AUDIO: 'AUDIO',
   VIDEO: 'VIDEO',
