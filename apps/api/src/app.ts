@@ -6,6 +6,7 @@ import { registerAuthRoutes } from "./modules/auth/routes.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerStorageHealthRoutes } from "./routes/health-storage.js";
 import { registerClientRoutes } from "./modules/clients/routes.js";
+import { registerCastMemberAvailabilityRoutes } from "./modules/cast-member-availability/routes.js";
 import { registerCastMemberRoutes } from "./modules/cast-members/routes.js";
 import { registerDubbingProjectRoutes } from "./modules/dubbing-projects/routes.js";
 import { registerProjectRoutes } from "./modules/projects/routes.js";
@@ -38,6 +39,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registerAdminInviteRoutes(app);
   void registerClientRoutes(app);
   void registerCastMemberRoutes(app);
+  void registerCastMemberAvailabilityRoutes(app);
   void registerDubbingProjectRoutes(app);
   void registerRecordingSessionRoutes(app);
   await registerProjectRoutes(app);

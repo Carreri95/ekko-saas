@@ -65,6 +65,7 @@ export const ModelName = {
   DubbingProject: 'DubbingProject',
   Episode: 'Episode',
   CastMember: 'CastMember',
+  CastMemberAvailability: 'CastMemberAvailability',
   ProjectCharacter: 'ProjectCharacter',
   ProjectCharacterAssignment: 'ProjectCharacterAssignment',
   RecordingSession: 'RecordingSession',
@@ -312,6 +313,20 @@ export const CastMemberScalarFieldEnum = {
 } as const
 
 export type CastMemberScalarFieldEnum = (typeof CastMemberScalarFieldEnum)[keyof typeof CastMemberScalarFieldEnum]
+
+
+export const CastMemberAvailabilityScalarFieldEnum = {
+  id: 'id',
+  castMemberId: 'castMemberId',
+  startAt: 'startAt',
+  endAt: 'endAt',
+  type: 'type',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CastMemberAvailabilityScalarFieldEnum = (typeof CastMemberAvailabilityScalarFieldEnum)[keyof typeof CastMemberAvailabilityScalarFieldEnum]
 
 
 export const ProjectCharacterScalarFieldEnum = {

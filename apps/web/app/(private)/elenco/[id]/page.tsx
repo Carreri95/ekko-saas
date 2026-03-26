@@ -5,7 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PageShell } from "@/app/components/page-shell";
+import { SessionDatetimeField } from "@/app/components/session-datetime-field";
 import { useConfirm } from "@/app/components/confirm-provider";
+import {
+  composeDateAndTimeToIso,
+  emptySessionDatetimeParts,
+  partsFromIso,
+} from "@/app/lib/session-datetime";
 import {
   formatBrazilPhone,
   normalizePhoneForStorage,
@@ -19,12 +25,20 @@ import type {
   CastMemberCastingDto,
   CastMemberDto,
 } from "@/app/types/cast-member";
+import type {
+  CastMemberAvailabilityDto,
+  CastMemberAvailabilityType,
+} from "@/app/types/cast-member-availability";
 import "../../projetos/projetos.css";
 
 const TABS = [
   { id: "info", label: "Informações", enabled: true },
   { id: "projetos", label: "Projetos", enabled: true },
-  { id: "agenda", label: "Agenda", enabled: false },
+  {
+    id: "disponibilidade",
+    label: "Disponibilidade",
+    enabled: true,
+  },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -40,6 +54,23 @@ function importanceLabel(i: CastMemberCastingDto["importance"]) {
   if (i === "MAIN") return "Principal";
   if (i === "SUPPORT") return "Suporte";
   return "Figurante";
+}
+
+const AVAIL_TYPE_LABELS: Record<CastMemberAvailabilityType, string> = {
+  AVAILABLE: "Disponível",
+  UNAVAILABLE: "Indisponível",
+  BLOCKED: "Bloqueio",
+};
+
+function formatAvailRange(startIso: string, endIso: string): string {
+  const s = new Date(startIso);
+  const e = new Date(endIso);
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return "—";
+  const opts: Intl.DateTimeFormatOptions = {
+    dateStyle: "short",
+    timeStyle: "short",
+  };
+  return `${s.toLocaleString("pt-BR", opts)} → ${e.toLocaleString("pt-BR", opts)}`;
 }
 
 function getDefaults(m: CastMemberDto): CastMemberFormInput {
@@ -132,6 +163,20 @@ export default function CastMemberEditPage() {
   const [savedMsg, setSavedMsg] = useState(false);
   const [castings, setCastings] = useState<CastMemberCastingDto[]>([]);
   const [castingsLoading, setCastingsLoading] = useState(false);
+  const [availabilities, setAvailabilities] = useState<
+    CastMemberAvailabilityDto[]
+  >([]);
+  const [availLoading, setAvailLoading] = useState(false);
+  const [availFeedback, setAvailFeedback] = useState<string | null>(null);
+  const [availSaving, setAvailSaving] = useState(false);
+  const [availDeletingId, setAvailDeletingId] = useState<string | null>(null);
+  const [editingAvailId, setEditingAvailId] = useState<string | null>(null);
+  const [availForm, setAvailForm] = useState({
+    start: emptySessionDatetimeParts(),
+    end: emptySessionDatetimeParts(),
+    type: "UNAVAILABLE" as CastMemberAvailabilityType,
+    notes: "",
+  });
 
   const load = useCallback(async () => {
     if (!id) {
@@ -180,6 +225,145 @@ export default function CastMemberEditPage() {
       cancelled = true;
     };
   }, [activeTab, id]);
+
+  const loadAvailabilities = useCallback(async () => {
+    if (!id) return;
+    setAvailLoading(true);
+    setAvailFeedback(null);
+    try {
+      const res = await fetch(`/api/cast-members/${id}/availability`, {
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        setAvailabilities([]);
+        setAvailFeedback("Não foi possível carregar a disponibilidade.");
+        return;
+      }
+      const data = (await res.json()) as {
+        availabilities: CastMemberAvailabilityDto[];
+      };
+      setAvailabilities(data.availabilities ?? []);
+    } catch {
+      setAvailabilities([]);
+      setAvailFeedback("Falha de rede ao carregar disponibilidade.");
+    } finally {
+      setAvailLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (activeTab !== "disponibilidade" || !id) return;
+    void loadAvailabilities();
+  }, [activeTab, id, loadAvailabilities]);
+
+  const resetAvailForm = useCallback(() => {
+    setEditingAvailId(null);
+    setAvailForm({
+      start: emptySessionDatetimeParts(),
+      end: emptySessionDatetimeParts(),
+      type: "UNAVAILABLE",
+      notes: "",
+    });
+    setAvailFeedback(null);
+  }, []);
+
+  const onEditAvailability = useCallback((row: CastMemberAvailabilityDto) => {
+    setEditingAvailId(row.id);
+    setAvailForm({
+      start: partsFromIso(row.startAt),
+      end: partsFromIso(row.endAt),
+      type: row.type,
+      notes: row.notes ?? "",
+    });
+    setAvailFeedback(null);
+  }, []);
+
+  const onSaveAvailability = useCallback(async () => {
+    if (!id) return;
+    setAvailFeedback(null);
+    const startIso = composeDateAndTimeToIso(
+      availForm.start.dateYmd,
+      availForm.start.hour24,
+      availForm.start.minute,
+    );
+    const endIso = composeDateAndTimeToIso(
+      availForm.end.dateYmd,
+      availForm.end.hour24,
+      availForm.end.minute,
+    );
+    if (!startIso || !endIso) {
+      setAvailFeedback("Informe início e fim válidos.");
+      return;
+    }
+    setAvailSaving(true);
+    try {
+      const body = {
+        startAt: startIso,
+        endAt: endIso,
+        type: availForm.type,
+        notes: availForm.notes.trim() ? availForm.notes.trim() : null,
+      };
+      const url = editingAvailId
+        ? `/api/cast-members/${id}/availability/${encodeURIComponent(editingAvailId)}`
+        : `/api/cast-members/${id}/availability`;
+      const res = await fetch(url, {
+        method: editingAvailId ? "PATCH" : "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const raw = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg =
+          typeof raw === "object" &&
+          raw &&
+          "error" in raw &&
+          typeof (raw as { error?: unknown }).error === "string"
+            ? (raw as { error: string }).error
+            : "Não foi possível salvar.";
+        setAvailFeedback(msg);
+        return;
+      }
+      await loadAvailabilities();
+      resetAvailForm();
+    } catch {
+      setAvailFeedback("Falha de rede ao salvar.");
+    } finally {
+      setAvailSaving(false);
+    }
+  }, [availForm, editingAvailId, id, loadAvailabilities, resetAvailForm]);
+
+  const onDeleteAvailability = useCallback(
+    async (row: CastMemberAvailabilityDto) => {
+      if (!id) return;
+      const ok = await confirm({
+        title: "Remover período",
+        description: `Remover este registro de disponibilidade?`,
+        variant: "danger",
+        confirmLabel: "Remover",
+        cancelLabel: "Cancelar",
+      });
+      if (!ok) return;
+      setAvailDeletingId(row.id);
+      setAvailFeedback(null);
+      try {
+        const res = await fetch(
+          `/api/cast-members/${id}/availability/${encodeURIComponent(row.id)}`,
+          { method: "DELETE" },
+        );
+        if (!res.ok) {
+          setAvailFeedback("Não foi possível remover.");
+          return;
+        }
+        if (editingAvailId === row.id) resetAvailForm();
+        await loadAvailabilities();
+      } catch {
+        setAvailFeedback("Falha de rede ao remover.");
+      } finally {
+        setAvailDeletingId(null);
+      }
+    },
+    [confirm, editingAvailId, id, loadAvailabilities, resetAvailForm],
+  );
 
   const {
     register,
@@ -790,9 +974,207 @@ export default function CastMemberEditPage() {
                 </div>
               )}
 
-              {activeTab === "agenda" && (
-                <div className="flex min-h-[200px] items-center justify-center rounded-[10px] border border-[#252525] bg-[#1a1a1a] text-[13px] text-[#444]">
-                  Em breve
+              {activeTab === "disponibilidade" && (
+                <div className="flex w-full justify-center">
+                  <div className="flex w-full max-w-[min(100%,960px)] flex-col gap-[14px]">
+                  <div className="rounded-[10px] border border-[#252525] bg-[#1a1a1a] p-[14px]">
+                    <h3 className="text-[12px] font-[600] text-[#e8e8e8]">
+                      Períodos manuais
+                    </h3>
+                    <p className="mt-[4px] text-[11px] text-[#505050]">
+                      Cadastro explícito de disponibilidade, indisponibilidade ou
+                      bloqueio. Não altera sessões de gravação nem bloqueia
+                      agendamento nesta versão.
+                    </p>
+                  </div>
+
+                  <div className="rounded-[10px] border border-[#252525] bg-[#1a1a1a] p-[14px]">
+                    <div className="mb-[10px] flex items-center justify-between gap-[8px]">
+                      <h3 className="text-[12px] font-[600] text-[#e8e8e8]">
+                        {editingAvailId
+                          ? "Editar período"
+                          : "Novo período"}
+                      </h3>
+                      {editingAvailId ? (
+                        <button
+                          type="button"
+                          onClick={resetAvailForm}
+                          className="rounded-[5px] border border-[#2e2e2e] px-[10px] py-[5px] text-[11px] text-[#909090] hover:bg-[#252525]"
+                        >
+                          Cancelar edição
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="grid grid-cols-1 gap-[14px]">
+                      <SessionDatetimeField
+                        label="Início"
+                        labelClassName={labelCls}
+                        inputClassName={inputCls}
+                        value={availForm.start}
+                        onChange={(start) =>
+                          setAvailForm((p) => ({ ...p, start }))
+                        }
+                      />
+                      <SessionDatetimeField
+                        label="Fim"
+                        labelClassName={labelCls}
+                        inputClassName={inputCls}
+                        value={availForm.end}
+                        onChange={(end) => setAvailForm((p) => ({ ...p, end }))}
+                      />
+                      <div>
+                        <label className={labelCls}>Tipo</label>
+                        <select
+                          className={inputCls}
+                          value={availForm.type}
+                          onChange={(e) =>
+                            setAvailForm((p) => ({
+                              ...p,
+                              type: e.target
+                                .value as CastMemberAvailabilityType,
+                            }))
+                          }
+                        >
+                          {(Object.keys(AVAIL_TYPE_LABELS) as CastMemberAvailabilityType[]).map(
+                            (k) => (
+                              <option key={k} value={k}>
+                                {AVAIL_TYPE_LABELS[k]}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </div>
+                      <div>
+                        <label className={labelCls}>Notas (opcional)</label>
+                        <textarea
+                          rows={2}
+                          maxLength={2000}
+                          className={`${inputCls} min-h-[60px] resize-y`}
+                          value={availForm.notes}
+                          onChange={(e) =>
+                            setAvailForm((p) => ({
+                              ...p,
+                              notes: e.target.value,
+                            }))
+                          }
+                          placeholder="Contexto interno sobre este período"
+                        />
+                      </div>
+                    </div>
+                    {availFeedback ? (
+                      <p className="mt-[8px] text-[11px] text-[#F09595]">
+                        {availFeedback}
+                      </p>
+                    ) : null}
+                    <div className="mt-[12px] flex flex-wrap gap-[8px]">
+                      <button
+                        type="button"
+                        disabled={
+                          availSaving || Boolean(availDeletingId)
+                        }
+                        onClick={() => void onSaveAvailability()}
+                        className="rounded-[5px] border border-[#0F6E56] bg-[#1D9E75] px-[12px] py-[6px] text-[11px] font-[500] text-white hover:bg-[#0F6E56] disabled:opacity-40"
+                      >
+                        {availSaving
+                          ? "Salvando…"
+                          : editingAvailId
+                            ? "Salvar alterações"
+                            : "Adicionar período"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={
+                          availSaving || Boolean(availDeletingId)
+                        }
+                        onClick={resetAvailForm}
+                        className="rounded-[5px] border border-[#2e2e2e] px-[12px] py-[6px] text-[11px] text-[#909090] hover:bg-[#252525] disabled:opacity-40"
+                      >
+                        Limpar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[10px] border border-[#252525] bg-[#1a1a1a] p-[14px]">
+                    <h3 className="mb-[10px] text-[12px] font-[600] text-[#e8e8e8]">
+                      Registros ({availabilities.length})
+                    </h3>
+                    {availLoading ? (
+                      <p className="text-[12px] text-[#505050]">A carregar…</p>
+                    ) : availabilities.length === 0 ? (
+                      <p className="text-[12px] text-[#505050]">
+                        Nenhum período cadastrado.
+                      </p>
+                    ) : (
+                      <ul className="flex flex-col gap-[8px]">
+                        {availabilities.map((row) => {
+                          const typeCls =
+                            row.type === "AVAILABLE"
+                              ? "border-[#0F6E56] bg-[#0d3d2a] text-[#5DCAA5]"
+                              : row.type === "BLOCKED"
+                                ? "border-[#5a1515] bg-[#2a0a0a] text-[#F09595]"
+                                : "border-[#5c4a20] bg-[#3d3520] text-[#EF9F27]";
+                          const isRowEditing = editingAvailId === row.id;
+                          return (
+                            <li
+                              key={row.id}
+                              className={`rounded-[8px] border p-[10px] ${
+                                isRowEditing
+                                  ? "border-[#1D9E75] bg-[#122a22] ring-1 ring-[#1D9E75]/35"
+                                  : "border-[#252525] bg-[#141414]"
+                              }`}
+                            >
+                              <div className="flex flex-wrap items-start justify-between gap-[8px]">
+                                <div className="min-w-0">
+                                  <span
+                                    className={`inline-block rounded-[4px] border px-[6px] py-[1px] text-[10px] font-[600] uppercase tracking-[0.04em] ${typeCls}`}
+                                  >
+                                    {AVAIL_TYPE_LABELS[row.type]}
+                                  </span>
+                                  <p className="mt-[6px] text-[12px] text-[#d0d0d0]">
+                                    {formatAvailRange(row.startAt, row.endAt)}
+                                  </p>
+                                  {row.notes?.trim() ? (
+                                    <p className="mt-[4px] text-[11px] text-[#707070]">
+                                      {row.notes}
+                                    </p>
+                                  ) : null}
+                                </div>
+                                <div className="flex shrink-0 gap-[6px]">
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      availSaving ||
+                                      Boolean(availDeletingId)
+                                    }
+                                    onClick={() => onEditAvailability(row)}
+                                    className="rounded-[5px] border border-[#2e2e2e] px-[8px] py-[4px] text-[10px] text-[#909090] hover:bg-[#252525] disabled:opacity-40"
+                                  >
+                                    Editar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      availSaving ||
+                                      Boolean(availDeletingId)
+                                    }
+                                    onClick={() =>
+                                      void onDeleteAvailability(row)
+                                    }
+                                    className="rounded-[5px] border border-[#5a1515] px-[8px] py-[4px] text-[10px] text-[#F09595] hover:bg-[#2a0a0a] disabled:opacity-40"
+                                  >
+                                    {availDeletingId === row.id
+                                      ? "Removendo…"
+                                      : "Remover"}
+                                  </button>
+                                </div>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                  </div>
                 </div>
               )}
             </div>

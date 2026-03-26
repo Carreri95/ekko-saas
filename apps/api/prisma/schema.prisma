@@ -367,6 +367,22 @@ model CastMember {
   characters  ProjectCharacter[]
   characterAssignments ProjectCharacterAssignment[]
   recordingSessions RecordingSession[]
+  availabilities CastMemberAvailability[]
+}
+
+model CastMemberAvailability {
+  id           String                     @id @default(cuid())
+  castMemberId String
+  castMember   CastMember                 @relation(fields: [castMemberId], references: [id], onDelete: Cascade)
+  startAt      DateTime
+  endAt        DateTime
+  type         CastMemberAvailabilityType
+  notes        String?
+  createdAt    DateTime                   @default(now())
+  updatedAt    DateTime                   @updatedAt
+
+  @@index([castMemberId])
+  @@index([castMemberId, startAt])
 }
 
 model ProjectCharacter {
@@ -422,6 +438,13 @@ enum CastMemberStatus {
   AVAILABLE
   BUSY
   INACTIVE
+}
+
+/// Períodos manuais de disponibilidade / indisponibilidade do dublador (camada separada de sessões).
+enum CastMemberAvailabilityType {
+  AVAILABLE
+  UNAVAILABLE
+  BLOCKED
 }
 
 enum RecordingSessionStatus {
