@@ -569,6 +569,40 @@ export type EnumProjectCharacterAssignmentStatusWithAggregatesFilter<$PrismaMode
   _max?: Prisma.NestedEnumProjectCharacterAssignmentStatusFilter<$PrismaModel>
 }
 
+export type EnumRecordingSessionStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecordingSessionStatus | Prisma.EnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.RecordingSessionStatus[] | Prisma.ListEnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecordingSessionStatus[] | Prisma.ListEnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecordingSessionStatusFilter<$PrismaModel> | $Enums.RecordingSessionStatus
+}
+
+export type EnumRecordingSessionFormatFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecordingSessionFormat | Prisma.EnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.RecordingSessionFormat[] | Prisma.ListEnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecordingSessionFormat[] | Prisma.ListEnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecordingSessionFormatFilter<$PrismaModel> | $Enums.RecordingSessionFormat
+}
+
+export type EnumRecordingSessionStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecordingSessionStatus | Prisma.EnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.RecordingSessionStatus[] | Prisma.ListEnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecordingSessionStatus[] | Prisma.ListEnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecordingSessionStatusWithAggregatesFilter<$PrismaModel> | $Enums.RecordingSessionStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRecordingSessionStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRecordingSessionStatusFilter<$PrismaModel>
+}
+
+export type EnumRecordingSessionFormatWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecordingSessionFormat | Prisma.EnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.RecordingSessionFormat[] | Prisma.ListEnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecordingSessionFormat[] | Prisma.ListEnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecordingSessionFormatWithAggregatesFilter<$PrismaModel> | $Enums.RecordingSessionFormat
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRecordingSessionFormatFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRecordingSessionFormatFilter<$PrismaModel>
+}
+
 export type EnumMediaAssetKindFilter<$PrismaModel = never> = {
   equals?: $Enums.MediaAssetKind | Prisma.EnumMediaAssetKindFieldRefInput<$PrismaModel>
   in?: $Enums.MediaAssetKind[] | Prisma.ListEnumMediaAssetKindFieldRefInput<$PrismaModel>
@@ -1186,6 +1220,40 @@ export type NestedEnumProjectCharacterAssignmentStatusWithAggregatesFilter<$Pris
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumProjectCharacterAssignmentStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumProjectCharacterAssignmentStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumRecordingSessionStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecordingSessionStatus | Prisma.EnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.RecordingSessionStatus[] | Prisma.ListEnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecordingSessionStatus[] | Prisma.ListEnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecordingSessionStatusFilter<$PrismaModel> | $Enums.RecordingSessionStatus
+}
+
+export type NestedEnumRecordingSessionFormatFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecordingSessionFormat | Prisma.EnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.RecordingSessionFormat[] | Prisma.ListEnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecordingSessionFormat[] | Prisma.ListEnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecordingSessionFormatFilter<$PrismaModel> | $Enums.RecordingSessionFormat
+}
+
+export type NestedEnumRecordingSessionStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecordingSessionStatus | Prisma.EnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.RecordingSessionStatus[] | Prisma.ListEnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecordingSessionStatus[] | Prisma.ListEnumRecordingSessionStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecordingSessionStatusWithAggregatesFilter<$PrismaModel> | $Enums.RecordingSessionStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRecordingSessionStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRecordingSessionStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumRecordingSessionFormatWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecordingSessionFormat | Prisma.EnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.RecordingSessionFormat[] | Prisma.ListEnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecordingSessionFormat[] | Prisma.ListEnumRecordingSessionFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecordingSessionFormatWithAggregatesFilter<$PrismaModel> | $Enums.RecordingSessionFormat
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRecordingSessionFormatFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRecordingSessionFormatFilter<$PrismaModel>
 }
 
 export type NestedEnumMediaAssetKindFilter<$PrismaModel = never> = {

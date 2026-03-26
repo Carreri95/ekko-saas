@@ -268,6 +268,8 @@ export type EpisodeWhereInput = {
   audioFile?: Prisma.XOR<Prisma.SubtitleFileNullableScalarRelationFilter, Prisma.SubtitleFileWhereInput> | null
   transcriptionProject?: Prisma.XOR<Prisma.ProjectNullableScalarRelationFilter, Prisma.ProjectWhereInput> | null
   project?: Prisma.XOR<Prisma.DubbingProjectScalarRelationFilter, Prisma.DubbingProjectWhereInput>
+  recordingSessions?: Prisma.RecordingSessionListRelationFilter
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeListRelationFilter
 }
 
 export type EpisodeOrderByWithRelationInput = {
@@ -286,6 +288,8 @@ export type EpisodeOrderByWithRelationInput = {
   audioFile?: Prisma.SubtitleFileOrderByWithRelationInput
   transcriptionProject?: Prisma.ProjectOrderByWithRelationInput
   project?: Prisma.DubbingProjectOrderByWithRelationInput
+  recordingSessions?: Prisma.RecordingSessionOrderByRelationAggregateInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeOrderByRelationAggregateInput
 }
 
 export type EpisodeWhereUniqueInput = Prisma.AtLeast<{
@@ -308,6 +312,8 @@ export type EpisodeWhereUniqueInput = Prisma.AtLeast<{
   audioFile?: Prisma.XOR<Prisma.SubtitleFileNullableScalarRelationFilter, Prisma.SubtitleFileWhereInput> | null
   transcriptionProject?: Prisma.XOR<Prisma.ProjectNullableScalarRelationFilter, Prisma.ProjectWhereInput> | null
   project?: Prisma.XOR<Prisma.DubbingProjectScalarRelationFilter, Prisma.DubbingProjectWhereInput>
+  recordingSessions?: Prisma.RecordingSessionListRelationFilter
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeListRelationFilter
 }, "id" | "subtitleFileId" | "audioFileId" | "transcriptionProjectId" | "projectId_number">
 
 export type EpisodeOrderByWithAggregationInput = {
@@ -358,6 +364,8 @@ export type EpisodeCreateInput = {
   audioFile?: Prisma.SubtitleFileCreateNestedOneWithoutEpisodeAudioInput
   transcriptionProject?: Prisma.ProjectCreateNestedOneWithoutDubbingEpisodeTranscriptionInput
   project: Prisma.DubbingProjectCreateNestedOneWithoutEpisodesInput
+  recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutEpisodeInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutEpisodeInput
 }
 
 export type EpisodeUncheckedCreateInput = {
@@ -372,6 +380,8 @@ export type EpisodeUncheckedCreateInput = {
   audioFileId?: string | null
   transcriptionProjectId?: string | null
   projectId: string
+  recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutEpisodeInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedCreateNestedManyWithoutEpisodeInput
 }
 
 export type EpisodeUpdateInput = {
@@ -386,6 +396,8 @@ export type EpisodeUpdateInput = {
   audioFile?: Prisma.SubtitleFileUpdateOneWithoutEpisodeAudioNestedInput
   transcriptionProject?: Prisma.ProjectUpdateOneWithoutDubbingEpisodeTranscriptionNestedInput
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutEpisodesNestedInput
+  recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutEpisodeNestedInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutEpisodeNestedInput
 }
 
 export type EpisodeUncheckedUpdateInput = {
@@ -400,6 +412,8 @@ export type EpisodeUncheckedUpdateInput = {
   audioFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   transcriptionProjectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutEpisodeNestedInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedUpdateManyWithoutEpisodeNestedInput
 }
 
 export type EpisodeCreateManyInput = {
@@ -508,6 +522,11 @@ export type EpisodeMinOrderByAggregateInput = {
 
 export type EpisodeSumOrderByAggregateInput = {
   number?: Prisma.SortOrder
+}
+
+export type EpisodeScalarRelationFilter = {
+  is?: Prisma.EpisodeWhereInput
+  isNot?: Prisma.EpisodeWhereInput
 }
 
 export type EpisodeCreateNestedOneWithoutTranscriptionProjectInput = {
@@ -652,6 +671,36 @@ export type EnumEpisodeStatusFieldUpdateOperationsInput = {
   set?: $Enums.EpisodeStatus
 }
 
+export type EpisodeCreateNestedOneWithoutRecordingSessionsInput = {
+  create?: Prisma.XOR<Prisma.EpisodeCreateWithoutRecordingSessionsInput, Prisma.EpisodeUncheckedCreateWithoutRecordingSessionsInput>
+  connectOrCreate?: Prisma.EpisodeCreateOrConnectWithoutRecordingSessionsInput
+  connect?: Prisma.EpisodeWhereUniqueInput
+}
+
+export type EpisodeUpdateOneWithoutRecordingSessionsNestedInput = {
+  create?: Prisma.XOR<Prisma.EpisodeCreateWithoutRecordingSessionsInput, Prisma.EpisodeUncheckedCreateWithoutRecordingSessionsInput>
+  connectOrCreate?: Prisma.EpisodeCreateOrConnectWithoutRecordingSessionsInput
+  upsert?: Prisma.EpisodeUpsertWithoutRecordingSessionsInput
+  disconnect?: Prisma.EpisodeWhereInput | boolean
+  delete?: Prisma.EpisodeWhereInput | boolean
+  connect?: Prisma.EpisodeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EpisodeUpdateToOneWithWhereWithoutRecordingSessionsInput, Prisma.EpisodeUpdateWithoutRecordingSessionsInput>, Prisma.EpisodeUncheckedUpdateWithoutRecordingSessionsInput>
+}
+
+export type EpisodeCreateNestedOneWithoutRecordingSessionEpisodesInput = {
+  create?: Prisma.XOR<Prisma.EpisodeCreateWithoutRecordingSessionEpisodesInput, Prisma.EpisodeUncheckedCreateWithoutRecordingSessionEpisodesInput>
+  connectOrCreate?: Prisma.EpisodeCreateOrConnectWithoutRecordingSessionEpisodesInput
+  connect?: Prisma.EpisodeWhereUniqueInput
+}
+
+export type EpisodeUpdateOneRequiredWithoutRecordingSessionEpisodesNestedInput = {
+  create?: Prisma.XOR<Prisma.EpisodeCreateWithoutRecordingSessionEpisodesInput, Prisma.EpisodeUncheckedCreateWithoutRecordingSessionEpisodesInput>
+  connectOrCreate?: Prisma.EpisodeCreateOrConnectWithoutRecordingSessionEpisodesInput
+  upsert?: Prisma.EpisodeUpsertWithoutRecordingSessionEpisodesInput
+  connect?: Prisma.EpisodeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EpisodeUpdateToOneWithWhereWithoutRecordingSessionEpisodesInput, Prisma.EpisodeUpdateWithoutRecordingSessionEpisodesInput>, Prisma.EpisodeUncheckedUpdateWithoutRecordingSessionEpisodesInput>
+}
+
 export type EpisodeCreateWithoutTranscriptionProjectInput = {
   id?: string
   createdAt?: Date | string
@@ -663,6 +712,8 @@ export type EpisodeCreateWithoutTranscriptionProjectInput = {
   subtitleFile?: Prisma.SubtitleFileCreateNestedOneWithoutEpisodeSubtitleOutputInput
   audioFile?: Prisma.SubtitleFileCreateNestedOneWithoutEpisodeAudioInput
   project: Prisma.DubbingProjectCreateNestedOneWithoutEpisodesInput
+  recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutEpisodeInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutEpisodeInput
 }
 
 export type EpisodeUncheckedCreateWithoutTranscriptionProjectInput = {
@@ -676,6 +727,8 @@ export type EpisodeUncheckedCreateWithoutTranscriptionProjectInput = {
   subtitleFileId?: string | null
   audioFileId?: string | null
   projectId: string
+  recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutEpisodeInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedCreateNestedManyWithoutEpisodeInput
 }
 
 export type EpisodeCreateOrConnectWithoutTranscriptionProjectInput = {
@@ -705,6 +758,8 @@ export type EpisodeUpdateWithoutTranscriptionProjectInput = {
   subtitleFile?: Prisma.SubtitleFileUpdateOneWithoutEpisodeSubtitleOutputNestedInput
   audioFile?: Prisma.SubtitleFileUpdateOneWithoutEpisodeAudioNestedInput
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutEpisodesNestedInput
+  recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutEpisodeNestedInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutEpisodeNestedInput
 }
 
 export type EpisodeUncheckedUpdateWithoutTranscriptionProjectInput = {
@@ -718,6 +773,8 @@ export type EpisodeUncheckedUpdateWithoutTranscriptionProjectInput = {
   subtitleFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   audioFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutEpisodeNestedInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedUpdateManyWithoutEpisodeNestedInput
 }
 
 export type EpisodeCreateWithoutSubtitleFileInput = {
@@ -731,6 +788,8 @@ export type EpisodeCreateWithoutSubtitleFileInput = {
   audioFile?: Prisma.SubtitleFileCreateNestedOneWithoutEpisodeAudioInput
   transcriptionProject?: Prisma.ProjectCreateNestedOneWithoutDubbingEpisodeTranscriptionInput
   project: Prisma.DubbingProjectCreateNestedOneWithoutEpisodesInput
+  recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutEpisodeInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutEpisodeInput
 }
 
 export type EpisodeUncheckedCreateWithoutSubtitleFileInput = {
@@ -744,6 +803,8 @@ export type EpisodeUncheckedCreateWithoutSubtitleFileInput = {
   audioFileId?: string | null
   transcriptionProjectId?: string | null
   projectId: string
+  recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutEpisodeInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedCreateNestedManyWithoutEpisodeInput
 }
 
 export type EpisodeCreateOrConnectWithoutSubtitleFileInput = {
@@ -762,6 +823,8 @@ export type EpisodeCreateWithoutAudioFileInput = {
   subtitleFile?: Prisma.SubtitleFileCreateNestedOneWithoutEpisodeSubtitleOutputInput
   transcriptionProject?: Prisma.ProjectCreateNestedOneWithoutDubbingEpisodeTranscriptionInput
   project: Prisma.DubbingProjectCreateNestedOneWithoutEpisodesInput
+  recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutEpisodeInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutEpisodeInput
 }
 
 export type EpisodeUncheckedCreateWithoutAudioFileInput = {
@@ -775,6 +838,8 @@ export type EpisodeUncheckedCreateWithoutAudioFileInput = {
   subtitleFileId?: string | null
   transcriptionProjectId?: string | null
   projectId: string
+  recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutEpisodeInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedCreateNestedManyWithoutEpisodeInput
 }
 
 export type EpisodeCreateOrConnectWithoutAudioFileInput = {
@@ -804,6 +869,8 @@ export type EpisodeUpdateWithoutSubtitleFileInput = {
   audioFile?: Prisma.SubtitleFileUpdateOneWithoutEpisodeAudioNestedInput
   transcriptionProject?: Prisma.ProjectUpdateOneWithoutDubbingEpisodeTranscriptionNestedInput
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutEpisodesNestedInput
+  recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutEpisodeNestedInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutEpisodeNestedInput
 }
 
 export type EpisodeUncheckedUpdateWithoutSubtitleFileInput = {
@@ -817,6 +884,8 @@ export type EpisodeUncheckedUpdateWithoutSubtitleFileInput = {
   audioFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   transcriptionProjectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutEpisodeNestedInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedUpdateManyWithoutEpisodeNestedInput
 }
 
 export type EpisodeUpsertWithoutAudioFileInput = {
@@ -841,6 +910,8 @@ export type EpisodeUpdateWithoutAudioFileInput = {
   subtitleFile?: Prisma.SubtitleFileUpdateOneWithoutEpisodeSubtitleOutputNestedInput
   transcriptionProject?: Prisma.ProjectUpdateOneWithoutDubbingEpisodeTranscriptionNestedInput
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutEpisodesNestedInput
+  recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutEpisodeNestedInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutEpisodeNestedInput
 }
 
 export type EpisodeUncheckedUpdateWithoutAudioFileInput = {
@@ -854,6 +925,8 @@ export type EpisodeUncheckedUpdateWithoutAudioFileInput = {
   subtitleFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   transcriptionProjectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutEpisodeNestedInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedUpdateManyWithoutEpisodeNestedInput
 }
 
 export type EpisodeCreateWithoutProjectInput = {
@@ -867,6 +940,8 @@ export type EpisodeCreateWithoutProjectInput = {
   subtitleFile?: Prisma.SubtitleFileCreateNestedOneWithoutEpisodeSubtitleOutputInput
   audioFile?: Prisma.SubtitleFileCreateNestedOneWithoutEpisodeAudioInput
   transcriptionProject?: Prisma.ProjectCreateNestedOneWithoutDubbingEpisodeTranscriptionInput
+  recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutEpisodeInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutEpisodeInput
 }
 
 export type EpisodeUncheckedCreateWithoutProjectInput = {
@@ -880,6 +955,8 @@ export type EpisodeUncheckedCreateWithoutProjectInput = {
   subtitleFileId?: string | null
   audioFileId?: string | null
   transcriptionProjectId?: string | null
+  recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutEpisodeInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedCreateNestedManyWithoutEpisodeInput
 }
 
 export type EpisodeCreateOrConnectWithoutProjectInput = {
@@ -925,6 +1002,158 @@ export type EpisodeScalarWhereInput = {
   projectId?: Prisma.StringFilter<"Episode"> | string
 }
 
+export type EpisodeCreateWithoutRecordingSessionsInput = {
+  id?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  editedAt?: Date | string | null
+  number: number
+  title?: string | null
+  status?: $Enums.EpisodeStatus
+  subtitleFile?: Prisma.SubtitleFileCreateNestedOneWithoutEpisodeSubtitleOutputInput
+  audioFile?: Prisma.SubtitleFileCreateNestedOneWithoutEpisodeAudioInput
+  transcriptionProject?: Prisma.ProjectCreateNestedOneWithoutDubbingEpisodeTranscriptionInput
+  project: Prisma.DubbingProjectCreateNestedOneWithoutEpisodesInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutEpisodeInput
+}
+
+export type EpisodeUncheckedCreateWithoutRecordingSessionsInput = {
+  id?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  editedAt?: Date | string | null
+  number: number
+  title?: string | null
+  status?: $Enums.EpisodeStatus
+  subtitleFileId?: string | null
+  audioFileId?: string | null
+  transcriptionProjectId?: string | null
+  projectId: string
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedCreateNestedManyWithoutEpisodeInput
+}
+
+export type EpisodeCreateOrConnectWithoutRecordingSessionsInput = {
+  where: Prisma.EpisodeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EpisodeCreateWithoutRecordingSessionsInput, Prisma.EpisodeUncheckedCreateWithoutRecordingSessionsInput>
+}
+
+export type EpisodeUpsertWithoutRecordingSessionsInput = {
+  update: Prisma.XOR<Prisma.EpisodeUpdateWithoutRecordingSessionsInput, Prisma.EpisodeUncheckedUpdateWithoutRecordingSessionsInput>
+  create: Prisma.XOR<Prisma.EpisodeCreateWithoutRecordingSessionsInput, Prisma.EpisodeUncheckedCreateWithoutRecordingSessionsInput>
+  where?: Prisma.EpisodeWhereInput
+}
+
+export type EpisodeUpdateToOneWithWhereWithoutRecordingSessionsInput = {
+  where?: Prisma.EpisodeWhereInput
+  data: Prisma.XOR<Prisma.EpisodeUpdateWithoutRecordingSessionsInput, Prisma.EpisodeUncheckedUpdateWithoutRecordingSessionsInput>
+}
+
+export type EpisodeUpdateWithoutRecordingSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumEpisodeStatusFieldUpdateOperationsInput | $Enums.EpisodeStatus
+  subtitleFile?: Prisma.SubtitleFileUpdateOneWithoutEpisodeSubtitleOutputNestedInput
+  audioFile?: Prisma.SubtitleFileUpdateOneWithoutEpisodeAudioNestedInput
+  transcriptionProject?: Prisma.ProjectUpdateOneWithoutDubbingEpisodeTranscriptionNestedInput
+  project?: Prisma.DubbingProjectUpdateOneRequiredWithoutEpisodesNestedInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutEpisodeNestedInput
+}
+
+export type EpisodeUncheckedUpdateWithoutRecordingSessionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumEpisodeStatusFieldUpdateOperationsInput | $Enums.EpisodeStatus
+  subtitleFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  audioFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transcriptionProjectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedUpdateManyWithoutEpisodeNestedInput
+}
+
+export type EpisodeCreateWithoutRecordingSessionEpisodesInput = {
+  id?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  editedAt?: Date | string | null
+  number: number
+  title?: string | null
+  status?: $Enums.EpisodeStatus
+  subtitleFile?: Prisma.SubtitleFileCreateNestedOneWithoutEpisodeSubtitleOutputInput
+  audioFile?: Prisma.SubtitleFileCreateNestedOneWithoutEpisodeAudioInput
+  transcriptionProject?: Prisma.ProjectCreateNestedOneWithoutDubbingEpisodeTranscriptionInput
+  project: Prisma.DubbingProjectCreateNestedOneWithoutEpisodesInput
+  recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutEpisodeInput
+}
+
+export type EpisodeUncheckedCreateWithoutRecordingSessionEpisodesInput = {
+  id?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  editedAt?: Date | string | null
+  number: number
+  title?: string | null
+  status?: $Enums.EpisodeStatus
+  subtitleFileId?: string | null
+  audioFileId?: string | null
+  transcriptionProjectId?: string | null
+  projectId: string
+  recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutEpisodeInput
+}
+
+export type EpisodeCreateOrConnectWithoutRecordingSessionEpisodesInput = {
+  where: Prisma.EpisodeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EpisodeCreateWithoutRecordingSessionEpisodesInput, Prisma.EpisodeUncheckedCreateWithoutRecordingSessionEpisodesInput>
+}
+
+export type EpisodeUpsertWithoutRecordingSessionEpisodesInput = {
+  update: Prisma.XOR<Prisma.EpisodeUpdateWithoutRecordingSessionEpisodesInput, Prisma.EpisodeUncheckedUpdateWithoutRecordingSessionEpisodesInput>
+  create: Prisma.XOR<Prisma.EpisodeCreateWithoutRecordingSessionEpisodesInput, Prisma.EpisodeUncheckedCreateWithoutRecordingSessionEpisodesInput>
+  where?: Prisma.EpisodeWhereInput
+}
+
+export type EpisodeUpdateToOneWithWhereWithoutRecordingSessionEpisodesInput = {
+  where?: Prisma.EpisodeWhereInput
+  data: Prisma.XOR<Prisma.EpisodeUpdateWithoutRecordingSessionEpisodesInput, Prisma.EpisodeUncheckedUpdateWithoutRecordingSessionEpisodesInput>
+}
+
+export type EpisodeUpdateWithoutRecordingSessionEpisodesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumEpisodeStatusFieldUpdateOperationsInput | $Enums.EpisodeStatus
+  subtitleFile?: Prisma.SubtitleFileUpdateOneWithoutEpisodeSubtitleOutputNestedInput
+  audioFile?: Prisma.SubtitleFileUpdateOneWithoutEpisodeAudioNestedInput
+  transcriptionProject?: Prisma.ProjectUpdateOneWithoutDubbingEpisodeTranscriptionNestedInput
+  project?: Prisma.DubbingProjectUpdateOneRequiredWithoutEpisodesNestedInput
+  recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutEpisodeNestedInput
+}
+
+export type EpisodeUncheckedUpdateWithoutRecordingSessionEpisodesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  editedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  number?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumEpisodeStatusFieldUpdateOperationsInput | $Enums.EpisodeStatus
+  subtitleFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  audioFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  transcriptionProjectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutEpisodeNestedInput
+}
+
 export type EpisodeCreateManyProjectInput = {
   id?: string
   createdAt?: Date | string
@@ -949,6 +1178,8 @@ export type EpisodeUpdateWithoutProjectInput = {
   subtitleFile?: Prisma.SubtitleFileUpdateOneWithoutEpisodeSubtitleOutputNestedInput
   audioFile?: Prisma.SubtitleFileUpdateOneWithoutEpisodeAudioNestedInput
   transcriptionProject?: Prisma.ProjectUpdateOneWithoutDubbingEpisodeTranscriptionNestedInput
+  recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutEpisodeNestedInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutEpisodeNestedInput
 }
 
 export type EpisodeUncheckedUpdateWithoutProjectInput = {
@@ -962,6 +1193,8 @@ export type EpisodeUncheckedUpdateWithoutProjectInput = {
   subtitleFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   audioFileId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   transcriptionProjectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutEpisodeNestedInput
+  recordingSessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedUpdateManyWithoutEpisodeNestedInput
 }
 
 export type EpisodeUncheckedUpdateManyWithoutProjectInput = {
@@ -977,6 +1210,44 @@ export type EpisodeUncheckedUpdateManyWithoutProjectInput = {
   transcriptionProjectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
+
+/**
+ * Count Type EpisodeCountOutputType
+ */
+
+export type EpisodeCountOutputType = {
+  recordingSessions: number
+  recordingSessionEpisodes: number
+}
+
+export type EpisodeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  recordingSessions?: boolean | EpisodeCountOutputTypeCountRecordingSessionsArgs
+  recordingSessionEpisodes?: boolean | EpisodeCountOutputTypeCountRecordingSessionEpisodesArgs
+}
+
+/**
+ * EpisodeCountOutputType without action
+ */
+export type EpisodeCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EpisodeCountOutputType
+   */
+  select?: Prisma.EpisodeCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * EpisodeCountOutputType without action
+ */
+export type EpisodeCountOutputTypeCountRecordingSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RecordingSessionWhereInput
+}
+
+/**
+ * EpisodeCountOutputType without action
+ */
+export type EpisodeCountOutputTypeCountRecordingSessionEpisodesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RecordingSessionEpisodeWhereInput
+}
 
 
 export type EpisodeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -995,6 +1266,9 @@ export type EpisodeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   audioFile?: boolean | Prisma.Episode$audioFileArgs<ExtArgs>
   transcriptionProject?: boolean | Prisma.Episode$transcriptionProjectArgs<ExtArgs>
   project?: boolean | Prisma.DubbingProjectDefaultArgs<ExtArgs>
+  recordingSessions?: boolean | Prisma.Episode$recordingSessionsArgs<ExtArgs>
+  recordingSessionEpisodes?: boolean | Prisma.Episode$recordingSessionEpisodesArgs<ExtArgs>
+  _count?: boolean | Prisma.EpisodeCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["episode"]>
 
 export type EpisodeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1053,6 +1327,9 @@ export type EpisodeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   audioFile?: boolean | Prisma.Episode$audioFileArgs<ExtArgs>
   transcriptionProject?: boolean | Prisma.Episode$transcriptionProjectArgs<ExtArgs>
   project?: boolean | Prisma.DubbingProjectDefaultArgs<ExtArgs>
+  recordingSessions?: boolean | Prisma.Episode$recordingSessionsArgs<ExtArgs>
+  recordingSessionEpisodes?: boolean | Prisma.Episode$recordingSessionEpisodesArgs<ExtArgs>
+  _count?: boolean | Prisma.EpisodeCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EpisodeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   subtitleFile?: boolean | Prisma.Episode$subtitleFileArgs<ExtArgs>
@@ -1074,6 +1351,8 @@ export type $EpisodePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     audioFile: Prisma.$SubtitleFilePayload<ExtArgs> | null
     transcriptionProject: Prisma.$ProjectPayload<ExtArgs> | null
     project: Prisma.$DubbingProjectPayload<ExtArgs>
+    recordingSessions: Prisma.$RecordingSessionPayload<ExtArgs>[]
+    recordingSessionEpisodes: Prisma.$RecordingSessionEpisodePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1485,6 +1764,8 @@ export interface Prisma__EpisodeClient<T, Null = never, ExtArgs extends runtime.
   audioFile<T extends Prisma.Episode$audioFileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Episode$audioFileArgs<ExtArgs>>): Prisma.Prisma__SubtitleFileClient<runtime.Types.Result.GetResult<Prisma.$SubtitleFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   transcriptionProject<T extends Prisma.Episode$transcriptionProjectArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Episode$transcriptionProjectArgs<ExtArgs>>): Prisma.Prisma__ProjectClient<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   project<T extends Prisma.DubbingProjectDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DubbingProjectDefaultArgs<ExtArgs>>): Prisma.Prisma__DubbingProjectClient<runtime.Types.Result.GetResult<Prisma.$DubbingProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  recordingSessions<T extends Prisma.Episode$recordingSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Episode$recordingSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecordingSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  recordingSessionEpisodes<T extends Prisma.Episode$recordingSessionEpisodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Episode$recordingSessionEpisodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecordingSessionEpisodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1980,6 +2261,54 @@ export type Episode$transcriptionProjectArgs<ExtArgs extends runtime.Types.Exten
    */
   include?: Prisma.ProjectInclude<ExtArgs> | null
   where?: Prisma.ProjectWhereInput
+}
+
+/**
+ * Episode.recordingSessions
+ */
+export type Episode$recordingSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RecordingSession
+   */
+  select?: Prisma.RecordingSessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RecordingSession
+   */
+  omit?: Prisma.RecordingSessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RecordingSessionInclude<ExtArgs> | null
+  where?: Prisma.RecordingSessionWhereInput
+  orderBy?: Prisma.RecordingSessionOrderByWithRelationInput | Prisma.RecordingSessionOrderByWithRelationInput[]
+  cursor?: Prisma.RecordingSessionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RecordingSessionScalarFieldEnum | Prisma.RecordingSessionScalarFieldEnum[]
+}
+
+/**
+ * Episode.recordingSessionEpisodes
+ */
+export type Episode$recordingSessionEpisodesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RecordingSessionEpisode
+   */
+  select?: Prisma.RecordingSessionEpisodeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RecordingSessionEpisode
+   */
+  omit?: Prisma.RecordingSessionEpisodeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RecordingSessionEpisodeInclude<ExtArgs> | null
+  where?: Prisma.RecordingSessionEpisodeWhereInput
+  orderBy?: Prisma.RecordingSessionEpisodeOrderByWithRelationInput | Prisma.RecordingSessionEpisodeOrderByWithRelationInput[]
+  cursor?: Prisma.RecordingSessionEpisodeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RecordingSessionEpisodeScalarFieldEnum | Prisma.RecordingSessionEpisodeScalarFieldEnum[]
 }
 
 /**
