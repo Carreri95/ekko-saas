@@ -399,6 +399,7 @@ export const ModelName = {
   Episode: 'Episode',
   CastMember: 'CastMember',
   ProjectCharacter: 'ProjectCharacter',
+  ProjectCharacterAssignment: 'ProjectCharacterAssignment',
   MediaAsset: 'MediaAsset'
 } as const
 
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "invite" | "inviteEmailDispatch" | "session" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "episode" | "castMember" | "projectCharacter" | "mediaAsset"
+    modelProps: "user" | "invite" | "inviteEmailDispatch" | "session" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "episode" | "castMember" | "projectCharacter" | "projectCharacterAssignment" | "mediaAsset"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1529,6 +1530,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ProjectCharacterAssignment: {
+      payload: Prisma.$ProjectCharacterAssignmentPayload<ExtArgs>
+      fields: Prisma.ProjectCharacterAssignmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProjectCharacterAssignmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectCharacterAssignmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProjectCharacterAssignmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectCharacterAssignmentPayload>
+        }
+        findFirst: {
+          args: Prisma.ProjectCharacterAssignmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectCharacterAssignmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProjectCharacterAssignmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectCharacterAssignmentPayload>
+        }
+        findMany: {
+          args: Prisma.ProjectCharacterAssignmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectCharacterAssignmentPayload>[]
+        }
+        create: {
+          args: Prisma.ProjectCharacterAssignmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectCharacterAssignmentPayload>
+        }
+        createMany: {
+          args: Prisma.ProjectCharacterAssignmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProjectCharacterAssignmentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectCharacterAssignmentPayload>[]
+        }
+        delete: {
+          args: Prisma.ProjectCharacterAssignmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectCharacterAssignmentPayload>
+        }
+        update: {
+          args: Prisma.ProjectCharacterAssignmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectCharacterAssignmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.ProjectCharacterAssignmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProjectCharacterAssignmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProjectCharacterAssignmentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectCharacterAssignmentPayload>[]
+        }
+        upsert: {
+          args: Prisma.ProjectCharacterAssignmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectCharacterAssignmentPayload>
+        }
+        aggregate: {
+          args: Prisma.ProjectCharacterAssignmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProjectCharacterAssignment>
+        }
+        groupBy: {
+          args: Prisma.ProjectCharacterAssignmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProjectCharacterAssignmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProjectCharacterAssignmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProjectCharacterAssignmentCountAggregateOutputType> | number
+        }
+      }
+    }
     MediaAsset: {
       payload: Prisma.$MediaAssetPayload<ExtArgs>
       fields: Prisma.MediaAssetFieldRefs
@@ -1882,6 +1957,23 @@ export const ProjectCharacterScalarFieldEnum = {
 } as const
 
 export type ProjectCharacterScalarFieldEnum = (typeof ProjectCharacterScalarFieldEnum)[keyof typeof ProjectCharacterScalarFieldEnum]
+
+
+export const ProjectCharacterAssignmentScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  characterId: 'characterId',
+  castMemberId: 'castMemberId',
+  type: 'type',
+  status: 'status',
+  priority: 'priority',
+  approvedByClient: 'approvedByClient',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProjectCharacterAssignmentScalarFieldEnum = (typeof ProjectCharacterAssignmentScalarFieldEnum)[keyof typeof ProjectCharacterAssignmentScalarFieldEnum]
 
 
 export const MediaAssetScalarFieldEnum = {
@@ -2239,6 +2331,34 @@ export type ListEnumCharacterImportanceFieldRefInput<$PrismaModel> = FieldRefInp
 
 
 /**
+ * Reference to a field of type 'ProjectCharacterAssignmentType'
+ */
+export type EnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProjectCharacterAssignmentType'>
+    
+
+
+/**
+ * Reference to a field of type 'ProjectCharacterAssignmentType[]'
+ */
+export type ListEnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProjectCharacterAssignmentType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ProjectCharacterAssignmentStatus'
+ */
+export type EnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProjectCharacterAssignmentStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ProjectCharacterAssignmentStatus[]'
+ */
+export type ListEnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProjectCharacterAssignmentStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'MediaAssetKind'
  */
 export type EnumMediaAssetKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MediaAssetKind'>
@@ -2417,6 +2537,7 @@ export type GlobalOmitConfig = {
   episode?: Prisma.EpisodeOmit
   castMember?: Prisma.CastMemberOmit
   projectCharacter?: Prisma.ProjectCharacterOmit
+  projectCharacterAssignment?: Prisma.ProjectCharacterAssignmentOmit
   mediaAsset?: Prisma.MediaAssetOmit
 }
 

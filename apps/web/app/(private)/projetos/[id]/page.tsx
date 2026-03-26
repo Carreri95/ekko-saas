@@ -510,6 +510,9 @@ export default function ProjectEditPage() {
     setEditingChar(null);
     void loadCharacters();
   };
+  const onAssignmentChanged = () => {
+    void loadCharacters();
+  };
 
   const {
     register,
@@ -1255,7 +1258,10 @@ export default function ProjectEditPage() {
                             <CharacterCard
                               key={c.id}
                               character={c}
+                              castMembers={castMembers}
+                              projectId={id}
                               onEdit={openEditChar}
+                              onAssignmentChanged={onAssignmentChanged}
                             />
                           ))}
                         </div>

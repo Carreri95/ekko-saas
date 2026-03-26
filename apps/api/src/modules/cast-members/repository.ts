@@ -10,7 +10,7 @@ export class CastMembersRepository {
       where,
       orderBy: { name: "asc" },
       include: {
-        characters: {
+        characterAssignments: {
           where: {
             project: {
               status: {
@@ -88,7 +88,7 @@ export class CastMembersRepository {
   }
 
   groupActiveProjectsByCastMember(castMemberIds: string[]) {
-    return prisma.projectCharacter.groupBy({
+    return prisma.projectCharacterAssignment.groupBy({
       by: ["castMemberId"],
       where: {
         castMemberId: { in: castMemberIds },
@@ -109,9 +109,17 @@ export class CastMembersRepository {
   }
 
   findCastings(castMemberId: string) {
-    return prisma.projectCharacter.findMany({
+    return prisma.projectCharacterAssignment.findMany({
       where: { castMemberId },
       include: {
+        character: {
+          select: {
+            id: true,
+            name: true,
+            voiceType: true,
+            importance: true,
+          },
+        },
         project: {
           select: {
             id: true,

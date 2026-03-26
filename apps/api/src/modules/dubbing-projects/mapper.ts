@@ -49,8 +49,24 @@ export type CharacterRow = {
   importance: "MAIN" | "SUPPORT" | "EXTRA";
   castMemberId: string | null;
   castMember: { id: string; name: string; role: string | null } | null;
+  assignments?: AssignmentRow[];
   notes: string | null;
   createdAt: Date;
+};
+
+export type AssignmentRow = {
+  id: string;
+  projectId: string;
+  characterId: string;
+  castMemberId: string;
+  type: "TEST_OPTION_1" | "TEST_OPTION_2" | "PRINCIPAL" | "RESERVE" | "SUPPORT";
+  status: "INVITED" | "TEST_SENT" | "TEST_RECEIVED" | "APPROVED" | "CAST" | "REPLACED" | "DECLINED";
+  priority: number;
+  approvedByClient: boolean;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  castMember?: { id: string; name: string; role: string | null } | null;
 };
 
 import type { EpisodeStatus } from "../../generated/prisma/client.js";
@@ -117,7 +133,31 @@ export function serializeProjectCharacter(c: CharacterRow) {
           role: c.castMember.role,
         }
       : null,
+    assignments: (c.assignments ?? []).map(serializeProjectCharacterAssignment),
     notes: c.notes,
     createdAt: c.createdAt.toISOString(),
+  };
+}
+
+export function serializeProjectCharacterAssignment(a: AssignmentRow) {
+  return {
+    id: a.id,
+    projectId: a.projectId,
+    characterId: a.characterId,
+    castMemberId: a.castMemberId,
+    type: a.type,
+    status: a.status,
+    priority: a.priority,
+    approvedByClient: a.approvedByClient,
+    notes: a.notes,
+    createdAt: a.createdAt.toISOString(),
+    updatedAt: a.updatedAt.toISOString(),
+    castMember: a.castMember
+      ? {
+          id: a.castMember.id,
+          name: a.castMember.name,
+          role: a.castMember.role,
+        }
+      : null,
   };
 }

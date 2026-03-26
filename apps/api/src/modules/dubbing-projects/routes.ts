@@ -1,5 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import {
+  assignmentCreateSchema,
+  assignmentPatchSchema,
   characterCreateSchema,
   characterPatchSchema,
   dubbingProjectFormSchema,
@@ -13,6 +15,7 @@ import { DubbingProjectsService } from "./service.js";
 type ParamsId = { id: string };
 type ParamsCharacter = { id: string; charId: string };
 type ParamsEpisode = { id: string; epId: string };
+type ParamsAssignment = { id: string; assignmentId: string };
 type QueryList = { status?: string; q?: string; page?: string };
 
 export async function registerDubbingProjectRoutes(app: FastifyInstance) {
@@ -210,6 +213,63 @@ export async function registerDubbingProjectRoutes(app: FastifyInstance) {
     "/api/dubbing-projects/:id/characters/:charId",
     async (request, reply) => {
       const result = await service.deleteCharacter(request.params.id, request.params.charId);
+      if ("notFound" in result) return reply.code(404).send({ error: "Não encontrado" });
+      return reply.send(result);
+    },
+  );
+
+  app.get<{ Params: ParamsId; Querystring: { characterId?: string } }>(
+    "/api/dubbing-projects/:id/character-assignments",
+    async (request, reply) => {
+      const result = await service.listAssignments(request.params.id, request.query.characterId);
+      if (!result) return reply.code(404).send({ error: "Não encontrado" });
+      if ("notFound" in result) return reply.code(404).send({ error: "Não encontrado" });
+      return reply.send(result);
+    },
+  );
+
+  app.post<{ Params: ParamsId }>(
+    "/api/dubbing-projects/:id/character-assignments",
+    async (request, reply) => {
+      const parsed = assignmentCreateSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: "Dados inválidos",
+          details: parsed.error.flatten().fieldErrors,
+        });
+      }
+      const result = await service.createAssignment(request.params.id, parsed.data);
+      if ("notFound" in result) return reply.code(404).send({ error: "Não encontrado" });
+      if ("badRequest" in result) return reply.code(400).send(result.badRequest);
+      return reply.code(201).send(result);
+    },
+  );
+
+  app.patch<{ Params: ParamsAssignment }>(
+    "/api/dubbing-projects/:id/character-assignments/:assignmentId",
+    async (request, reply) => {
+      const parsed = assignmentPatchSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: "Dados inválidos",
+          details: parsed.error.flatten().fieldErrors,
+        });
+      }
+      const result = await service.patchAssignment(
+        request.params.id,
+        request.params.assignmentId,
+        parsed.data,
+      );
+      if ("notFound" in result) return reply.code(404).send({ error: "Não encontrado" });
+      if ("badRequest" in result) return reply.code(400).send(result.badRequest);
+      return reply.send(result);
+    },
+  );
+
+  app.delete<{ Params: ParamsAssignment }>(
+    "/api/dubbing-projects/:id/character-assignments/:assignmentId",
+    async (request, reply) => {
+      const result = await service.deleteAssignment(request.params.id, request.params.assignmentId);
       if ("notFound" in result) return reply.code(404).send({ error: "Não encontrado" });
       return reply.send(result);
     },

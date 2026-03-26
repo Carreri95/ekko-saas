@@ -276,6 +276,7 @@ model DubbingProject {
   updatedAt     DateTime             @updatedAt
   userId        String?
   characters    ProjectCharacter[]
+  characterAssignments ProjectCharacterAssignment[]
   episodes      Episode[]
 
   @@index([status])
@@ -331,6 +332,24 @@ enum ValueCurrency {
   USD
 }
 
+enum ProjectCharacterAssignmentType {
+  TEST_OPTION_1
+  TEST_OPTION_2
+  PRINCIPAL
+  RESERVE
+  SUPPORT
+}
+
+enum ProjectCharacterAssignmentStatus {
+  INVITED
+  TEST_SENT
+  TEST_RECEIVED
+  APPROVED
+  CAST
+  REPLACED
+  DECLINED
+}
+
 model CastMember {
   id          String           @id @default(cuid())
   name        String
@@ -343,6 +362,7 @@ model CastMember {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   characters  ProjectCharacter[]
+  characterAssignments ProjectCharacterAssignment[]
 }
 
 model ProjectCharacter {
@@ -355,11 +375,36 @@ model ProjectCharacter {
   importance   CharacterImportance @default(SUPPORT)
   castMemberId String?
   castMember   CastMember?         @relation(fields: [castMemberId], references: [id], onDelete: SetNull)
+  assignments  ProjectCharacterAssignment[]
   notes        String?
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
 
   @@index([projectId])
+}
+
+model ProjectCharacterAssignment {
+  id              String                          @id @default(cuid())
+  projectId        String
+  project          DubbingProject                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  characterId      String
+  character        ProjectCharacter               @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  castMemberId     String
+  castMember       CastMember                     @relation(fields: [castMemberId], references: [id], onDelete: Restrict)
+  type             ProjectCharacterAssignmentType
+  status           ProjectCharacterAssignmentStatus @default(INVITED)
+  priority         Int                             @default(1)
+  approvedByClient Boolean                         @default(false)
+  notes            String?
+  createdAt        DateTime                        @default(now())
+  updatedAt        DateTime                        @updatedAt
+
+  @@index([projectId])
+  @@index([characterId])
+  @@index([castMemberId])
+  @@index([projectId, characterId])
+  @@index([projectId, castMemberId])
+  @@index([type, status])
 }
 
 enum CharacterImportance {
