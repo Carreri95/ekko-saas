@@ -5,7 +5,14 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 type UserMenuProps = {
-  user?: { name: string; email: string; plan?: string };
+  user?: {
+    name: string;
+    email: string;
+    plan?: string;
+    role?: string;
+    /** URL de imagem; quando definida, substitui iniciais no botão e no cabeçalho do menu */
+    avatarUrl?: string | null;
+  };
   /** Quando definidos (ex.: via PageShell + section), avatar e badge do menu seguem a paleta */
   accentColor?: string;
   accentBg?: string;
@@ -55,6 +62,7 @@ export function UserMenu({
   }, [open]);
 
   const initials = getInitials(user.name);
+  const avatarSrc = user.avatarUrl?.trim() || null;
   const hasAccent =
     accentColor != null && accentBg != null && accentBorder != null;
 
@@ -85,7 +93,17 @@ export function UserMenu({
             : undefined
         }
       >
-        {initials || (
+        {avatarSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarSrc}
+            alt=""
+            className="h-full w-full rounded-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        ) : initials ? (
+          initials
+        ) : (
           <svg
             width="15"
             height="15"
@@ -125,12 +143,27 @@ export function UserMenu({
                     }
               }
             >
-              {initials || "?"}
+              {avatarSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarSrc}
+                  alt=""
+                  className="h-full w-full rounded-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                initials || "?"
+              )}
             </div>
             <div className="text-[13px] font-[500] text-[#e8e8e8]">
               {user.name}
             </div>
             <div className="mt-[1px] text-[11px] text-[#505050]">{user.email}</div>
+            {user.role ? (
+              <div className="mt-[6px] text-[10px] font-[600] uppercase tracking-wide text-[#606060]">
+                {user.role}
+              </div>
+            ) : null}
             {user.plan ? (
               <div
                 className="mt-[6px] inline-flex items-center gap-[3px] rounded-[99px] border px-[7px] py-[2px] text-[9px] font-[600]"
@@ -161,14 +194,7 @@ export function UserMenu({
               Meu perfil
             </MenuItem>
             <MenuItem
-              href="/configuracoes"
-              icon={<IconSettings />}
-              onClick={() => setOpen(false)}
-            >
-              Configurações da conta
-            </MenuItem>
-            <MenuItem
-              href="/configuracoes/seguranca"
+              href="/perfil/seguranca"
               icon={<IconShield />}
               onClick={() => setOpen(false)}
             >
@@ -247,25 +273,6 @@ function IconUser() {
     >
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function IconSettings() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      className="shrink-0 opacity-70"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
     </svg>
   );
 }

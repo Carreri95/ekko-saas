@@ -40,7 +40,7 @@ export function serializeDubbingProject(p: DubbingProjectSerializeInput) {
   };
 }
 
-type CharacterRow = {
+export type CharacterRow = {
   id: string;
   projectId: string;
   name: string;

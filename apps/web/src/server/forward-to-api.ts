@@ -2,17 +2,30 @@ import { NextResponse } from "next/server";
 
 const API_BASE_URL = process.env.API_BASE_URL?.trim() || "http://localhost:4000";
 
+/** Repassa `Set-Cookie` da API (sessão, logout, etc.) para o browser via BFF. */
+function copySetCookiesFromUpstream(upstream: Response, res: NextResponse): void {
+  const h = upstream.headers as Headers & { getSetCookie?: () => string[] };
+  if (typeof h.getSetCookie !== "function") return;
+  for (const part of h.getSetCookie()) {
+    res.headers.append("Set-Cookie", part);
+  }
+}
+
 async function forwardUpstreamToNextResponse(upstream: Response): Promise<NextResponse> {
   if (upstream.status === 204 || upstream.status === 205 || upstream.status === 304) {
-    return new NextResponse(null, { status: upstream.status });
+    const res = new NextResponse(null, { status: upstream.status });
+    copySetCookiesFromUpstream(upstream, res);
+    return res;
   }
   const text = await upstream.text();
-  return new NextResponse(text, {
+  const res = new NextResponse(text, {
     status: upstream.status,
     headers: {
       "content-type": upstream.headers.get("content-type") ?? "application/json",
     },
   });
+  copySetCookiesFromUpstream(upstream, res);
+  return res;
 }
 
 /**
@@ -58,6 +71,10 @@ export async function forwardMultipartToApi(
     const headers: Record<string, string> = {
       "content-type": contentType,
     };
+    const cookie = request.headers.get("cookie");
+    if (cookie) {
+      headers["cookie"] = cookie;
+    }
     const openaiKey = request.headers.get("x-openai-key");
     if (openaiKey) {
       headers["x-openai-key"] = openaiKey;
@@ -118,6 +135,10 @@ export async function forwardToApi(request: Request, apiPath: string): Promise<N
     const openaiKey = request.headers.get("x-openai-key");
     if (openaiKey) {
       upstreamHeaders["x-openai-key"] = openaiKey;
+    }
+    const cookie = request.headers.get("cookie");
+    if (cookie) {
+      upstreamHeaders["cookie"] = cookie;
     }
     if (request.method !== "GET" && request.method !== "HEAD") {
       const rawBody = await request.text();

@@ -7,6 +7,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 import { ConfirmProvider } from "./confirm-provider";
 import { SidebarDisplayProvider } from "./sidebar-display-context";
 import { SidebarNav } from "./sidebar-nav";
@@ -26,6 +27,8 @@ export function useAppSidebar() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const hideSidebar = pathname === "/login";
   const [collapsed, setCollapsedState] = useState(false);
 
   useEffect(() => {
@@ -59,19 +62,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const value: SidebarContextValue = { collapsed, setCollapsed, toggle };
 
+  const shellClass =
+    hideSidebar
+      ? "app-shell-root app-shell-root--no-sidebar"
+      : `app-shell-root ${collapsed ? "app-shell-root--collapsed" : ""}`;
+
   return (
     <SidebarDisplayProvider>
       <ConfirmProvider>
         <SidebarContext.Provider value={value}>
           <div
-            className={`app-shell-root ${collapsed ? "app-shell-root--collapsed" : ""}`}
-            data-sidebar-collapsed={collapsed ? "true" : "false"}
+            className={shellClass}
+            data-sidebar-collapsed={hideSidebar ? "false" : collapsed ? "true" : "false"}
+            data-no-sidebar={hideSidebar ? "true" : "false"}
           >
-            <aside
-              className={`app-sidebar ${collapsed ? "app-sidebar--collapsed" : ""}`}
-            >
-              <SidebarNav collapsed={collapsed} onToggle={toggle} />
-            </aside>
+            {hideSidebar ? null : (
+              <aside
+                className={`app-sidebar ${collapsed ? "app-sidebar--collapsed" : ""}`}
+              >
+                <SidebarNav collapsed={collapsed} onToggle={toggle} />
+              </aside>
+            )}
 
             <main className="app-main flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               {children}

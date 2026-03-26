@@ -1,0 +1,342 @@
+/* ── Layout (largura total; padding no page.tsx via px-[24px] py-[24px]) ── */
+.projects-container {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── KPI cards ── */
+.projects-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.projects-kpi-card {
+  background: #1a1a1a;
+  border: 0.5px solid #252525;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.projects-kpi-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #505050;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.projects-kpi-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #e8e8e8;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.projects-kpi-value--green {
+  color: #5dcaa5;
+  font-size: 18px;
+}
+
+.projects-kpi-sub {
+  font-size: 11px;
+  color: #505050;
+  margin-top: 6px;
+}
+
+/* ── Filtros ── */
+.projects-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.projects-filters-label {
+  font-size: 11px;
+  color: #444;
+  margin-right: 2px;
+  flex-shrink: 0;
+}
+
+.projects-filter-chip {
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-size: 11px;
+  line-height: 1.2;
+  border: 0.5px solid #2e2e2e;
+  color: #707070;
+  background: #141414;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    color 0.12s,
+    background 0.12s,
+    border-color 0.12s;
+}
+
+.projects-filter-chip:hover {
+  color: #a0a0a0;
+  background: #1a1a1a;
+  border-color: #3a3a3a;
+}
+
+.projects-filter-chip.active {
+  background: #252525;
+  border-color: #444;
+  color: #e8e8e8;
+}
+
+/* ── Tabela em card ── */
+.projects-table-card {
+  background: #1a1a1a;
+  border: 0.5px solid #252525;
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Tabela ── */
+.projects-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.projects-table .col-project {
+  width: auto;
+}
+
+.projects-table .col-status {
+  width: 150px;
+}
+
+.projects-table .col-ep {
+  width: 90px;
+}
+
+.projects-table .col-min {
+  width: 110px;
+}
+
+.projects-table .col-prazo {
+  width: 155px;
+}
+
+.projects-table .col-valor {
+  width: 140px;
+}
+
+.projects-table .col-acoes {
+  width: 80px;
+}
+
+.projects-table thead th {
+  padding: 10px 18px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  color: #404040;
+  background: #1e1e1e;
+  border-bottom: 0.5px solid #252525;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.projects-table thead th.th-right {
+  text-align: right;
+}
+
+.projects-table thead th.th-center {
+  text-align: center;
+}
+
+.projects-table tbody tr {
+  border-bottom: 0.5px solid #1e1e1e;
+  cursor: pointer;
+  transition: background 0.08s;
+  background: #1a1a1a;
+}
+
+.projects-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.projects-table tbody tr:hover {
+  background: #202020;
+}
+
+/* Botão ••• sempre visível (sem depender de hover na linha). */
+.projects-table tbody tr .row-actions {
+  opacity: 1;
+}
+
+.projects-table tbody td {
+  padding: 13px 18px;
+  font-size: 12px;
+  color: #c8c8c8;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: transparent;
+}
+
+.projects-table tbody td.td-right {
+  text-align: right;
+}
+
+.projects-table tbody td.td-center {
+  text-align: center;
+}
+
+.proj-cell-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #e8e8e8;
+  line-height: 1.3;
+}
+
+.proj-cell-client {
+  font-size: 11px;
+  color: #606060;
+  margin-top: 2px;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.projects-table tfoot td {
+  padding: 9px 18px;
+  font-size: 11px;
+  color: #505050;
+  background: #161616;
+  border-top: 0.5px solid #252525;
+}
+
+.projects-table tfoot .td-right {
+  text-align: right;
+}
+
+.projects-table tfoot .td-center {
+  text-align: center;
+}
+
+.tfoot-val {
+  color: #909090;
+  font-weight: 500;
+}
+
+/* ── Compat: projects-table.tsx (status, prazo, coluna projeto) ── */
+.projects-table tbody td.td-project {
+  white-space: normal;
+}
+
+.projects-table tbody td.td-status {
+  text-align: center;
+}
+
+.projects-table tbody td.td-prazo {
+  text-align: left;
+}
+
+.projects-table tbody td.td-numeric,
+.projects-table tfoot td.td-numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+.projects-table thead th.th-actions {
+  width: 80px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+.status-pill-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.proj-deadline-ok {
+  color: #606060;
+}
+
+.proj-deadline-warn {
+  color: #ef9f27;
+}
+
+.proj-deadline-late {
+  color: #f09595;
+}
+
+/* Página de edição — grid horizontal */
+.project-edit-grid {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.project-edit-col-main {
+  flex: 2;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.project-edit-col-side {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.projects-table tfoot td.tfoot-summary {
+  text-align: left;
+  color: #606060;
+}
+
+/* ── Responsivo ── */
+@media (max-width: 900px) {
+  .projects-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .project-edit-grid {
+    flex-direction: column;
+  }
+
+  .project-edit-col-side {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .projects-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}

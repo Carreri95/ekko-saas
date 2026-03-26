@@ -77,7 +77,9 @@ export class OpenAIWhisperAdapter implements TranscriptionAdapter {
     const fromInput = input.openaiApiKey?.trim();
     const apiKey = fromInput && fromInput !== "" ? fromInput : getOpenAIApiKey();
     if (!apiKey) {
-      throw new Error("OPENAI_API_KEY nao configurada");
+      throw new Error(
+        "Chave OpenAI não configurada para o utilizador e OPENAI_API_KEY ausente no ambiente.",
+      );
     }
 
     const filePath = toLocalPath(input.audioUrl);

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { fetchAuthMe } from "@/src/lib/auth-client";
 import { useSidebarDisplay } from "./sidebar-display-context";
 
 function IconCollapseChevron({ collapsed }: { collapsed: boolean }) {
@@ -192,6 +194,25 @@ function IconGear() {
   );
 }
 
+function IconMailInvite() {
+  return (
+    <svg
+      width={15}
+      height={15}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+      <polyline points="22,6 12,13 2,6" />
+    </svg>
+  );
+}
+
 type NavIconId = "grid" | "users" | "briefcase" | "calendar" | "edit" | "mic";
 
 function NavItemIcon({ id }: { id: NavIconId }) {
@@ -225,6 +246,19 @@ type Props = {
 export function SidebarNav({ collapsed, onToggle }: Props) {
   const pathname = usePathname();
   const { editorFilename } = useSidebarDisplay();
+  /** A sidebar está fora de `PrivateAuthProvider`; o papel vem de `/api/auth/me` no cliente. */
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAuthMe().then((r) => {
+      if (cancelled) return;
+      setIsAdmin(r.ok && r.user.role === "ADMIN");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   const activeFileName =
     editorFilename && editorFilename.trim().length > 0
@@ -268,6 +302,23 @@ export function SidebarNav({ collapsed, onToggle }: Props) {
         className="app-sidebar-nav-main"
         aria-label="Navegação do workspace"
       >
+        {isAdmin ? (
+          <div className="app-sidebar-nav-stack">
+            <span className="app-sidebar-group-label">Administração</span>
+            <Link
+              href="/admin/convites"
+              className={`app-sidebar-nav-item${isActivePath(pathname, "/admin/convites") ? " active" : ""}`}
+              aria-current={
+                isActivePath(pathname, "/admin/convites") ? "page" : undefined
+              }
+              title={collapsed ? "Convites" : undefined}
+            >
+              <IconMailInvite />
+              <span className="app-sidebar-nav-item-label">Convites</span>
+            </Link>
+          </div>
+        ) : null}
+
         {/* GESTÃO */}
         <div className="app-sidebar-nav-stack">
           <span className="app-sidebar-group-label">Gestão</span>

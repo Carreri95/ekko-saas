@@ -1,0 +1,27 @@
+/* Requer `projetos.css` importado no mesmo page (tabela + status-pill). */
+
+/* Tabela de convites: linhas não são clicáveis (sem navegação) */
+.convites-table-wrap .projects-table tbody tr {
+  cursor: default;
+}
+
+/* Larguras aproximadas: email ~40%, demais ~15% */
+.convites-table-wrap .projects-table .col-email {
+  width: 40%;
+}
+
+.convites-table-wrap .projects-table .col-status {
+  width: 15%;
+}
+
+.convites-table-wrap .projects-table .col-enviado {
+  width: 15%;
+}
+
+.convites-table-wrap .projects-table .col-expira {
+  width: 15%;
+}
+
+.convites-table-wrap .projects-table .col-acoes {
+  width: 15%;
+}

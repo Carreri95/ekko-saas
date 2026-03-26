@@ -19,3 +19,8 @@ export function getOpenAIApiKey(): string | undefined {
   const k = process.env.OPENAI_API_KEY;
   return k && k.trim() !== "" ? k.trim() : undefined;
 }
+
+export function getOpenAiKeyEncryptionSecret(): string | undefined {
+  const k = process.env.OPENAI_KEY_ENCRYPTION_SECRET;
+  return k && k.trim() !== "" ? k.trim() : undefined;
+}

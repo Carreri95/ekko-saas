@@ -2,7 +2,7 @@ import type {
   DubbingProjectStatus,
   PaymentType,
   ValueCurrency,
-} from "@/app/projetos/domain";
+} from "@/app/(private)/projetos/domain";
 
 /** Projeto serializado na API (Decimal → string). Tipos partilhados entre API e UI. */
 export type DubbingProjectDto = {

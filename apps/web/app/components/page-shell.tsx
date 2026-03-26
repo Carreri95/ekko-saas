@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useOptionalPrivateAuth } from "./private-auth-provider";
 import { UserMenu } from "./user-menu";
 
 export type PageSection = "gestao" | "editor";
@@ -37,8 +38,7 @@ const SECTION_META: Record<
 
 /**
  * Wrapper padrão para páginas — topbar com badge de seção (opcional), título, UserMenu.
- *
- * Quando tiver NextAuth, substituir o mock do UserMenu por useSession().
+ * Na área privada, o menu usa o utilizador de `PrivateAuthProvider` (sessão via `/api/auth/me`).
  */
 export function PageShell({
   title,
@@ -48,6 +48,7 @@ export function PageShell({
   children,
   noScroll = false,
 }: PageShellProps) {
+  const auth = useOptionalPrivateAuth();
   const meta = section ? SECTION_META[section] : null;
   const accent =
     section === "editor"
@@ -96,15 +97,22 @@ export function PageShell({
         ) : null}
         <div className="flex-1" />
         <UserMenu
-          user={{
-            name: "João Silva",
-            email: "joao@estudio.com.br",
-            plan: "Pro",
-          }}
+          user={
+            auth
+              ? {
+                  name:
+                    auth.user.displayName?.trim() ||
+                    auth.user.name?.trim() ||
+                    auth.user.email ||
+                    "Utilizador",
+                  email: auth.user.email ?? "",
+                  role: auth.user.role,
+                  avatarUrl: auth.user.avatarUrl,
+                }
+              : undefined
+          }
           {...(accent ?? {})}
-          onSignOut={() => {
-            // TODO: signOut({ callbackUrl: "/login" }) com NextAuth
-          }}
+          onSignOut={auth ? () => auth.signOut() : undefined}
         />
       </header>
 

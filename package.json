@@ -21,10 +21,11 @@
     "db:seed": "npm run db:seed --prefix apps/web",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "db:migrate": "npm run db:migrate --prefix apps/web",
-    "db:deploy": "npm run db:deploy --prefix apps/web",
-    "db:studio": "npm run db:studio --prefix apps/web",
-    "db:studio:api": "npm run db:studio --prefix apps/api",
+    "db:migrate": "npm run db:migrate --prefix apps/api",
+    "db:deploy": "npm run db:deploy --prefix apps/api",
+    "db:generate": "npm run db:generate --prefix apps/api",
+    "db:studio": "npm run db:studio --prefix apps/api",
+    "db:studio:web": "npm run db:studio --prefix apps/web",
     "storage:bootstrap": "npm run storage:bootstrap --prefix apps/api",
     "media:reconcile": "npm run media:reconcile --prefix apps/api"
   }

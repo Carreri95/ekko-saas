@@ -9,6 +9,24 @@
 * 🟢 You can import this file directly.
 */
 
+export const Role = {
+  ADMIN: 'ADMIN',
+  USER: 'USER'
+} as const
+
+export type Role = (typeof Role)[keyof typeof Role]
+
+
+export const InviteEmailDispatchStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  SENT: 'SENT',
+  FAILED: 'FAILED'
+} as const
+
+export type InviteEmailDispatchStatus = (typeof InviteEmailDispatchStatus)[keyof typeof InviteEmailDispatchStatus]
+
+
 export const ProjectStatus = {
   DRAFT: 'DRAFT',
   ACTIVE: 'ACTIVE',

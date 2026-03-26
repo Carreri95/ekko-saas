@@ -52,6 +52,9 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  Invite: 'Invite',
+  InviteEmailDispatch: 'InviteEmailDispatch',
+  Session: 'Session',
   Project: 'Project',
   SubtitleFile: 'SubtitleFile',
   SubtitleCue: 'SubtitleCue',
@@ -85,13 +88,62 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  displayName: 'displayName',
+  avatarUrl: 'avatarUrl',
   email: 'email',
-  password: 'password',
+  passwordHash: 'passwordHash',
+  openAiWhisperKeyEncrypted: 'openAiWhisperKeyEncrypted',
+  openAiWhisperKeyMask: 'openAiWhisperKeyMask',
+  role: 'role',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const InviteScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  role: 'role',
+  tokenHash: 'tokenHash',
+  invitedByUserId: 'invitedByUserId',
+  expiresAt: 'expiresAt',
+  acceptedAt: 'acceptedAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InviteScalarFieldEnum = (typeof InviteScalarFieldEnum)[keyof typeof InviteScalarFieldEnum]
+
+
+export const InviteEmailDispatchScalarFieldEnum = {
+  id: 'id',
+  inviteId: 'inviteId',
+  toEmail: 'toEmail',
+  inviteUrl: 'inviteUrl',
+  status: 'status',
+  lastError: 'lastError',
+  attemptCount: 'attemptCount',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type InviteEmailDispatchScalarFieldEnum = (typeof InviteEmailDispatchScalarFieldEnum)[keyof typeof InviteEmailDispatchScalarFieldEnum]
+
+
+export const SessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  tokenHash: 'tokenHash',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+} as const
+
+export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
 
 
 export const ProjectScalarFieldEnum = {

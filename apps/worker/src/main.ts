@@ -2,8 +2,19 @@ import "./load-env.js";
 import { TranscriptionJobStatus } from "../../api/src/generated/prisma/client.js";
 
 import { prisma } from "./prisma-client.js";
+import { processOneInviteEmailDispatch } from "./invite-email/run-invite-email-dispatch.js";
 import { MediaStorageService } from "./transcription/media-storage.service.js";
 import { runTranscriptionJob } from "./transcription/transcription-job-runner.js";
+
+console.log(
+  JSON.stringify({
+    scope: "env-debug",
+    event: "worker_start",
+    hasProcessEnvOpenAiKeyEncryptionSecret: Boolean(
+      process.env.OPENAI_KEY_ENCRYPTION_SECRET?.trim(),
+    ),
+  }),
+);
 
 function pollMs(): number {
   const raw = process.env.WORKER_POLL_MS;
@@ -31,6 +42,11 @@ async function loop(): Promise<void> {
 
   while (!shuttingDown) {
     try {
+      const didInviteEmail = await processOneInviteEmailDispatch(prisma);
+      if (didInviteEmail) {
+        continue;
+      }
+
       const next = await prisma.transcriptionJob.findFirst({
         where: { status: TranscriptionJobStatus.PENDING },
         orderBy: { createdAt: "asc" },

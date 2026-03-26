@@ -23,6 +23,21 @@ export * from './enums.js';
  */
 export type User = Prisma.UserModel
 /**
+ * Model Invite
+ * Convite por email; token apenas como hash. Nesta fase o produto só prevê convites com `role` USER (regra de negócio nas rotas futuras).
+ */
+export type Invite = Prisma.InviteModel
+/**
+ * Model InviteEmailDispatch
+ * 
+ */
+export type InviteEmailDispatch = Prisma.InviteEmailDispatchModel
+/**
+ * Model Session
+ * 
+ */
+export type Session = Prisma.SessionModel
+/**
  * Model Project
  * 
  */

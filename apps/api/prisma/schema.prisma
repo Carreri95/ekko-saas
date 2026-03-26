@@ -3,19 +3,96 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
+/// Cliente gerado para `apps/web` (seed, tooling). Fonte de verdade única: este schema.
+generator client_web {
+  provider = "prisma-client"
+  output   = "../../web/app/generated/prisma"
+}
+
 datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  USER
+}
+
 model User {
-  id        String    @id @default(cuid())
-  name      String?
-  email     String?   @unique
-  password  String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  projects  Project[]
-  batchJobs BatchJob[]
+  id           String    @id @default(cuid())
+  name         String?
+  displayName  String?
+  avatarUrl    String?
+  email        String?   @unique
+  passwordHash String?
+  /// Chave OpenAI/Whisper cifrada (AES-GCM). Nunca retornar ao frontend.
+  openAiWhisperKeyEncrypted String?
+  /// Máscara segura para UI (ex.: sk-...ABCD), sem expor segredo completo.
+  openAiWhisperKeyMask      String?
+  role         Role      @default(USER)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  projects     Project[]
+  batchJobs    BatchJob[]
+  sessions     Session[]
+  invitesSent  Invite[] @relation("InviteInvitedBy")
+}
+
+/// Convite por email; token apenas como hash. Nesta fase o produto só prevê convites com `role` USER (regra de negócio nas rotas futuras).
+model Invite {
+  id              String    @id @default(cuid())
+  email           String
+  role            Role      @default(USER)
+  tokenHash       String
+  invitedByUserId String
+  invitedBy       User      @relation("InviteInvitedBy", fields: [invitedByUserId], references: [id], onDelete: Restrict)
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  revokedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  emailDispatch   InviteEmailDispatch?
+
+  @@index([email])
+  @@index([invitedByUserId])
+}
+
+/// Fila mínima de envio de email (outbox): URL com token só até envio bem-sucedido; depois `inviteUrl` fica null.
+enum InviteEmailDispatchStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
+model InviteEmailDispatch {
+  id           String                    @id @default(cuid())
+  inviteId     String                    @unique
+  invite       Invite                    @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  toEmail      String
+  /// Link completo com `?token=`; removido após envio bem-sucedido (não persistir token além do necessário).
+  inviteUrl    String?
+  status       InviteEmailDispatchStatus @default(PENDING)
+  lastError    String?
+  attemptCount Int                       @default(0)
+  sentAt       DateTime?
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
 }
 
 model Project {

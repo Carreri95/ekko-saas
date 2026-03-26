@@ -1,18 +1,15 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 import { TranscriptionEngine } from "../../generated/prisma/client.js";
 import { prisma } from "../../infrastructure/db/prisma.client.js";
-import { getDefaultUserId } from "../../infrastructure/demo-user.js";
 import { isDatabaseConnectionError } from "../../infrastructure/prisma-errors.js";
+import { AuthService } from "../auth/service.js";
 import { getMediaStorageService } from "../projects/media-storage.service.js";
 import { TranscriptionJobService } from "../transcription-jobs/transcription-job.service.js";
 import { BatchJobService } from "./batch-job.service.js";
 
 const OPENAI_HEADER = "x-openai-key";
 
-/** Mensagens alinhadas ao handler legado em `apps/web/app/api/batch-jobs/route.ts`. */
-const DEMO_USER_ERROR =
-  "Nenhum utilizador demo na base de dados. Execute npm run db:seed na pasta web.";
 const DB_UNAVAILABLE_ERROR =
   "Base de dados indisponivel. Arranque o PostgreSQL e confirme DATABASE_URL.";
 
@@ -20,15 +17,34 @@ export async function registerBatchJobRoutes(app: FastifyInstance): Promise<void
   const media = getMediaStorageService();
   const transcriptionJobs = new TranscriptionJobService(prisma);
   const svc = new BatchJobService(prisma, media, transcriptionJobs);
+  const authService = new AuthService();
 
-  app.post("/api/batch-jobs", async (_request, reply) => {
-    try {
-      const userId = await getDefaultUserId();
-      if (!userId) {
-        return reply.status(500).send({ error: DEMO_USER_ERROR });
+  async function ensureUser(request: FastifyRequest, reply: FastifyReply) {
+    const session = await authService.resolveSessionUser(request);
+    if (!session.ok) {
+      if (session.error === "inactive") {
+        void reply.status(403).send({ error: "Conta desativada" });
+        return null;
       }
+      void reply.status(401).send({ error: "Nao autenticado" });
+      return null;
+    }
+    return session.user;
+  }
 
-      const batch = await svc.createBatch(userId);
+  async function ensureBatchOwner(batchId: string, userId: string): Promise<boolean> {
+    const batch = await prisma.batchJob.findUnique({
+      where: { id: batchId },
+      select: { userId: true },
+    });
+    return Boolean(batch && batch.userId === userId);
+  }
+
+  app.post("/api/batch-jobs", async (request, reply) => {
+    const user = await ensureUser(request, reply);
+    if (!user) return;
+    try {
+      const batch = await svc.createBatch(user.id);
       return reply.status(201).send({ batchId: batch.id });
     } catch (e) {
       if (isDatabaseConnectionError(e)) {
@@ -43,9 +59,14 @@ export async function registerBatchJobRoutes(app: FastifyInstance): Promise<void
   app.post<{ Params: { batchId: string } }>(
     "/api/batch-jobs/:batchId/files",
     async (request, reply) => {
+      const user = await ensureUser(request, reply);
+      if (!user) return;
       const batchId = request.params.batchId;
       if (!batchId) {
         return reply.status(400).send({ error: "batchId obrigatorio" });
+      }
+      if (!(await ensureBatchOwner(batchId, user.id))) {
+        return reply.status(404).send({ error: "Batch nao encontrado" });
       }
 
       if (!request.isMultipart()) {
@@ -118,9 +139,14 @@ export async function registerBatchJobRoutes(app: FastifyInstance): Promise<void
   app.get<{ Params: { batchId: string } }>(
     "/api/batch-jobs/:batchId/download",
     async (request, reply) => {
+      const user = await ensureUser(request, reply);
+      if (!user) return;
       const batchId = request.params.batchId;
       if (!batchId) {
         return reply.status(400).send({ error: "batchId obrigatorio" });
+      }
+      if (!(await ensureBatchOwner(batchId, user.id))) {
+        return reply.status(404).send({ error: "Batch nao encontrado" });
       }
 
       try {
@@ -143,9 +169,14 @@ export async function registerBatchJobRoutes(app: FastifyInstance): Promise<void
   );
 
   app.get<{ Params: { batchId: string } }>("/api/batch-jobs/:batchId", async (request, reply) => {
+    const user = await ensureUser(request, reply);
+    if (!user) return;
     const batchId = request.params.batchId;
     if (!batchId) {
       return reply.status(400).send({ error: "batchId obrigatorio" });
+    }
+    if (!(await ensureBatchOwner(batchId, user.id))) {
+      return reply.status(404).send({ error: "Batch nao encontrado" });
     }
 
     const status = await svc.getBatchStatus(batchId);
@@ -159,9 +190,14 @@ export async function registerBatchJobRoutes(app: FastifyInstance): Promise<void
   app.post<{ Params: { batchId: string } }>(
     "/api/batch-jobs/:batchId/start",
     async (request, reply) => {
+      const user = await ensureUser(request, reply);
+      if (!user) return;
       const batchId = request.params.batchId;
       if (!batchId) {
         return reply.status(400).send({ error: "batchId obrigatorio" });
+      }
+      if (!(await ensureBatchOwner(batchId, user.id))) {
+        return reply.status(404).send({ error: "Batch nao encontrado" });
       }
 
       const rawKey = request.headers[OPENAI_HEADER];
@@ -181,10 +217,15 @@ export async function registerBatchJobRoutes(app: FastifyInstance): Promise<void
   app.post<{ Params: { batchId: string; jobId: string } }>(
     "/api/batch-jobs/:batchId/jobs/:jobId/retry",
     async (request, reply) => {
+      const user = await ensureUser(request, reply);
+      if (!user) return;
       const batchId = request.params.batchId;
       const jobId = request.params.jobId;
       if (!batchId || !jobId) {
         return reply.status(400).send({ error: "batchId e jobId obrigatorios" });
+      }
+      if (!(await ensureBatchOwner(batchId, user.id))) {
+        return reply.status(404).send({ error: "Batch nao encontrado" });
       }
 
       const job = await prisma.transcriptionJob.findUnique({
@@ -217,9 +258,14 @@ export async function registerBatchJobRoutes(app: FastifyInstance): Promise<void
   app.delete<{ Params: { batchId: string }; Body: unknown }>(
     "/api/batch-jobs/:batchId/jobs",
     async (request, reply) => {
+      const user = await ensureUser(request, reply);
+      if (!user) return;
       const batchId = request.params.batchId;
       if (!batchId) {
         return reply.status(400).send({ error: "batchId obrigatorio" });
+      }
+      if (!(await ensureBatchOwner(batchId, user.id))) {
+        return reply.status(404).send({ error: "Batch nao encontrado" });
       }
 
       let body: { jobIds?: unknown };

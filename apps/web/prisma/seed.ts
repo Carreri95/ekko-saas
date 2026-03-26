@@ -1,23 +1,32 @@
 import "dotenv/config";
 
+import bcrypt from "bcryptjs";
+
 import { prisma } from "../src/lib/prisma";
 import { isDatabaseConnectionError } from "../src/server/prisma-errors";
 
+/** Alinhado com `apps/api/src/infrastructure/demo-user.ts` — utilizador por defeito para fluxos dev (ex.: `POST /api/projects`). */
 const DEMO_EMAIL = "demo@subtitlestudio.local";
 const DEMO_NAME = "Demo User";
 const DEMO_PASSWORD = "dev-fake-password";
 
 async function main() {
+  const passwordHash = bcrypt.hashSync(DEMO_PASSWORD, 10);
+
   await prisma.user.upsert({
     where: { email: DEMO_EMAIL },
     update: {
       name: DEMO_NAME,
-      password: DEMO_PASSWORD,
+      passwordHash,
+      role: "ADMIN",
+      isActive: true,
     },
     create: {
       email: DEMO_EMAIL,
       name: DEMO_NAME,
-      password: DEMO_PASSWORD,
+      passwordHash,
+      role: "ADMIN",
+      isActive: true,
     },
   });
 }

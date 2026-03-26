@@ -1,4 +1,4 @@
-@import "../subtitle-file-edit/waveform-cue-shadow.css";
+@import "../(private)/subtitle-file-edit/waveform-cue-shadow.css";
 
 .editor-timeline-dock {
   display: flex;

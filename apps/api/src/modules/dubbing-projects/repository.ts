@@ -1,5 +1,8 @@
 import { prisma } from "../../infrastructure/db/prisma.client.js";
-import { EpisodeStatus, Prisma } from "../../generated/prisma/client.js";
+import {
+  EpisodeStatus,
+  Prisma,
+} from "../../generated/prisma/client.js";
 
 export class DubbingProjectsRepository {
   count(where: object) {
@@ -33,7 +36,9 @@ export class DubbingProjectsRepository {
   }
 
   create(data: Record<string, unknown>) {
-    return prisma.dubbingProject.create({ data });
+    return prisma.dubbingProject.create({
+      data: data as Prisma.DubbingProjectCreateInput,
+    });
   }
 
   /**
@@ -45,7 +50,9 @@ export class DubbingProjectsRepository {
   ) {
     const n = Math.max(0, Math.floor(plannedEpisodeCount));
     return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const project = await tx.dubbingProject.create({ data });
+      const project = await tx.dubbingProject.create({
+        data: data as Prisma.DubbingProjectCreateInput,
+      });
       if (n > 0) {
         await tx.episode.createMany({
           data: Array.from({ length: n }, (_, i) => ({
@@ -97,7 +104,7 @@ export class DubbingProjectsRepository {
 
   createProjectCharacter(projectId: string, data: Record<string, unknown>) {
     return prisma.projectCharacter.create({
-      data: { ...data, projectId },
+      data: { ...data, projectId } as Prisma.ProjectCharacterUncheckedCreateInput,
       include: { castMember: { select: { id: true, name: true, role: true } } },
     });
   }

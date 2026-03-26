@@ -111,10 +111,6 @@ export async function registerDubbingProjectRoutes(app: FastifyInstance) {
   app.post<{ Params: ParamsEpisode }>(
     "/api/dubbing-projects/:id/episodes/:epId/transcriptions",
     async (request, reply) => {
-      const openaiKey = request.headers["x-openai-key"];
-      if (!openaiKey || typeof openaiKey !== "string" || !openaiKey.trim()) {
-        return reply.code(400).send({ error: "Cabeçalho x-openai-key obrigatório" });
-      }
       const parsed = episodeTranscriptionBodySchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply.code(400).send({

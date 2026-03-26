@@ -12,6 +12,8 @@ import { OpenAIWhisperAdapter } from "./openai-whisper.adapter.js";
 import type { TranscriptionAdapter } from "./transcription-adapter.js";
 import { CueRepository } from "./cue-repository.js";
 import { getMaxTranscriptionAttempts } from "./env.js";
+import { getOpenAiKeyEncryptionSecret } from "./env.js";
+import { decryptOpenAiKey } from "./openai-key-crypto.js";
 import { normalizeTranscript } from "./transcript-normalizer.js";
 
 function logJob(event: string, payload: Record<string, unknown>) {
@@ -112,7 +114,7 @@ export async function runTranscriptionJob(
     const job = await prisma.transcriptionJob.findUnique({
       where: { id: jobId },
       include: {
-        project: { select: { id: true, storageKey: true } },
+        project: { select: { id: true, storageKey: true, userId: true } },
         subtitleFile: { select: { id: true, projectId: true } },
       },
     });
@@ -164,6 +166,23 @@ export async function runTranscriptionJob(
 
     const audioAbsolutePath = media.resolveAbsolutePath(job.project.storageKey);
     const adapter = adapterForEngine(job.engine);
+    let resolvedOpenAiApiKey = opts.openaiApiKey?.trim() || undefined;
+    if (!resolvedOpenAiApiKey && job.project.userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: job.project.userId },
+        select: { openAiWhisperKeyEncrypted: true },
+      });
+      if (user?.openAiWhisperKeyEncrypted) {
+        const secret = getOpenAiKeyEncryptionSecret();
+        if (!secret) {
+          throw new Error("OPENAI_KEY_ENCRYPTION_SECRET nao configurada");
+        }
+        resolvedOpenAiApiKey = decryptOpenAiKey(
+          user.openAiWhisperKeyEncrypted,
+          secret,
+        );
+      }
+    }
 
     logJob("pipeline_start", { jobId, attempt, engine: job.engine });
 
@@ -172,7 +191,7 @@ export async function runTranscriptionJob(
         audioUrl: audioAbsolutePath,
         language: opts.language ?? job.language ?? undefined,
         prompt: opts.prompt,
-        openaiApiKey: opts.openaiApiKey,
+        openaiApiKey: resolvedOpenAiApiKey,
       });
 
       const cues = normalizeTranscript(transcript);

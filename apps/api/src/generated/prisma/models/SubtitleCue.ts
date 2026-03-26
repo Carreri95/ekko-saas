@@ -505,14 +505,6 @@ export type SubtitleCueUncheckedUpdateManyWithoutSubtitleFileNestedInput = {
   deleteMany?: Prisma.SubtitleCueScalarWhereInput | Prisma.SubtitleCueScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type SubtitleCueCreateNestedManyWithoutTranscriptionJobInput = {
   create?: Prisma.XOR<Prisma.SubtitleCueCreateWithoutTranscriptionJobInput, Prisma.SubtitleCueUncheckedCreateWithoutTranscriptionJobInput> | Prisma.SubtitleCueCreateWithoutTranscriptionJobInput[] | Prisma.SubtitleCueUncheckedCreateWithoutTranscriptionJobInput[]
   connectOrCreate?: Prisma.SubtitleCueCreateOrConnectWithoutTranscriptionJobInput | Prisma.SubtitleCueCreateOrConnectWithoutTranscriptionJobInput[]

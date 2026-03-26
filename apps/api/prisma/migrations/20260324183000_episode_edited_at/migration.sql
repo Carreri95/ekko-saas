@@ -1,2 +1,0 @@
-ALTER TABLE "Episode"
-ADD COLUMN "editedAt" TIMESTAMP(3);

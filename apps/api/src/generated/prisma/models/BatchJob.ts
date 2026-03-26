@@ -511,10 +511,6 @@ export type EnumTranscriptionEngineFieldUpdateOperationsInput = {
   set?: $Enums.TranscriptionEngine
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type BatchJobCreateNestedOneWithoutJobsInput = {
   create?: Prisma.XOR<Prisma.BatchJobCreateWithoutJobsInput, Prisma.BatchJobUncheckedCreateWithoutJobsInput>
   connectOrCreate?: Prisma.BatchJobCreateOrConnectWithoutJobsInput

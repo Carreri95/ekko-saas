@@ -10,16 +10,18 @@
     "seed": "tsx prisma/seed.ts",
     "db:seed": "prisma db seed",
     "test": "vitest run",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
-    "db:studio": "prisma studio --port 5555"
+    "db:generate": "npm run db:generate --prefix ../api",
+    "db:migrate": "npm run db:migrate --prefix ../api",
+    "db:deploy": "npm run db:deploy --prefix ../api",
+    "db:studio": "prisma studio --port 5555 --schema ../api/prisma/schema.prisma"
   },
   "dependencies": {
+    "@subtitlebot/shared": "*",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "adm-zip": "^0.5.16",
+    "bcryptjs": "^3.0.3",
     "date-fns": "^4.1.0",
     "ffmpeg-static": "^5.3.0",
     "music-metadata": "^11.12.3",
@@ -35,6 +37,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/adm-zip": "^0.5.8",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

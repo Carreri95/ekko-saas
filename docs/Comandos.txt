@@ -1,0 +1,9 @@
+docker compose down -v
+npm run db:up
+npm run db:deploy
+npm run db:generate
+npm run db:seed
+
+npm run dev:api
+npm run dev:web
+npm run dev:worker

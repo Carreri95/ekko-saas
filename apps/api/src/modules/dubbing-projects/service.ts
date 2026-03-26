@@ -14,7 +14,12 @@ import {
   type DubbingProjectPatchData,
   type EpisodePatchData,
 } from "./schemas.js";
-import { serializeDubbingProject, serializeEpisode, serializeProjectCharacter } from "./mapper.js";
+import {
+  type CharacterRow,
+  serializeDubbingProject,
+  serializeEpisode,
+  serializeProjectCharacter,
+} from "./mapper.js";
 import { CastMembersService } from "../cast-members/service.js";
 import { ProjectsService } from "../projects/service.js";
 import { TranscriptionJobService } from "../transcription-jobs/transcription-job.service.js";
@@ -318,7 +323,7 @@ export class DubbingProjectsService {
     if (input.castMemberId) {
       await this.castService.syncCastMemberStatus([input.castMemberId]);
     }
-    return { character: serializeProjectCharacter(created) };
+    return { character: serializeProjectCharacter(created as CharacterRow) };
   }
 
   async patchCharacter(projectId: string, charId: string, input: CharacterPatchData) {
@@ -338,7 +343,7 @@ export class DubbingProjectsService {
     if (affected.length > 0) {
       await this.castService.syncCastMemberStatus([...new Set(affected)]);
     }
-    return { character: serializeProjectCharacter(updated) };
+    return { character: serializeProjectCharacter(updated as CharacterRow) };
   }
 
   async listEpisodes(projectId: string) {
@@ -408,12 +413,12 @@ export class DubbingProjectsService {
     if (input.status !== undefined) {
       data.status = input.status;
       if (input.status === "DONE") {
-        if (input.editedAt) {
+        // `editedAt` só deve ser populado quando vier explicitamente no payload.
+        // Se `editedAt` não vier (undefined), significa: DONE via transcrição (sem edição manual).
+        if (input.editedAt !== undefined) {
           const parsed = parseEditedAt(input.editedAt);
           if (parsed === undefined) return { badRequest: { error: "editedAt inválido" } };
           data.editedAt = parsed;
-        } else {
-          data.editedAt = new Date();
         }
       }
       if (input.status !== "DONE" && input.editedAt !== undefined) {
