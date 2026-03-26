@@ -77,7 +77,7 @@ export class CastMembersService {
       const members = await this.repo.findMany(listWhere);
       return {
         members: members.map((m) => {
-          const uniqueProjectIds = new Set(m.characters.map((c) => c.projectId));
+          const uniqueProjectIds = new Set(m.characterAssignments.map((c) => c.projectId));
           return serializeCastMember(m, uniqueProjectIds.size);
         }),
         total,
@@ -93,7 +93,7 @@ export class CastMembersService {
     const members = await this.repo.findMany(listWhere, { skip, take: PROJECTS_PAGE_SIZE });
     return {
       members: members.map((m) => {
-        const uniqueProjectIds = new Set(m.characters.map((c) => c.projectId));
+        const uniqueProjectIds = new Set(m.characterAssignments.map((c) => c.projectId));
         return serializeCastMember(m, uniqueProjectIds.size);
       }),
       total,
@@ -218,10 +218,10 @@ export class CastMembersService {
     const characters = await this.repo.findCastings(id);
     return {
       castings: characters.map((c) => ({
-        characterId: c.id,
-        characterName: c.name,
-        voiceType: c.voiceType,
-        importance: c.importance,
+        characterId: c.character.id,
+        characterName: c.character.name,
+        voiceType: c.character.voiceType,
+        importance: c.character.importance,
         projectId: c.project.id,
         projectName: c.project.name,
         projectStatus: c.project.status,

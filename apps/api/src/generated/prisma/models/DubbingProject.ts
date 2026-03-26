@@ -322,6 +322,7 @@ export type DubbingProjectWhereInput = {
   userId?: Prisma.StringNullableFilter<"DubbingProject"> | string | null
   clientRef?: Prisma.XOR<Prisma.ClientNullableScalarRelationFilter, Prisma.ClientWhereInput> | null
   characters?: Prisma.ProjectCharacterListRelationFilter
+  characterAssignments?: Prisma.ProjectCharacterAssignmentListRelationFilter
   episodes?: Prisma.EpisodeListRelationFilter
 }
 
@@ -345,6 +346,7 @@ export type DubbingProjectOrderByWithRelationInput = {
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   clientRef?: Prisma.ClientOrderByWithRelationInput
   characters?: Prisma.ProjectCharacterOrderByRelationAggregateInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentOrderByRelationAggregateInput
   episodes?: Prisma.EpisodeOrderByRelationAggregateInput
 }
 
@@ -371,6 +373,7 @@ export type DubbingProjectWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.StringNullableFilter<"DubbingProject"> | string | null
   clientRef?: Prisma.XOR<Prisma.ClientNullableScalarRelationFilter, Prisma.ClientWhereInput> | null
   characters?: Prisma.ProjectCharacterListRelationFilter
+  characterAssignments?: Prisma.ProjectCharacterAssignmentListRelationFilter
   episodes?: Prisma.EpisodeListRelationFilter
 }, "id">
 
@@ -441,6 +444,7 @@ export type DubbingProjectCreateInput = {
   userId?: string | null
   clientRef?: Prisma.ClientCreateNestedOneWithoutProjectsInput
   characters?: Prisma.ProjectCharacterCreateNestedManyWithoutProjectInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutProjectInput
   episodes?: Prisma.EpisodeCreateNestedManyWithoutProjectInput
 }
 
@@ -463,6 +467,7 @@ export type DubbingProjectUncheckedCreateInput = {
   updatedAt?: Date | string
   userId?: string | null
   characters?: Prisma.ProjectCharacterUncheckedCreateNestedManyWithoutProjectInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutProjectInput
   episodes?: Prisma.EpisodeUncheckedCreateNestedManyWithoutProjectInput
 }
 
@@ -485,6 +490,7 @@ export type DubbingProjectUpdateInput = {
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clientRef?: Prisma.ClientUpdateOneWithoutProjectsNestedInput
   characters?: Prisma.ProjectCharacterUpdateManyWithoutProjectNestedInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutProjectNestedInput
   episodes?: Prisma.EpisodeUpdateManyWithoutProjectNestedInput
 }
 
@@ -507,6 +513,7 @@ export type DubbingProjectUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characters?: Prisma.ProjectCharacterUncheckedUpdateManyWithoutProjectNestedInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutProjectNestedInput
   episodes?: Prisma.EpisodeUncheckedUpdateManyWithoutProjectNestedInput
 }
 
@@ -746,6 +753,20 @@ export type DubbingProjectUpdateOneRequiredWithoutCharactersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.DubbingProjectUpdateToOneWithWhereWithoutCharactersInput, Prisma.DubbingProjectUpdateWithoutCharactersInput>, Prisma.DubbingProjectUncheckedUpdateWithoutCharactersInput>
 }
 
+export type DubbingProjectCreateNestedOneWithoutCharacterAssignmentsInput = {
+  create?: Prisma.XOR<Prisma.DubbingProjectCreateWithoutCharacterAssignmentsInput, Prisma.DubbingProjectUncheckedCreateWithoutCharacterAssignmentsInput>
+  connectOrCreate?: Prisma.DubbingProjectCreateOrConnectWithoutCharacterAssignmentsInput
+  connect?: Prisma.DubbingProjectWhereUniqueInput
+}
+
+export type DubbingProjectUpdateOneRequiredWithoutCharacterAssignmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.DubbingProjectCreateWithoutCharacterAssignmentsInput, Prisma.DubbingProjectUncheckedCreateWithoutCharacterAssignmentsInput>
+  connectOrCreate?: Prisma.DubbingProjectCreateOrConnectWithoutCharacterAssignmentsInput
+  upsert?: Prisma.DubbingProjectUpsertWithoutCharacterAssignmentsInput
+  connect?: Prisma.DubbingProjectWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DubbingProjectUpdateToOneWithWhereWithoutCharacterAssignmentsInput, Prisma.DubbingProjectUpdateWithoutCharacterAssignmentsInput>, Prisma.DubbingProjectUncheckedUpdateWithoutCharacterAssignmentsInput>
+}
+
 export type DubbingProjectCreateWithoutClientRefInput = {
   id?: string
   name: string
@@ -764,6 +785,7 @@ export type DubbingProjectCreateWithoutClientRefInput = {
   updatedAt?: Date | string
   userId?: string | null
   characters?: Prisma.ProjectCharacterCreateNestedManyWithoutProjectInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutProjectInput
   episodes?: Prisma.EpisodeCreateNestedManyWithoutProjectInput
 }
 
@@ -785,6 +807,7 @@ export type DubbingProjectUncheckedCreateWithoutClientRefInput = {
   updatedAt?: Date | string
   userId?: string | null
   characters?: Prisma.ProjectCharacterUncheckedCreateNestedManyWithoutProjectInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutProjectInput
   episodes?: Prisma.EpisodeUncheckedCreateNestedManyWithoutProjectInput
 }
 
@@ -856,6 +879,7 @@ export type DubbingProjectCreateWithoutEpisodesInput = {
   userId?: string | null
   clientRef?: Prisma.ClientCreateNestedOneWithoutProjectsInput
   characters?: Prisma.ProjectCharacterCreateNestedManyWithoutProjectInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutProjectInput
 }
 
 export type DubbingProjectUncheckedCreateWithoutEpisodesInput = {
@@ -877,6 +901,7 @@ export type DubbingProjectUncheckedCreateWithoutEpisodesInput = {
   updatedAt?: Date | string
   userId?: string | null
   characters?: Prisma.ProjectCharacterUncheckedCreateNestedManyWithoutProjectInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutProjectInput
 }
 
 export type DubbingProjectCreateOrConnectWithoutEpisodesInput = {
@@ -914,6 +939,7 @@ export type DubbingProjectUpdateWithoutEpisodesInput = {
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clientRef?: Prisma.ClientUpdateOneWithoutProjectsNestedInput
   characters?: Prisma.ProjectCharacterUpdateManyWithoutProjectNestedInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutProjectNestedInput
 }
 
 export type DubbingProjectUncheckedUpdateWithoutEpisodesInput = {
@@ -935,6 +961,7 @@ export type DubbingProjectUncheckedUpdateWithoutEpisodesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characters?: Prisma.ProjectCharacterUncheckedUpdateManyWithoutProjectNestedInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutProjectNestedInput
 }
 
 export type DubbingProjectCreateWithoutCharactersInput = {
@@ -955,6 +982,7 @@ export type DubbingProjectCreateWithoutCharactersInput = {
   updatedAt?: Date | string
   userId?: string | null
   clientRef?: Prisma.ClientCreateNestedOneWithoutProjectsInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutProjectInput
   episodes?: Prisma.EpisodeCreateNestedManyWithoutProjectInput
 }
 
@@ -976,6 +1004,7 @@ export type DubbingProjectUncheckedCreateWithoutCharactersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   userId?: string | null
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutProjectInput
   episodes?: Prisma.EpisodeUncheckedCreateNestedManyWithoutProjectInput
 }
 
@@ -1013,6 +1042,7 @@ export type DubbingProjectUpdateWithoutCharactersInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clientRef?: Prisma.ClientUpdateOneWithoutProjectsNestedInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutProjectNestedInput
   episodes?: Prisma.EpisodeUpdateManyWithoutProjectNestedInput
 }
 
@@ -1034,6 +1064,111 @@ export type DubbingProjectUncheckedUpdateWithoutCharactersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutProjectNestedInput
+  episodes?: Prisma.EpisodeUncheckedUpdateManyWithoutProjectNestedInput
+}
+
+export type DubbingProjectCreateWithoutCharacterAssignmentsInput = {
+  id?: string
+  name: string
+  client?: string | null
+  status?: $Enums.DubbingProjectStatus
+  startDate?: Date | string | null
+  deadline?: Date | string | null
+  episodeCount?: number | null
+  durationMin?: number | null
+  language?: string | null
+  value?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueCurrency?: $Enums.ValueCurrency
+  paymentType?: $Enums.PaymentType
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  userId?: string | null
+  clientRef?: Prisma.ClientCreateNestedOneWithoutProjectsInput
+  characters?: Prisma.ProjectCharacterCreateNestedManyWithoutProjectInput
+  episodes?: Prisma.EpisodeCreateNestedManyWithoutProjectInput
+}
+
+export type DubbingProjectUncheckedCreateWithoutCharacterAssignmentsInput = {
+  id?: string
+  name: string
+  client?: string | null
+  clientId?: string | null
+  status?: $Enums.DubbingProjectStatus
+  startDate?: Date | string | null
+  deadline?: Date | string | null
+  episodeCount?: number | null
+  durationMin?: number | null
+  language?: string | null
+  value?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueCurrency?: $Enums.ValueCurrency
+  paymentType?: $Enums.PaymentType
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  userId?: string | null
+  characters?: Prisma.ProjectCharacterUncheckedCreateNestedManyWithoutProjectInput
+  episodes?: Prisma.EpisodeUncheckedCreateNestedManyWithoutProjectInput
+}
+
+export type DubbingProjectCreateOrConnectWithoutCharacterAssignmentsInput = {
+  where: Prisma.DubbingProjectWhereUniqueInput
+  create: Prisma.XOR<Prisma.DubbingProjectCreateWithoutCharacterAssignmentsInput, Prisma.DubbingProjectUncheckedCreateWithoutCharacterAssignmentsInput>
+}
+
+export type DubbingProjectUpsertWithoutCharacterAssignmentsInput = {
+  update: Prisma.XOR<Prisma.DubbingProjectUpdateWithoutCharacterAssignmentsInput, Prisma.DubbingProjectUncheckedUpdateWithoutCharacterAssignmentsInput>
+  create: Prisma.XOR<Prisma.DubbingProjectCreateWithoutCharacterAssignmentsInput, Prisma.DubbingProjectUncheckedCreateWithoutCharacterAssignmentsInput>
+  where?: Prisma.DubbingProjectWhereInput
+}
+
+export type DubbingProjectUpdateToOneWithWhereWithoutCharacterAssignmentsInput = {
+  where?: Prisma.DubbingProjectWhereInput
+  data: Prisma.XOR<Prisma.DubbingProjectUpdateWithoutCharacterAssignmentsInput, Prisma.DubbingProjectUncheckedUpdateWithoutCharacterAssignmentsInput>
+}
+
+export type DubbingProjectUpdateWithoutCharacterAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  client?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumDubbingProjectStatusFieldUpdateOperationsInput | $Enums.DubbingProjectStatus
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deadline?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  episodeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  durationMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  value?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueCurrency?: Prisma.EnumValueCurrencyFieldUpdateOperationsInput | $Enums.ValueCurrency
+  paymentType?: Prisma.EnumPaymentTypeFieldUpdateOperationsInput | $Enums.PaymentType
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientRef?: Prisma.ClientUpdateOneWithoutProjectsNestedInput
+  characters?: Prisma.ProjectCharacterUpdateManyWithoutProjectNestedInput
+  episodes?: Prisma.EpisodeUpdateManyWithoutProjectNestedInput
+}
+
+export type DubbingProjectUncheckedUpdateWithoutCharacterAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  client?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumDubbingProjectStatusFieldUpdateOperationsInput | $Enums.DubbingProjectStatus
+  startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deadline?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  episodeCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  durationMin?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  value?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  valueCurrency?: Prisma.EnumValueCurrencyFieldUpdateOperationsInput | $Enums.ValueCurrency
+  paymentType?: Prisma.EnumPaymentTypeFieldUpdateOperationsInput | $Enums.PaymentType
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  characters?: Prisma.ProjectCharacterUncheckedUpdateManyWithoutProjectNestedInput
   episodes?: Prisma.EpisodeUncheckedUpdateManyWithoutProjectNestedInput
 }
 
@@ -1074,6 +1209,7 @@ export type DubbingProjectUpdateWithoutClientRefInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characters?: Prisma.ProjectCharacterUpdateManyWithoutProjectNestedInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutProjectNestedInput
   episodes?: Prisma.EpisodeUpdateManyWithoutProjectNestedInput
 }
 
@@ -1095,6 +1231,7 @@ export type DubbingProjectUncheckedUpdateWithoutClientRefInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characters?: Prisma.ProjectCharacterUncheckedUpdateManyWithoutProjectNestedInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutProjectNestedInput
   episodes?: Prisma.EpisodeUncheckedUpdateManyWithoutProjectNestedInput
 }
 
@@ -1124,11 +1261,13 @@ export type DubbingProjectUncheckedUpdateManyWithoutClientRefInput = {
 
 export type DubbingProjectCountOutputType = {
   characters: number
+  characterAssignments: number
   episodes: number
 }
 
 export type DubbingProjectCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   characters?: boolean | DubbingProjectCountOutputTypeCountCharactersArgs
+  characterAssignments?: boolean | DubbingProjectCountOutputTypeCountCharacterAssignmentsArgs
   episodes?: boolean | DubbingProjectCountOutputTypeCountEpisodesArgs
 }
 
@@ -1147,6 +1286,13 @@ export type DubbingProjectCountOutputTypeDefaultArgs<ExtArgs extends runtime.Typ
  */
 export type DubbingProjectCountOutputTypeCountCharactersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ProjectCharacterWhereInput
+}
+
+/**
+ * DubbingProjectCountOutputType without action
+ */
+export type DubbingProjectCountOutputTypeCountCharacterAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProjectCharacterAssignmentWhereInput
 }
 
 /**
@@ -1177,6 +1323,7 @@ export type DubbingProjectSelect<ExtArgs extends runtime.Types.Extensions.Intern
   userId?: boolean
   clientRef?: boolean | Prisma.DubbingProject$clientRefArgs<ExtArgs>
   characters?: boolean | Prisma.DubbingProject$charactersArgs<ExtArgs>
+  characterAssignments?: boolean | Prisma.DubbingProject$characterAssignmentsArgs<ExtArgs>
   episodes?: boolean | Prisma.DubbingProject$episodesArgs<ExtArgs>
   _count?: boolean | Prisma.DubbingProjectCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["dubbingProject"]>
@@ -1247,6 +1394,7 @@ export type DubbingProjectOmit<ExtArgs extends runtime.Types.Extensions.Internal
 export type DubbingProjectInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   clientRef?: boolean | Prisma.DubbingProject$clientRefArgs<ExtArgs>
   characters?: boolean | Prisma.DubbingProject$charactersArgs<ExtArgs>
+  characterAssignments?: boolean | Prisma.DubbingProject$characterAssignmentsArgs<ExtArgs>
   episodes?: boolean | Prisma.DubbingProject$episodesArgs<ExtArgs>
   _count?: boolean | Prisma.DubbingProjectCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -1262,6 +1410,7 @@ export type $DubbingProjectPayload<ExtArgs extends runtime.Types.Extensions.Inte
   objects: {
     clientRef: Prisma.$ClientPayload<ExtArgs> | null
     characters: Prisma.$ProjectCharacterPayload<ExtArgs>[]
+    characterAssignments: Prisma.$ProjectCharacterAssignmentPayload<ExtArgs>[]
     episodes: Prisma.$EpisodePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1681,6 +1830,7 @@ export interface Prisma__DubbingProjectClient<T, Null = never, ExtArgs extends r
   readonly [Symbol.toStringTag]: "PrismaPromise"
   clientRef<T extends Prisma.DubbingProject$clientRefArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DubbingProject$clientRefArgs<ExtArgs>>): Prisma.Prisma__ClientClient<runtime.Types.Result.GetResult<Prisma.$ClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   characters<T extends Prisma.DubbingProject$charactersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DubbingProject$charactersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectCharacterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  characterAssignments<T extends Prisma.DubbingProject$characterAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DubbingProject$characterAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectCharacterAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   episodes<T extends Prisma.DubbingProject$episodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DubbingProject$episodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EpisodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2169,6 +2319,30 @@ export type DubbingProject$charactersArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.ProjectCharacterScalarFieldEnum | Prisma.ProjectCharacterScalarFieldEnum[]
+}
+
+/**
+ * DubbingProject.characterAssignments
+ */
+export type DubbingProject$characterAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProjectCharacterAssignment
+   */
+  select?: Prisma.ProjectCharacterAssignmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProjectCharacterAssignment
+   */
+  omit?: Prisma.ProjectCharacterAssignmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProjectCharacterAssignmentInclude<ExtArgs> | null
+  where?: Prisma.ProjectCharacterAssignmentWhereInput
+  orderBy?: Prisma.ProjectCharacterAssignmentOrderByWithRelationInput | Prisma.ProjectCharacterAssignmentOrderByWithRelationInput[]
+  cursor?: Prisma.ProjectCharacterAssignmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProjectCharacterAssignmentScalarFieldEnum | Prisma.ProjectCharacterAssignmentScalarFieldEnum[]
 }
 
 /**

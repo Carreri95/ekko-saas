@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import type { ProjectCharacterDto } from "@/app/types/project-character";
-import type { CastMemberDto } from "@/app/types/cast-member";
 import { useConfirm } from "@/app/components/confirm-provider";
 
 const schema = z.object({
-  castMemberId: z.union([z.string().min(1), z.null()]).optional(),
   name: z.string().min(1, "Nome do personagem é obrigatório").max(80),
   voiceType: z.union([z.string().max(60), z.literal("")]).optional(),
   importance: z.enum(["MAIN", "SUPPORT", "EXTRA"]),
@@ -18,25 +16,6 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const STATUS_STYLE: Record<string, { bg: string; border: string; text: string }> =
-  {
-    AVAILABLE: {
-      bg: "rgba(29,158,117,0.12)",
-      border: "#1D9E75",
-      text: "#5DCAA5",
-    },
-    BUSY: {
-      bg: "rgba(186,117,23,0.12)",
-      border: "#BA7517",
-      text: "#EF9F27",
-    },
-    INACTIVE: { bg: "#1e1e1e", border: "#2e2e2e", text: "#505050" },
-  };
-const STATUS_LABEL: Record<string, string> = {
-  AVAILABLE: "Disponível",
-  BUSY: "Em projeto",
-  INACTIVE: "Inativo",
-};
 const IMPORTANCE_OPTIONS = [
   { value: "MAIN", label: "Principal", color: "#1D9E75" },
   { value: "SUPPORT", label: "Suporte", color: "#5B9BD5" },
@@ -55,7 +34,8 @@ const errorCls = "mt-[2px] text-[10px] text-[#F09595]";
 type Props = {
   character: ProjectCharacterDto | null;
   projectId: string;
-  castMembers: CastMemberDto[];
+  /** Mantida por compatibilidade de chamada; modal não usa mais casting. */
+  castMembers?: unknown[];
   onClose: () => void;
   onSaved: () => void;
 };
@@ -63,15 +43,11 @@ type Props = {
 export function CharacterModal({
   character,
   projectId,
-  castMembers,
   onClose,
   onSaved,
 }: Props) {
   const confirm = useConfirm();
   const isNew = character == null;
-  const [selectedMember, setSelectedMember] = useState<CastMemberDto | null>(
-    null,
-  );
 
   const {
     register,
@@ -85,7 +61,6 @@ export function CharacterModal({
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      castMemberId: character?.castMemberId ?? null,
       name: character?.name ?? "",
       voiceType: character?.voiceType ?? "",
       importance: character?.importance ?? "SUPPORT",
@@ -96,34 +71,14 @@ export function CharacterModal({
 
   useEffect(() => {
     reset({
-      castMemberId: character?.castMemberId ?? null,
       name: character?.name ?? "",
       voiceType: character?.voiceType ?? "",
       importance: character?.importance ?? "SUPPORT",
       notes: character?.notes ?? "",
     });
-    if (character?.castMemberId) {
-      setSelectedMember(
-        castMembers.find((m) => m.id === character.castMemberId) ?? null,
-      );
-    } else {
-      setSelectedMember(null);
-    }
-  }, [character, castMembers, reset]);
-
-  const handleSelectMember = (memberId: string) => {
-    const m = memberId
-      ? (castMembers.find((cm) => cm.id === memberId) ?? null)
-      : null;
-    setSelectedMember(m);
-    setValue("castMemberId", memberId ? memberId : null, { shouldDirty: true });
-    if (m?.specialties?.[0])
-      setValue("voiceType", m.specialties[0], { shouldDirty: true });
-  };
+  }, [character, reset]);
 
   const watchedImportance = watch("importance");
-  const watchedVoiceType = watch("voiceType");
-  const availableMembers = castMembers.filter((m) => m.status !== "INACTIVE");
 
   const onSubmit = async (data: FormData) => {
     const url = isNew
@@ -134,7 +89,6 @@ export function CharacterModal({
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        castMemberId: data.castMemberId || null,
         name: data.name,
         voiceType: data.voiceType || null,
         importance: data.importance,
@@ -179,7 +133,7 @@ export function CharacterModal({
       />
 
       <div
-        className="fixed left-1/2 top-1/2 z-[70] w-[min(92vw,440px)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[10px] border border-[#2e2e2e] bg-[#1a1a1a] shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
+        className="fixed left-1/2 top-1/2 z-[70] w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[10px] border border-[#2e2e2e] bg-[#1a1a1a] shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="character-modal-title"
@@ -209,113 +163,28 @@ export function CharacterModal({
               </div>
             ) : null}
 
-            <div>
-              <label className={labelCls} htmlFor="char-modal-cast">
-                Dublador escalado
-              </label>
-              <select
-                id="char-modal-cast"
-                value={watch("castMemberId") ?? ""}
-                onChange={(e) => handleSelectMember(e.target.value)}
-                className={inputCls}
-              >
-                <option value="">— Sem dublador —</option>
-                {availableMembers.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {`${m.name}${m.role ? ` · ${m.role}` : ""} (${STATUS_LABEL[m.status] ?? m.status})`}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {selectedMember ? (
-              <div className="rounded-[6px] border border-[#252525] bg-[#141414] p-[10px]">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-[12px] font-[500] text-[#e8e8e8]">
-                      {selectedMember.name}
-                    </div>
-                    {selectedMember.role ? (
-                      <div className="text-[11px] text-[#606060]">
-                        {selectedMember.role}
-                      </div>
-                    ) : null}
-                  </div>
-                  <span
-                    className="rounded-[99px] px-[7px] py-[1px] text-[10px] font-[500]"
-                    style={{
-                      background: STATUS_STYLE[selectedMember.status]?.bg,
-                      border: `0.5px solid ${STATUS_STYLE[selectedMember.status]?.border}`,
-                      color: STATUS_STYLE[selectedMember.status]?.text,
-                    }}
-                  >
-                    {STATUS_LABEL[selectedMember.status]}
-                  </span>
-                </div>
-                {selectedMember.specialties.length > 0 ? (
-                  <div className="mt-[8px]">
-                    <div className="mb-[4px] text-[9px] font-[600] uppercase tracking-[0.06em] text-[#404040]">
-                      Especialidades — clique para usar como tipo de voz
-                    </div>
-                    <div className="flex flex-wrap gap-[4px]">
-                      {selectedMember.specialties.map((sp) => (
-                        <button
-                          key={sp}
-                          type="button"
-                          onClick={() =>
-                            setValue("voiceType", sp, { shouldDirty: true })
-                          }
-                          className="rounded-[3px] px-[6px] py-[1px] text-[10px] transition-colors"
-                          style={
-                            watchedVoiceType === sp
-                              ? {
-                                  background: "#0d3d2a",
-                                  border: "0.5px solid #0F6E56",
-                                  color: "#5DCAA5",
-                                }
-                              : {
-                                  background: "#252525",
-                                  border: "0.5px solid transparent",
-                                  color: "#707070",
-                                }
-                          }
-                        >
-                          {sp}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+            <div className="grid grid-cols-2 gap-[8px]">
+              <div>
+                <label className={labelCls}>
+                  Nome <span className="text-[#E24B4A]">*</span>
+                </label>
+                <input
+                  {...register("name")}
+                  autoFocus={isNew}
+                  className={errors.name ? inputErrCls : inputCls}
+                  placeholder="Ex: Goku"
+                />
+                {errors.name ? (
+                  <p className={errorCls}>{errors.name.message}</p>
                 ) : null}
               </div>
-            ) : null}
-
-            <div className="border-t border-[#252525] pt-[12px]">
-              <div className="mb-[10px] text-[10px] font-[600] uppercase tracking-[0.06em] text-[#505050]">
-                Personagem
-              </div>
-              <div className="grid grid-cols-2 gap-[8px]">
-                <div>
-                  <label className={labelCls}>
-                    Nome <span className="text-[#E24B4A]">*</span>
-                  </label>
-                  <input
-                    {...register("name")}
-                    autoFocus={isNew}
-                    className={errors.name ? inputErrCls : inputCls}
-                    placeholder="Ex: Goku"
-                  />
-                  {errors.name ? (
-                    <p className={errorCls}>{errors.name.message}</p>
-                  ) : null}
-                </div>
-                <div>
-                  <label className={labelCls}>Tipo de voz</label>
-                  <input
-                    {...register("voiceType")}
-                    className={inputCls}
-                    placeholder="Ex: Masculino adulto"
-                  />
-                </div>
+              <div>
+                <label className={labelCls}>Tipo de voz</label>
+                <input
+                  {...register("voiceType")}
+                  className={inputCls}
+                  placeholder="Ex: Masculino adulto"
+                />
               </div>
             </div>
 

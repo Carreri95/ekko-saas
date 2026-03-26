@@ -97,7 +97,13 @@ export class DubbingProjectsRepository {
   findProjectCharacters(projectId: string) {
     return prisma.projectCharacter.findMany({
       where: { projectId },
-      include: { castMember: { select: { id: true, name: true, role: true } } },
+      include: {
+        castMember: { select: { id: true, name: true, role: true } },
+        assignments: {
+          include: { castMember: { select: { id: true, name: true, role: true } } },
+          orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
+        },
+      },
       orderBy: [{ importance: "asc" }, { name: "asc" }],
     });
   }
@@ -130,6 +136,119 @@ export class DubbingProjectsRepository {
   findProjectCharacterMemberIds(projectId: string) {
     return prisma.projectCharacter.findMany({
       where: { projectId, castMemberId: { not: null } },
+      select: { castMemberId: true },
+    });
+  }
+
+  findCharacterAssignments(projectId: string, characterId?: string) {
+    return prisma.projectCharacterAssignment.findMany({
+      where: {
+        projectId,
+        ...(characterId ? { characterId } : {}),
+      },
+      include: {
+        castMember: { select: { id: true, name: true, role: true } },
+      },
+      orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
+    });
+  }
+
+  findCharacterById(charId: string) {
+    return prisma.projectCharacter.findUnique({ where: { id: charId } });
+  }
+
+  findCastMemberById(castMemberId: string) {
+    return prisma.castMember.findUnique({ where: { id: castMemberId } });
+  }
+
+  findAssignmentInProject(projectId: string, assignmentId: string) {
+    return prisma.projectCharacterAssignment.findFirst({
+      where: { id: assignmentId, projectId },
+      include: {
+        castMember: { select: { id: true, name: true, role: true } },
+      },
+    });
+  }
+
+  createAssignment(data: Prisma.ProjectCharacterAssignmentUncheckedCreateInput) {
+    return prisma.projectCharacterAssignment.create({
+      data,
+      include: {
+        castMember: { select: { id: true, name: true, role: true } },
+      },
+    });
+  }
+
+  updateAssignment(
+    assignmentId: string,
+    data: Prisma.ProjectCharacterAssignmentUncheckedUpdateInput,
+  ) {
+    return prisma.projectCharacterAssignment.update({
+      where: { id: assignmentId },
+      data,
+      include: {
+        castMember: { select: { id: true, name: true, role: true } },
+      },
+    });
+  }
+
+  deleteAssignment(assignmentId: string) {
+    return prisma.projectCharacterAssignment.delete({ where: { id: assignmentId } });
+  }
+
+  findPrincipalAssignment(projectId: string, characterId: string) {
+    return prisma.projectCharacterAssignment.findFirst({
+      where: {
+        projectId,
+        characterId,
+        type: "PRINCIPAL",
+        status: { notIn: ["REPLACED", "DECLINED"] },
+      },
+      orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
+      select: { id: true, castMemberId: true },
+    });
+  }
+
+  findActivePrincipalAssignments(projectId: string, characterId: string) {
+    return prisma.projectCharacterAssignment.findMany({
+      where: {
+        projectId,
+        characterId,
+        type: "PRINCIPAL",
+        status: { notIn: ["REPLACED", "DECLINED"] },
+      },
+      orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
+      select: { id: true, castMemberId: true },
+    });
+  }
+
+  replacePrincipalAssignmentsAsReplaced(
+    projectId: string,
+    characterId: string,
+    keepAssignmentId: string,
+  ) {
+    return prisma.projectCharacterAssignment.updateMany({
+      where: {
+        projectId,
+        characterId,
+        type: "PRINCIPAL",
+        status: { notIn: ["REPLACED", "DECLINED"] },
+        id: { not: keepAssignmentId },
+      },
+      data: { status: "REPLACED" },
+    });
+  }
+
+  updateCharacterCastMember(charId: string, castMemberId: string | null) {
+    return prisma.projectCharacter.update({
+      where: { id: charId },
+      data: { castMemberId },
+    });
+  }
+
+  findAssignmentMemberIdsByCharacter(projectId: string, characterId: string) {
+    return prisma.projectCharacterAssignment.findMany({
+      where: { projectId, characterId },
       select: { castMemberId: true },
     });
   }

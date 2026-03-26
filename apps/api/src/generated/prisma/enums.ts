@@ -128,6 +128,30 @@ export const ValueCurrency = {
 export type ValueCurrency = (typeof ValueCurrency)[keyof typeof ValueCurrency]
 
 
+export const ProjectCharacterAssignmentType = {
+  TEST_OPTION_1: 'TEST_OPTION_1',
+  TEST_OPTION_2: 'TEST_OPTION_2',
+  PRINCIPAL: 'PRINCIPAL',
+  RESERVE: 'RESERVE',
+  SUPPORT: 'SUPPORT'
+} as const
+
+export type ProjectCharacterAssignmentType = (typeof ProjectCharacterAssignmentType)[keyof typeof ProjectCharacterAssignmentType]
+
+
+export const ProjectCharacterAssignmentStatus = {
+  INVITED: 'INVITED',
+  TEST_SENT: 'TEST_SENT',
+  TEST_RECEIVED: 'TEST_RECEIVED',
+  APPROVED: 'APPROVED',
+  CAST: 'CAST',
+  REPLACED: 'REPLACED',
+  DECLINED: 'DECLINED'
+} as const
+
+export type ProjectCharacterAssignmentStatus = (typeof ProjectCharacterAssignmentStatus)[keyof typeof ProjectCharacterAssignmentStatus]
+
+
 export const CharacterImportance = {
   MAIN: 'MAIN',
   SUPPORT: 'SUPPORT',

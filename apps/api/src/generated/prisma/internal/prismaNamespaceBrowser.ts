@@ -66,6 +66,7 @@ export const ModelName = {
   Episode: 'Episode',
   CastMember: 'CastMember',
   ProjectCharacter: 'ProjectCharacter',
+  ProjectCharacterAssignment: 'ProjectCharacterAssignment',
   MediaAsset: 'MediaAsset'
 } as const
 
@@ -325,6 +326,23 @@ export const ProjectCharacterScalarFieldEnum = {
 } as const
 
 export type ProjectCharacterScalarFieldEnum = (typeof ProjectCharacterScalarFieldEnum)[keyof typeof ProjectCharacterScalarFieldEnum]
+
+
+export const ProjectCharacterAssignmentScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  characterId: 'characterId',
+  castMemberId: 'castMemberId',
+  type: 'type',
+  status: 'status',
+  priority: 'priority',
+  approvedByClient: 'approvedByClient',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProjectCharacterAssignmentScalarFieldEnum = (typeof ProjectCharacterAssignmentScalarFieldEnum)[keyof typeof ProjectCharacterAssignmentScalarFieldEnum]
 
 
 export const MediaAssetScalarFieldEnum = {

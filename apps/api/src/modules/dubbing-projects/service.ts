@@ -8,6 +8,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { DubbingProjectsRepository } from "./repository.js";
 import {
+  type AssignmentCreateData,
+  type AssignmentPatchData,
   type CharacterCreateData,
   type CharacterPatchData,
   type DubbingProjectCreateData,
@@ -15,6 +17,7 @@ import {
   type EpisodePatchData,
 } from "./schemas.js";
 import {
+  serializeProjectCharacterAssignment,
   type CharacterRow,
   serializeDubbingProject,
   serializeEpisode,
@@ -575,5 +578,141 @@ export class DubbingProjectsService {
       status: job.status,
       episode: row ? serializeEpisode(row) : undefined,
     };
+  }
+
+  async listAssignments(projectId: string, characterId?: string) {
+    const project = await this.repo.findById(projectId);
+    if (!project) return null;
+    if (characterId) {
+      const character = await this.repo.findCharacterInProject(projectId, characterId);
+      if (!character) return { notFound: true as const };
+    }
+    const rows = await this.repo.findCharacterAssignments(projectId, characterId);
+    return { assignments: rows.map(serializeProjectCharacterAssignment) };
+  }
+
+  private async syncLegacyCharacterCastMember(projectId: string, characterId: string) {
+    const principal = await this.repo.findPrincipalAssignment(projectId, characterId);
+    await this.repo.updateCharacterCastMember(characterId, principal?.castMemberId ?? null);
+  }
+
+  private async reconcileCharacterCasting(
+    projectId: string,
+    characterId: string,
+    preferredPrincipalAssignmentId?: string,
+  ) {
+    const principals = await this.repo.findActivePrincipalAssignments(projectId, characterId);
+    const effectivePrincipal =
+      (preferredPrincipalAssignmentId
+        ? principals.find((p) => p.id === preferredPrincipalAssignmentId)
+        : null) ?? principals[0] ?? null;
+    if (effectivePrincipal && principals.length > 1) {
+      await this.repo.replacePrincipalAssignmentsAsReplaced(
+        projectId,
+        characterId,
+        effectivePrincipal.id,
+      );
+    }
+    await this.syncLegacyCharacterCastMember(projectId, characterId);
+  }
+
+  async createAssignment(projectId: string, input: AssignmentCreateData) {
+    const project = await this.repo.findById(projectId);
+    if (!project) return { notFound: true as const };
+    const character = await this.repo.findCharacterInProject(projectId, input.characterId);
+    if (!character) return { badRequest: { error: "Personagem não pertence ao projeto" } as const };
+    const castMember = await this.repo.findCastMemberById(input.castMemberId);
+    if (!castMember) return { badRequest: { error: "Dublador não encontrado" } as const };
+
+    const created = await this.repo.createAssignment({
+      projectId,
+      characterId: input.characterId,
+      castMemberId: input.castMemberId,
+      type: input.type,
+      status: input.status,
+      priority: input.priority,
+      approvedByClient: input.approvedByClient,
+      notes: input.notes || null,
+    });
+    await this.reconcileCharacterCasting(
+      projectId,
+      input.characterId,
+      created.type === "PRINCIPAL" && created.status !== "REPLACED" && created.status !== "DECLINED"
+        ? created.id
+        : undefined,
+    );
+    const memberRows = await this.repo.findAssignmentMemberIdsByCharacter(projectId, input.characterId);
+    const memberIds = [...new Set(memberRows.map((r) => r.castMemberId))];
+    if (memberIds.length > 0) {
+      await this.castService.syncCastMemberStatus(memberIds);
+    }
+    return { assignment: serializeProjectCharacterAssignment(created) };
+  }
+
+  async patchAssignment(projectId: string, assignmentId: string, input: AssignmentPatchData) {
+    const existing = await this.repo.findAssignmentInProject(projectId, assignmentId);
+    if (!existing) return { notFound: true as const };
+    if (input.characterId !== undefined) {
+      const character = await this.repo.findCharacterInProject(projectId, input.characterId);
+      if (!character) {
+        return { badRequest: { error: "Personagem não pertence ao projeto" } as const };
+      }
+    }
+    if (input.castMemberId) {
+      const castMember = await this.repo.findCastMemberById(input.castMemberId);
+      if (!castMember) return { badRequest: { error: "Dublador não encontrado" } as const };
+    }
+    const targetCharacterId = input.characterId ?? existing.characterId;
+    const updated = await this.repo.updateAssignment(assignmentId, {
+      ...(input.characterId !== undefined ? { characterId: input.characterId } : {}),
+      ...(input.castMemberId !== undefined ? { castMemberId: input.castMemberId } : {}),
+      ...(input.type !== undefined ? { type: input.type } : {}),
+      ...(input.status !== undefined ? { status: input.status } : {}),
+      ...(input.priority !== undefined ? { priority: input.priority } : {}),
+      ...(input.approvedByClient !== undefined ? { approvedByClient: input.approvedByClient } : {}),
+      ...(input.notes !== undefined ? { notes: input.notes || null } : {}),
+    });
+    const preferUpdatedAsPrincipal =
+      updated.type === "PRINCIPAL" &&
+      updated.status !== "REPLACED" &&
+      updated.status !== "DECLINED";
+    await this.reconcileCharacterCasting(
+      projectId,
+      existing.characterId,
+      targetCharacterId === existing.characterId && preferUpdatedAsPrincipal
+        ? updated.id
+        : undefined,
+    );
+    if (targetCharacterId !== existing.characterId) {
+      await this.reconcileCharacterCasting(
+        projectId,
+        targetCharacterId,
+        preferUpdatedAsPrincipal ? updated.id : undefined,
+      );
+    }
+    const affectedCharacters = [existing.characterId, targetCharacterId];
+    const affectedMemberIds = new Set<string>();
+    for (const charId of affectedCharacters) {
+      const rows = await this.repo.findAssignmentMemberIdsByCharacter(projectId, charId);
+      rows.forEach((r) => affectedMemberIds.add(r.castMemberId));
+    }
+    if (existing.castMemberId) affectedMemberIds.add(existing.castMemberId);
+    if (updated.castMemberId) affectedMemberIds.add(updated.castMemberId);
+    if (affectedMemberIds.size > 0) {
+      await this.castService.syncCastMemberStatus([...affectedMemberIds]);
+    }
+    return { assignment: serializeProjectCharacterAssignment(updated) };
+  }
+
+  async deleteAssignment(projectId: string, assignmentId: string) {
+    const existing = await this.repo.findAssignmentInProject(projectId, assignmentId);
+    if (!existing) return { notFound: true as const };
+    await this.repo.deleteAssignment(assignmentId);
+    await this.reconcileCharacterCasting(projectId, existing.characterId);
+    const memberRows = await this.repo.findAssignmentMemberIdsByCharacter(projectId, existing.characterId);
+    const affectedMemberIds = new Set<string>(memberRows.map((r) => r.castMemberId));
+    affectedMemberIds.add(existing.castMemberId);
+    await this.castService.syncCastMemberStatus([...affectedMemberIds]);
+    return { ok: true as const };
   }
 }

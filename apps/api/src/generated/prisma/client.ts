@@ -117,6 +117,11 @@ export type CastMember = Prisma.CastMemberModel
  */
 export type ProjectCharacter = Prisma.ProjectCharacterModel
 /**
+ * Model ProjectCharacterAssignment
+ * 
+ */
+export type ProjectCharacterAssignment = Prisma.ProjectCharacterAssignmentModel
+/**
  * Model MediaAsset
  * Registo canónico de ficheiros em object storage (S3-compatible). PR 4.3 — sem rotas de produto ainda.
  */

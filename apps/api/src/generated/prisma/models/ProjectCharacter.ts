@@ -224,6 +224,7 @@ export type ProjectCharacterWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"ProjectCharacter"> | Date | string
   project?: Prisma.XOR<Prisma.DubbingProjectScalarRelationFilter, Prisma.DubbingProjectWhereInput>
   castMember?: Prisma.XOR<Prisma.CastMemberNullableScalarRelationFilter, Prisma.CastMemberWhereInput> | null
+  assignments?: Prisma.ProjectCharacterAssignmentListRelationFilter
 }
 
 export type ProjectCharacterOrderByWithRelationInput = {
@@ -239,6 +240,7 @@ export type ProjectCharacterOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   project?: Prisma.DubbingProjectOrderByWithRelationInput
   castMember?: Prisma.CastMemberOrderByWithRelationInput
+  assignments?: Prisma.ProjectCharacterAssignmentOrderByRelationAggregateInput
 }
 
 export type ProjectCharacterWhereUniqueInput = Prisma.AtLeast<{
@@ -257,6 +259,7 @@ export type ProjectCharacterWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"ProjectCharacter"> | Date | string
   project?: Prisma.XOR<Prisma.DubbingProjectScalarRelationFilter, Prisma.DubbingProjectWhereInput>
   castMember?: Prisma.XOR<Prisma.CastMemberNullableScalarRelationFilter, Prisma.CastMemberWhereInput> | null
+  assignments?: Prisma.ProjectCharacterAssignmentListRelationFilter
 }, "id">
 
 export type ProjectCharacterOrderByWithAggregationInput = {
@@ -302,6 +305,7 @@ export type ProjectCharacterCreateInput = {
   updatedAt?: Date | string
   project: Prisma.DubbingProjectCreateNestedOneWithoutCharactersInput
   castMember?: Prisma.CastMemberCreateNestedOneWithoutCharactersInput
+  assignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterUncheckedCreateInput = {
@@ -315,6 +319,7 @@ export type ProjectCharacterUncheckedCreateInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  assignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterUpdateInput = {
@@ -328,6 +333,7 @@ export type ProjectCharacterUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutCharactersNestedInput
   castMember?: Prisma.CastMemberUpdateOneWithoutCharactersNestedInput
+  assignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterUncheckedUpdateInput = {
@@ -341,6 +347,7 @@ export type ProjectCharacterUncheckedUpdateInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterCreateManyInput = {
@@ -427,6 +434,11 @@ export type ProjectCharacterMinOrderByAggregateInput = {
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type ProjectCharacterScalarRelationFilter = {
+  is?: Prisma.ProjectCharacterWhereInput
+  isNot?: Prisma.ProjectCharacterWhereInput
 }
 
 export type ProjectCharacterCreateNestedManyWithoutProjectInput = {
@@ -517,6 +529,20 @@ export type EnumCharacterImportanceFieldUpdateOperationsInput = {
   set?: $Enums.CharacterImportance
 }
 
+export type ProjectCharacterCreateNestedOneWithoutAssignmentsInput = {
+  create?: Prisma.XOR<Prisma.ProjectCharacterCreateWithoutAssignmentsInput, Prisma.ProjectCharacterUncheckedCreateWithoutAssignmentsInput>
+  connectOrCreate?: Prisma.ProjectCharacterCreateOrConnectWithoutAssignmentsInput
+  connect?: Prisma.ProjectCharacterWhereUniqueInput
+}
+
+export type ProjectCharacterUpdateOneRequiredWithoutAssignmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.ProjectCharacterCreateWithoutAssignmentsInput, Prisma.ProjectCharacterUncheckedCreateWithoutAssignmentsInput>
+  connectOrCreate?: Prisma.ProjectCharacterCreateOrConnectWithoutAssignmentsInput
+  upsert?: Prisma.ProjectCharacterUpsertWithoutAssignmentsInput
+  connect?: Prisma.ProjectCharacterWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectCharacterUpdateToOneWithWhereWithoutAssignmentsInput, Prisma.ProjectCharacterUpdateWithoutAssignmentsInput>, Prisma.ProjectCharacterUncheckedUpdateWithoutAssignmentsInput>
+}
+
 export type ProjectCharacterCreateWithoutProjectInput = {
   id?: string
   name: string
@@ -527,6 +553,7 @@ export type ProjectCharacterCreateWithoutProjectInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   castMember?: Prisma.CastMemberCreateNestedOneWithoutCharactersInput
+  assignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterUncheckedCreateWithoutProjectInput = {
@@ -539,6 +566,7 @@ export type ProjectCharacterUncheckedCreateWithoutProjectInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  assignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterCreateOrConnectWithoutProjectInput = {
@@ -593,6 +621,7 @@ export type ProjectCharacterCreateWithoutCastMemberInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   project: Prisma.DubbingProjectCreateNestedOneWithoutCharactersInput
+  assignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterUncheckedCreateWithoutCastMemberInput = {
@@ -605,6 +634,7 @@ export type ProjectCharacterUncheckedCreateWithoutCastMemberInput = {
   notes?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  assignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCharacterInput
 }
 
 export type ProjectCharacterCreateOrConnectWithoutCastMemberInput = {
@@ -633,6 +663,74 @@ export type ProjectCharacterUpdateManyWithWhereWithoutCastMemberInput = {
   data: Prisma.XOR<Prisma.ProjectCharacterUpdateManyMutationInput, Prisma.ProjectCharacterUncheckedUpdateManyWithoutCastMemberInput>
 }
 
+export type ProjectCharacterCreateWithoutAssignmentsInput = {
+  id?: string
+  name: string
+  type?: string | null
+  voiceType?: string | null
+  importance?: $Enums.CharacterImportance
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  project: Prisma.DubbingProjectCreateNestedOneWithoutCharactersInput
+  castMember?: Prisma.CastMemberCreateNestedOneWithoutCharactersInput
+}
+
+export type ProjectCharacterUncheckedCreateWithoutAssignmentsInput = {
+  id?: string
+  projectId: string
+  name: string
+  type?: string | null
+  voiceType?: string | null
+  importance?: $Enums.CharacterImportance
+  castMemberId?: string | null
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ProjectCharacterCreateOrConnectWithoutAssignmentsInput = {
+  where: Prisma.ProjectCharacterWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProjectCharacterCreateWithoutAssignmentsInput, Prisma.ProjectCharacterUncheckedCreateWithoutAssignmentsInput>
+}
+
+export type ProjectCharacterUpsertWithoutAssignmentsInput = {
+  update: Prisma.XOR<Prisma.ProjectCharacterUpdateWithoutAssignmentsInput, Prisma.ProjectCharacterUncheckedUpdateWithoutAssignmentsInput>
+  create: Prisma.XOR<Prisma.ProjectCharacterCreateWithoutAssignmentsInput, Prisma.ProjectCharacterUncheckedCreateWithoutAssignmentsInput>
+  where?: Prisma.ProjectCharacterWhereInput
+}
+
+export type ProjectCharacterUpdateToOneWithWhereWithoutAssignmentsInput = {
+  where?: Prisma.ProjectCharacterWhereInput
+  data: Prisma.XOR<Prisma.ProjectCharacterUpdateWithoutAssignmentsInput, Prisma.ProjectCharacterUncheckedUpdateWithoutAssignmentsInput>
+}
+
+export type ProjectCharacterUpdateWithoutAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  voiceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importance?: Prisma.EnumCharacterImportanceFieldUpdateOperationsInput | $Enums.CharacterImportance
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  project?: Prisma.DubbingProjectUpdateOneRequiredWithoutCharactersNestedInput
+  castMember?: Prisma.CastMemberUpdateOneWithoutCharactersNestedInput
+}
+
+export type ProjectCharacterUncheckedUpdateWithoutAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  voiceType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  importance?: Prisma.EnumCharacterImportanceFieldUpdateOperationsInput | $Enums.CharacterImportance
+  castMemberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type ProjectCharacterCreateManyProjectInput = {
   id?: string
   name: string
@@ -655,6 +753,7 @@ export type ProjectCharacterUpdateWithoutProjectInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   castMember?: Prisma.CastMemberUpdateOneWithoutCharactersNestedInput
+  assignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterUncheckedUpdateWithoutProjectInput = {
@@ -667,6 +766,7 @@ export type ProjectCharacterUncheckedUpdateWithoutProjectInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterUncheckedUpdateManyWithoutProjectInput = {
@@ -703,6 +803,7 @@ export type ProjectCharacterUpdateWithoutCastMemberInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutCharactersNestedInput
+  assignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterUncheckedUpdateWithoutCastMemberInput = {
@@ -715,6 +816,7 @@ export type ProjectCharacterUncheckedUpdateWithoutCastMemberInput = {
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCharacterNestedInput
 }
 
 export type ProjectCharacterUncheckedUpdateManyWithoutCastMemberInput = {
@@ -730,6 +832,35 @@ export type ProjectCharacterUncheckedUpdateManyWithoutCastMemberInput = {
 }
 
 
+/**
+ * Count Type ProjectCharacterCountOutputType
+ */
+
+export type ProjectCharacterCountOutputType = {
+  assignments: number
+}
+
+export type ProjectCharacterCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  assignments?: boolean | ProjectCharacterCountOutputTypeCountAssignmentsArgs
+}
+
+/**
+ * ProjectCharacterCountOutputType without action
+ */
+export type ProjectCharacterCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProjectCharacterCountOutputType
+   */
+  select?: Prisma.ProjectCharacterCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * ProjectCharacterCountOutputType without action
+ */
+export type ProjectCharacterCountOutputTypeCountAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProjectCharacterAssignmentWhereInput
+}
+
 
 export type ProjectCharacterSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -744,6 +875,8 @@ export type ProjectCharacterSelect<ExtArgs extends runtime.Types.Extensions.Inte
   updatedAt?: boolean
   project?: boolean | Prisma.DubbingProjectDefaultArgs<ExtArgs>
   castMember?: boolean | Prisma.ProjectCharacter$castMemberArgs<ExtArgs>
+  assignments?: boolean | Prisma.ProjectCharacter$assignmentsArgs<ExtArgs>
+  _count?: boolean | Prisma.ProjectCharacterCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["projectCharacter"]>
 
 export type ProjectCharacterSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -793,6 +926,8 @@ export type ProjectCharacterOmit<ExtArgs extends runtime.Types.Extensions.Intern
 export type ProjectCharacterInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.DubbingProjectDefaultArgs<ExtArgs>
   castMember?: boolean | Prisma.ProjectCharacter$castMemberArgs<ExtArgs>
+  assignments?: boolean | Prisma.ProjectCharacter$assignmentsArgs<ExtArgs>
+  _count?: boolean | Prisma.ProjectCharacterCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProjectCharacterIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.DubbingProjectDefaultArgs<ExtArgs>
@@ -808,6 +943,7 @@ export type $ProjectCharacterPayload<ExtArgs extends runtime.Types.Extensions.In
   objects: {
     project: Prisma.$DubbingProjectPayload<ExtArgs>
     castMember: Prisma.$CastMemberPayload<ExtArgs> | null
+    assignments: Prisma.$ProjectCharacterAssignmentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1216,6 +1352,7 @@ export interface Prisma__ProjectCharacterClient<T, Null = never, ExtArgs extends
   readonly [Symbol.toStringTag]: "PrismaPromise"
   project<T extends Prisma.DubbingProjectDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DubbingProjectDefaultArgs<ExtArgs>>): Prisma.Prisma__DubbingProjectClient<runtime.Types.Result.GetResult<Prisma.$DubbingProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   castMember<T extends Prisma.ProjectCharacter$castMemberArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectCharacter$castMemberArgs<ExtArgs>>): Prisma.Prisma__CastMemberClient<runtime.Types.Result.GetResult<Prisma.$CastMemberPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  assignments<T extends Prisma.ProjectCharacter$assignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectCharacter$assignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectCharacterAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1672,6 +1809,30 @@ export type ProjectCharacter$castMemberArgs<ExtArgs extends runtime.Types.Extens
    */
   include?: Prisma.CastMemberInclude<ExtArgs> | null
   where?: Prisma.CastMemberWhereInput
+}
+
+/**
+ * ProjectCharacter.assignments
+ */
+export type ProjectCharacter$assignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProjectCharacterAssignment
+   */
+  select?: Prisma.ProjectCharacterAssignmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProjectCharacterAssignment
+   */
+  omit?: Prisma.ProjectCharacterAssignmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProjectCharacterAssignmentInclude<ExtArgs> | null
+  where?: Prisma.ProjectCharacterAssignmentWhereInput
+  orderBy?: Prisma.ProjectCharacterAssignmentOrderByWithRelationInput | Prisma.ProjectCharacterAssignmentOrderByWithRelationInput[]
+  cursor?: Prisma.ProjectCharacterAssignmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProjectCharacterAssignmentScalarFieldEnum | Prisma.ProjectCharacterAssignmentScalarFieldEnum[]
 }
 
 /**

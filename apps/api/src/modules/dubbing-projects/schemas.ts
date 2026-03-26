@@ -131,6 +131,48 @@ export const characterPatchSchema = z.object({
   notes: optionalStringField(500),
 });
 
+export const assignmentTypeSchema = z.enum([
+  "TEST_OPTION_1",
+  "TEST_OPTION_2",
+  "PRINCIPAL",
+  "RESERVE",
+  "SUPPORT",
+]);
+
+export const assignmentStatusSchema = z.enum([
+  "INVITED",
+  "TEST_SENT",
+  "TEST_RECEIVED",
+  "APPROVED",
+  "CAST",
+  "REPLACED",
+  "DECLINED",
+]);
+
+export const assignmentCreateSchema = z.object({
+  characterId: z.string().min(1),
+  castMemberId: z.string().min(1),
+  type: assignmentTypeSchema,
+  status: assignmentStatusSchema.default("INVITED"),
+  priority: z.coerce.number().int().min(1).max(99).default(1),
+  approvedByClient: z.coerce.boolean().default(false),
+  notes: optionalStringField(1000),
+});
+
+export const assignmentPatchSchema = z
+  .object({
+    characterId: z.string().min(1).optional(),
+    castMemberId: z.string().min(1).optional(),
+    type: assignmentTypeSchema.optional(),
+    status: assignmentStatusSchema.optional(),
+    priority: z.coerce.number().int().min(1).max(99).optional(),
+    approvedByClient: z.coerce.boolean().optional(),
+    notes: optionalStringField(1000),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "Informe ao menos um campo para atualização",
+  });
+
 export const episodePatchSchema = z.object({
   status: z.enum(["PENDING", "TRANSCRIBING", "DONE"]).optional(),
   title: z.union([z.string().max(500), z.null()]).optional(),
@@ -149,4 +191,6 @@ export type DubbingProjectCreateData = z.output<typeof dubbingProjectFormSchema>
 export type DubbingProjectPatchData = z.output<typeof dubbingProjectPatchRequestSchema>;
 export type CharacterCreateData = z.output<typeof characterCreateSchema>;
 export type CharacterPatchData = z.output<typeof characterPatchSchema>;
+export type AssignmentCreateData = z.output<typeof assignmentCreateSchema>;
+export type AssignmentPatchData = z.output<typeof assignmentPatchSchema>;
 export type EpisodePatchData = z.output<typeof episodePatchSchema>;

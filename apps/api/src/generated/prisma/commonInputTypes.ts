@@ -535,6 +535,40 @@ export type EnumCharacterImportanceWithAggregatesFilter<$PrismaModel = never> = 
   _max?: Prisma.NestedEnumCharacterImportanceFilter<$PrismaModel>
 }
 
+export type EnumProjectCharacterAssignmentTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectCharacterAssignmentType | Prisma.EnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectCharacterAssignmentType[] | Prisma.ListEnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectCharacterAssignmentType[] | Prisma.ListEnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectCharacterAssignmentTypeFilter<$PrismaModel> | $Enums.ProjectCharacterAssignmentType
+}
+
+export type EnumProjectCharacterAssignmentStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectCharacterAssignmentStatus | Prisma.EnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectCharacterAssignmentStatus[] | Prisma.ListEnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectCharacterAssignmentStatus[] | Prisma.ListEnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectCharacterAssignmentStatusFilter<$PrismaModel> | $Enums.ProjectCharacterAssignmentStatus
+}
+
+export type EnumProjectCharacterAssignmentTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectCharacterAssignmentType | Prisma.EnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectCharacterAssignmentType[] | Prisma.ListEnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectCharacterAssignmentType[] | Prisma.ListEnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectCharacterAssignmentTypeWithAggregatesFilter<$PrismaModel> | $Enums.ProjectCharacterAssignmentType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumProjectCharacterAssignmentTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumProjectCharacterAssignmentTypeFilter<$PrismaModel>
+}
+
+export type EnumProjectCharacterAssignmentStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectCharacterAssignmentStatus | Prisma.EnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectCharacterAssignmentStatus[] | Prisma.ListEnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectCharacterAssignmentStatus[] | Prisma.ListEnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectCharacterAssignmentStatusWithAggregatesFilter<$PrismaModel> | $Enums.ProjectCharacterAssignmentStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumProjectCharacterAssignmentStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumProjectCharacterAssignmentStatusFilter<$PrismaModel>
+}
+
 export type EnumMediaAssetKindFilter<$PrismaModel = never> = {
   equals?: $Enums.MediaAssetKind | Prisma.EnumMediaAssetKindFieldRefInput<$PrismaModel>
   in?: $Enums.MediaAssetKind[] | Prisma.ListEnumMediaAssetKindFieldRefInput<$PrismaModel>
@@ -1118,6 +1152,40 @@ export type NestedEnumCharacterImportanceWithAggregatesFilter<$PrismaModel = nev
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumCharacterImportanceFilter<$PrismaModel>
   _max?: Prisma.NestedEnumCharacterImportanceFilter<$PrismaModel>
+}
+
+export type NestedEnumProjectCharacterAssignmentTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectCharacterAssignmentType | Prisma.EnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectCharacterAssignmentType[] | Prisma.ListEnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectCharacterAssignmentType[] | Prisma.ListEnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectCharacterAssignmentTypeFilter<$PrismaModel> | $Enums.ProjectCharacterAssignmentType
+}
+
+export type NestedEnumProjectCharacterAssignmentStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectCharacterAssignmentStatus | Prisma.EnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectCharacterAssignmentStatus[] | Prisma.ListEnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectCharacterAssignmentStatus[] | Prisma.ListEnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectCharacterAssignmentStatusFilter<$PrismaModel> | $Enums.ProjectCharacterAssignmentStatus
+}
+
+export type NestedEnumProjectCharacterAssignmentTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectCharacterAssignmentType | Prisma.EnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectCharacterAssignmentType[] | Prisma.ListEnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectCharacterAssignmentType[] | Prisma.ListEnumProjectCharacterAssignmentTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectCharacterAssignmentTypeWithAggregatesFilter<$PrismaModel> | $Enums.ProjectCharacterAssignmentType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumProjectCharacterAssignmentTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumProjectCharacterAssignmentTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumProjectCharacterAssignmentStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ProjectCharacterAssignmentStatus | Prisma.EnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ProjectCharacterAssignmentStatus[] | Prisma.ListEnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ProjectCharacterAssignmentStatus[] | Prisma.ListEnumProjectCharacterAssignmentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumProjectCharacterAssignmentStatusWithAggregatesFilter<$PrismaModel> | $Enums.ProjectCharacterAssignmentStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumProjectCharacterAssignmentStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumProjectCharacterAssignmentStatusFilter<$PrismaModel>
 }
 
 export type NestedEnumMediaAssetKindFilter<$PrismaModel = never> = {
