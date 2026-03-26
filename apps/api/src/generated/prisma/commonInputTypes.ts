@@ -518,6 +518,23 @@ export type EnumCastMemberStatusWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumCastMemberStatusFilter<$PrismaModel>
 }
 
+export type EnumCastMemberAvailabilityTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.CastMemberAvailabilityType | Prisma.EnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.CastMemberAvailabilityType[] | Prisma.ListEnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.CastMemberAvailabilityType[] | Prisma.ListEnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumCastMemberAvailabilityTypeFilter<$PrismaModel> | $Enums.CastMemberAvailabilityType
+}
+
+export type EnumCastMemberAvailabilityTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.CastMemberAvailabilityType | Prisma.EnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.CastMemberAvailabilityType[] | Prisma.ListEnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.CastMemberAvailabilityType[] | Prisma.ListEnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumCastMemberAvailabilityTypeWithAggregatesFilter<$PrismaModel> | $Enums.CastMemberAvailabilityType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumCastMemberAvailabilityTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumCastMemberAvailabilityTypeFilter<$PrismaModel>
+}
+
 export type EnumCharacterImportanceFilter<$PrismaModel = never> = {
   equals?: $Enums.CharacterImportance | Prisma.EnumCharacterImportanceFieldRefInput<$PrismaModel>
   in?: $Enums.CharacterImportance[] | Prisma.ListEnumCharacterImportanceFieldRefInput<$PrismaModel>
@@ -1169,6 +1186,23 @@ export type NestedEnumCastMemberStatusWithAggregatesFilter<$PrismaModel = never>
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumCastMemberStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumCastMemberStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumCastMemberAvailabilityTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.CastMemberAvailabilityType | Prisma.EnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.CastMemberAvailabilityType[] | Prisma.ListEnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.CastMemberAvailabilityType[] | Prisma.ListEnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumCastMemberAvailabilityTypeFilter<$PrismaModel> | $Enums.CastMemberAvailabilityType
+}
+
+export type NestedEnumCastMemberAvailabilityTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.CastMemberAvailabilityType | Prisma.EnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.CastMemberAvailabilityType[] | Prisma.ListEnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.CastMemberAvailabilityType[] | Prisma.ListEnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumCastMemberAvailabilityTypeWithAggregatesFilter<$PrismaModel> | $Enums.CastMemberAvailabilityType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumCastMemberAvailabilityTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumCastMemberAvailabilityTypeFilter<$PrismaModel>
 }
 
 export type NestedEnumCharacterImportanceFilter<$PrismaModel = never> = {

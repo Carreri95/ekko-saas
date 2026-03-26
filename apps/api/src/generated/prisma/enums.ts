@@ -170,6 +170,15 @@ export const CastMemberStatus = {
 export type CastMemberStatus = (typeof CastMemberStatus)[keyof typeof CastMemberStatus]
 
 
+export const CastMemberAvailabilityType = {
+  AVAILABLE: 'AVAILABLE',
+  UNAVAILABLE: 'UNAVAILABLE',
+  BLOCKED: 'BLOCKED'
+} as const
+
+export type CastMemberAvailabilityType = (typeof CastMemberAvailabilityType)[keyof typeof CastMemberAvailabilityType]
+
+
 export const RecordingSessionStatus = {
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',

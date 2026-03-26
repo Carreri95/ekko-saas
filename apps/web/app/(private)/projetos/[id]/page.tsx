@@ -5,6 +5,13 @@ import "../projetos.css";
 import { PageShell } from "@/app/components/page-shell";
 import { useConfirm } from "@/app/components/confirm-provider";
 import { DateInput } from "@/app/components/date-input";
+import { SessionDatetimeField } from "@/app/components/session-datetime-field";
+import {
+  composeDateAndTimeToIso,
+  isoToDateInput,
+  partsFromIso,
+} from "@/app/lib/session-datetime";
+import { computeSessionTimeSuggestions } from "@/app/lib/session-time-suggestions";
 import {
   useCallback,
   useEffect,
@@ -31,6 +38,7 @@ import type {
   RecordingSessionFormat,
   RecordingSessionStatus,
 } from "@/app/types/recording-session";
+import type { CastMemberAvailabilityDto } from "@/app/types/cast-member-availability";
 import { CharacterCard } from "./components/character-card";
 import { CharacterModal } from "./components/character-modal";
 import { LanguageCombobox } from "../components/language-combobox";
@@ -121,76 +129,15 @@ function isoToInput(iso?: string | null) {
   return d.toISOString().slice(0, 10);
 }
 
-function isoToDateInput(iso?: string | null) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function isoToTimeInput(iso?: string | null) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${hh}:${mm}`;
-}
-
-function parseTimeTo12hParts(time24: string): {
-  hour12: string;
-  minute: string;
-  period: "AM" | "PM";
-} {
-  const [hRaw, mRaw] = time24.split(":");
-  const hNum = Number(hRaw);
-  const mNum = Number(mRaw);
-  if (!Number.isFinite(hNum) || !Number.isFinite(mNum)) {
-    return { hour12: "12", minute: "00", period: "AM" };
-  }
-  const period = hNum >= 12 ? "PM" : "AM";
-  const hour12 = ((hNum + 11) % 12) + 1;
-  return {
-    hour12: String(hour12).padStart(2, "0"),
-    minute: String(Math.max(0, Math.min(59, mNum))).padStart(2, "0"),
-    period,
-  };
-}
-
-function composeDateAndTimeToIso(
-  dateYmd: string,
-  hour12: string,
-  minute: string,
-  period: "AM" | "PM",
-) {
-  if (!dateYmd || !hour12 || !minute) return "";
-  const hNum = Number(hour12);
-  const mNum = Number(minute);
-  if (!Number.isFinite(hNum) || !Number.isFinite(mNum)) return "";
-  if (hNum < 1 || hNum > 12 || mNum < 0 || mNum > 59) return "";
-  let h24 = hNum % 12;
-  if (period === "PM") h24 += 12;
-  const hh = String(h24).padStart(2, "0");
-  const mm = String(mNum).padStart(2, "0");
-  const d = new Date(`${dateYmd}T${hh}:${mm}:00`);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toISOString();
-}
-
 type SessionFormState = {
   title: string;
   castMemberId: string;
   startDate: string;
-  startHour: string;
+  startHour24: string;
   startMinute: string;
-  startPeriod: "AM" | "PM";
   endDate: string;
-  endHour: string;
+  endHour24: string;
   endMinute: string;
-  endPeriod: "AM" | "PM";
   status: RecordingSessionStatus;
   format: RecordingSessionFormat;
   notes: string;
@@ -221,107 +168,17 @@ const EMPTY_SESSION_FORM: SessionFormState = {
   title: "",
   castMemberId: "",
   startDate: "",
-  startHour: "12",
+  startHour24: "00",
   startMinute: "00",
-  startPeriod: "AM",
   endDate: "",
-  endHour: "12",
+  endHour24: "00",
   endMinute: "00",
-  endPeriod: "AM",
   status: "PENDING",
   format: "REMOTE",
   notes: "",
   episodeIds: [],
   characterId: "",
 };
-
-const HOUR_OPTIONS_12H = Array.from({ length: 12 }, (_, i) =>
-  String(i + 1).padStart(2, "0"),
-);
-const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) =>
-  String(i).padStart(2, "0"),
-);
-
-/** ~12 linhas; em telas baixas limita à viewport (hora e minuto iguais). */
-const SESSION_TIME_DROPDOWN_MAX_H = "max-h-[min(27rem,_45vh)]";
-
-const SESSION_TIME_LIST_PANEL =
-  "rounded-[6px] border border-[#3d3d3d] bg-[#1f1f1f] py-0.5 shadow-[0_8px_24px_rgba(0,0,0,0.45)]";
-const SESSION_TIME_ROW_BASE =
-  "flex w-full min-h-[36px] items-center px-[10px] text-left text-[13px] text-white";
-const SESSION_TIME_ROW_HOVER = "hover:bg-[#2a3444]";
-const SESSION_TIME_ROW_SELECTED = "bg-[#3d6ea8] hover:bg-[#4a7ab8]";
-
-function SessionTimeOptionSelect({
-  value,
-  options,
-  onChange,
-}: {
-  value: string;
-  options: readonly string[];
-  onChange: (next: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !listRef.current) return;
-    const row = listRef.current.querySelector(`[data-opt="${value}"]`);
-    row?.scrollIntoView({ block: "nearest" });
-  }, [open, value]);
-
-  return (
-    <div ref={rootRef} className="relative">
-      <button
-        type="button"
-        className={`${inputCls} flex w-full items-center text-left ${
-          open ? "border-[#1D9E75]" : ""
-        }`}
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        {value}
-      </button>
-      {open ? (
-        <div
-          ref={listRef}
-          className={`absolute left-0 right-0 top-full z-50 mt-px ${SESSION_TIME_DROPDOWN_MAX_H} overflow-y-auto ${SESSION_TIME_LIST_PANEL}`}
-          role="listbox"
-        >
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              data-opt={opt}
-              role="option"
-              aria-selected={opt === value}
-              className={`${SESSION_TIME_ROW_BASE} ${SESSION_TIME_ROW_HOVER} ${
-                opt === value ? SESSION_TIME_ROW_SELECTED : ""
-              }`}
-              onClick={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 const AGENDA_PAGE_SIZE = 8;
 
@@ -404,6 +261,337 @@ function isSessionInPeriod(
   return start < todayStart;
 }
 
+function buildSessionDayGroups(
+  sessionList: RecordingSessionDto[],
+  now: Date,
+): Array<{
+  dayKey: string;
+  label: string;
+  items: RecordingSessionDto[];
+}> {
+  const groups: Array<{
+    dayKey: string;
+    label: string;
+    items: RecordingSessionDto[];
+  }> = [];
+  for (const session of sessionList) {
+    const dt = new Date(session.startAt);
+    if (Number.isNaN(dt.getTime())) continue;
+    const dayKey = getLocalDayKey(dt);
+    const last = groups[groups.length - 1];
+    if (!last || last.dayKey !== dayKey) {
+      groups.push({
+        dayKey,
+        label: getDayHeaderLabel(dayKey, now),
+        items: [session],
+      });
+    } else {
+      last.items.push(session);
+    }
+  }
+  return groups;
+}
+
+/** Horário local curto para timeline (início – fim). */
+function formatSessionTimeRange(startIso: string, endIso: string): string {
+  const s = new Date(startIso);
+  const e = new Date(endIso);
+  if (Number.isNaN(s.getTime())) return "—";
+  const opts: Intl.DateTimeFormatOptions = { timeStyle: "short" };
+  const a = s.toLocaleTimeString("pt-BR", opts);
+  if (Number.isNaN(e.getTime())) return a;
+  return `${a} – ${e.toLocaleTimeString("pt-BR", opts)}`;
+}
+
+/** Sobreposição estrita de intervalos [start, end) em tempo Unix. */
+function sessionIntervalsOverlap(
+  a: RecordingSessionDto,
+  b: RecordingSessionDto,
+): boolean {
+  const aStart = new Date(a.startAt).getTime();
+  const aEnd = new Date(a.endAt).getTime();
+  const bStart = new Date(b.startAt).getTime();
+  const bEnd = new Date(b.endAt).getTime();
+  if (
+    Number.isNaN(aStart) ||
+    Number.isNaN(aEnd) ||
+    Number.isNaN(bStart) ||
+    Number.isNaN(bEnd)
+  ) {
+    return false;
+  }
+  return aStart < bEnd && bStart < aEnd;
+}
+
+/**
+ * IDs de sessões em conflito (mesmo dia local + mesmo dublador + intervalos sobrepostos).
+ * Agrupa por bucket para evitar O(n²) global; dentro de cada bucket ordena por início e corta o inner loop cedo.
+ */
+function computeSessionOverlapConflicts(
+  sessions: RecordingSessionDto[],
+): Set<string> {
+  const conflictIds = new Set<string>();
+  const buckets = new Map<string, RecordingSessionDto[]>();
+
+  for (const s of sessions) {
+    const dt = new Date(s.startAt);
+    if (Number.isNaN(dt.getTime())) continue;
+    const dayKey = getLocalDayKey(dt);
+    const bucketKey = `${dayKey}\0${s.castMemberId}`;
+    const list = buckets.get(bucketKey);
+    if (list) list.push(s);
+    else buckets.set(bucketKey, [s]);
+  }
+
+  for (const group of buckets.values()) {
+    if (group.length < 2) continue;
+    const sorted = [...group].sort(
+      (x, y) =>
+        new Date(x.startAt).getTime() - new Date(y.startAt).getTime(),
+    );
+    for (let i = 0; i < sorted.length; i++) {
+      const a = sorted[i];
+      const aEnd = new Date(a.endAt).getTime();
+      if (Number.isNaN(aEnd)) continue;
+      for (let j = i + 1; j < sorted.length; j++) {
+        const b = sorted[j];
+        const bStart = new Date(b.startAt).getTime();
+        if (Number.isNaN(bStart)) continue;
+        if (bStart >= aEnd) break;
+        if (sessionIntervalsOverlap(a, b)) {
+          conflictIds.add(a.id);
+          conflictIds.add(b.id);
+        }
+      }
+    }
+  }
+
+  return conflictIds;
+}
+
+type AgendaConflictType =
+  | "SESSION_OVERLAP"
+  | "AVAILABILITY_UNAVAILABLE"
+  | "AVAILABILITY_BLOCKED";
+
+type AgendaConflictSeverity = "soft" | "medium" | "hard";
+
+/**
+ * Resumo único por sessão na agenda filtrada.
+ * severidade: soft = sobreposição com outra sessão; medium = UNAVAILABLE; hard = BLOCKED.
+ */
+type SessionConflictSummary = {
+  hasConflict: boolean;
+  severity: AgendaConflictSeverity | null;
+  types: AgendaConflictType[];
+  /** Texto para tooltip (tipos combinados sem segundo badge). */
+  detailLines: string[];
+};
+
+const EMPTY_SESSION_CONFLICT_SUMMARY: SessionConflictSummary = {
+  hasConflict: false,
+  severity: null,
+  types: [],
+  detailLines: [],
+};
+
+function sessionConflictSummaryForId(
+  map: Map<string, SessionConflictSummary>,
+  sessionId: string,
+): SessionConflictSummary {
+  return map.get(sessionId) ?? EMPTY_SESSION_CONFLICT_SUMMARY;
+}
+
+type AgendaDayConflictStats = {
+  total: number;
+  hard: number;
+  medium: number;
+};
+
+function dayConflictHeaderAccentClass(stats: AgendaDayConflictStats): string {
+  if (stats.total === 0) return "";
+  if (stats.hard > 0) return "text-[#F09595]";
+  if (stats.medium > 0) return "text-[#E07A2E]";
+  return "text-[#c9a227]";
+}
+
+/** Sobreposição sessão × período de disponibilidade (UNAVAILABLE / BLOCKED). */
+function sessionOverlapsAvailabilityWindow(
+  session: RecordingSessionDto,
+  a: CastMemberAvailabilityDto,
+): boolean {
+  if (a.type !== "UNAVAILABLE" && a.type !== "BLOCKED") return false;
+  const sStart = new Date(session.startAt).getTime();
+  const sEnd = new Date(session.endAt).getTime();
+  const aStart = new Date(a.startAt).getTime();
+  const aEnd = new Date(a.endAt).getTime();
+  if (
+    Number.isNaN(sStart) ||
+    Number.isNaN(sEnd) ||
+    Number.isNaN(aStart) ||
+    Number.isNaN(aEnd)
+  ) {
+    return false;
+  }
+  return sStart < aEnd && aStart < sEnd;
+}
+
+function collectAvailabilityConflictTypes(
+  session: RecordingSessionDto,
+  rows: CastMemberAvailabilityDto[] | undefined,
+): AgendaConflictType[] {
+  const out: AgendaConflictType[] = [];
+  if (!rows?.length) return out;
+  let blocked = false;
+  let unavailable = false;
+  for (const a of rows) {
+    if (!sessionOverlapsAvailabilityWindow(session, a)) continue;
+    if (a.type === "BLOCKED") blocked = true;
+    else if (a.type === "UNAVAILABLE") unavailable = true;
+  }
+  if (blocked) out.push("AVAILABILITY_BLOCKED");
+  if (unavailable) out.push("AVAILABILITY_UNAVAILABLE");
+  return out;
+}
+
+function severityFromConflictTypes(
+  types: AgendaConflictType[],
+): AgendaConflictSeverity | null {
+  if (types.includes("AVAILABILITY_BLOCKED")) return "hard";
+  if (types.includes("AVAILABILITY_UNAVAILABLE")) return "medium";
+  if (types.includes("SESSION_OVERLAP")) return "soft";
+  return null;
+}
+
+function buildSessionConflictSummary(
+  session: RecordingSessionDto,
+  hasSessionOverlap: boolean,
+  availByMember: Record<string, CastMemberAvailabilityDto[]>,
+): SessionConflictSummary {
+  const types: AgendaConflictType[] = [];
+  const detailLines: string[] = [];
+  if (hasSessionOverlap) {
+    types.push("SESSION_OVERLAP");
+    detailLines.push(
+      "Sobreposição de horário com outra sessão deste dublador no mesmo dia.",
+    );
+  }
+  for (const t of collectAvailabilityConflictTypes(
+    session,
+    availByMember[session.castMemberId],
+  )) {
+    types.push(t);
+    if (t === "AVAILABILITY_BLOCKED") {
+      detailLines.push("Cruza período bloqueado no cadastro do dublador.");
+    }
+    if (t === "AVAILABILITY_UNAVAILABLE") {
+      detailLines.push("Cruza período indisponível no cadastro do dublador.");
+    }
+  }
+  const severity = severityFromConflictTypes(types);
+  return {
+    hasConflict: types.length > 0,
+    severity,
+    types,
+    detailLines,
+  };
+}
+
+/** Conflito do intervalo do formulário (criação/edição), mesma regra que a agenda. */
+function buildConflictSummaryForProposedSession(input: {
+  startAt: string;
+  endAt: string;
+  castMemberId: string;
+  excludeSessionId: string | null;
+  sessions: RecordingSessionDto[];
+  availByMember: Record<string, CastMemberAvailabilityDto[]>;
+}): SessionConflictSummary {
+  const stub = {
+    id: input.excludeSessionId ?? "__proposed__",
+    startAt: input.startAt,
+    endAt: input.endAt,
+    castMemberId: input.castMemberId,
+  } as RecordingSessionDto;
+
+  const hasOverlap = input.sessions.some((s) => {
+    if (s.castMemberId !== input.castMemberId) return false;
+    if (input.excludeSessionId && s.id === input.excludeSessionId) return false;
+    return sessionIntervalsOverlap(stub, s);
+  });
+
+  return buildSessionConflictSummary(stub, hasOverlap, input.availByMember);
+}
+
+function agendaConflictCardClassNames(
+  severity: AgendaConflictSeverity | null,
+  isEditing: boolean,
+): string {
+  if (isEditing) {
+    return "border-[#1D9E75] bg-[#122a22] ring-1 ring-[#1D9E75]/35";
+  }
+  switch (severity) {
+    case "hard":
+      return "border-[#8b3535] bg-[#241414] ring-1 ring-[#E24B4A]/35 hover:border-[#a04040]";
+    case "medium":
+      return "border-[#a65c18] bg-[#261a0e] ring-1 ring-[#E07A2E]/28 hover:border-[#b86a20]";
+    case "soft":
+      return "border-[#6b5a1e] bg-[#221f14] ring-1 ring-[#EF9F27]/22 hover:border-[#7d6a28]";
+    default:
+      return "border-[#252525] bg-[#141414] hover:border-[#333] hover:bg-[#181818]";
+  }
+}
+
+function agendaConflictBadgePresentation(severity: AgendaConflictSeverity): {
+  label: string;
+  className: string;
+} {
+  switch (severity) {
+    case "hard":
+      return {
+        label: "Bloqueado",
+        className:
+          "inline-flex items-center gap-[4px] rounded-[4px] border border-[#8b3030] bg-[#3d2020] px-[6px] py-[1px] text-[10px] font-[600] uppercase tracking-[0.04em] text-[#F09595]",
+      };
+    case "medium":
+      return {
+        label: "Indisponível",
+        className:
+          "inline-flex items-center gap-[4px] rounded-[4px] border border-[#8a5520] bg-[#3d2a18] px-[6px] py-[1px] text-[10px] font-[600] uppercase tracking-[0.04em] text-[#E07A2E]",
+      };
+    default:
+      return {
+        label: "Sobreposição",
+        className:
+          "inline-flex items-center gap-[4px] rounded-[4px] border border-[#6b5a1e] bg-[#3d3520] px-[6px] py-[1px] text-[10px] font-[600] uppercase tracking-[0.04em] text-[#EF9F27]",
+      };
+  }
+}
+
+function agendaConflictListBadgePresentation(severity: AgendaConflictSeverity): {
+  label: string;
+  className: string;
+} {
+  const base =
+    "inline-flex items-center gap-[4px] rounded-[10px] border px-[6px] py-[1px] text-[10px] font-[600]";
+  switch (severity) {
+    case "hard":
+      return {
+        label: "Bloqueado",
+        className: `${base} border-[#8b3030] bg-[#3d2020] text-[#F09595]`,
+      };
+    case "medium":
+      return {
+        label: "Indisponível",
+        className: `${base} border-[#8a5520] bg-[#3d2a18] text-[#E07A2E]`,
+      };
+    default:
+      return {
+        label: "Sobreposição",
+        className: `${base} border-[#6b5a1e] bg-[#3d3520] text-[#EF9F27]`,
+      };
+  }
+}
+
 function getEditDefaults(p: DubbingProjectDto): DubbingProjectEditFormInput {
   const unit = storedTotalToFormUnit(
     p.value,
@@ -473,8 +661,10 @@ export default function ProjectEditPage() {
   );
   const [sessionFeedback, setSessionFeedback] = useState<string | null>(null);
   const [sessionFeedbackTone, setSessionFeedbackTone] = useState<
-    "success" | "error"
+    "success" | "error" | "info"
   >("success");
+  const [sessionSuggestionAppliedHint, setSessionSuggestionAppliedHint] =
+    useState<string | null>(null);
   const [sessionTitleTouched, setSessionTitleTouched] = useState(false);
   const [sessionStatusFilter, setSessionStatusFilter] = useState<
     "ALL" | RecordingSessionStatus
@@ -484,6 +674,13 @@ export default function ProjectEditPage() {
     useState<SessionPeriodFilter>("ALL");
   const [sessionVisibleCount, setSessionVisibleCount] =
     useState(AGENDA_PAGE_SIZE);
+  const [sessionAgendaViewMode, setSessionAgendaViewMode] = useState<
+    "list" | "visual"
+  >("list");
+  const [castMemberAvailabilities, setCastMemberAvailabilities] = useState<
+    Record<string, CastMemberAvailabilityDto[]>
+  >({});
+  const agendaAvailabilityFetchedRef = useRef<Set<string>>(new Set());
   const [episodeDropdownOpen, setEpisodeDropdownOpen] = useState(false);
   const audioTargetEpRef = useRef<string | null>(null);
   const audioFileInputRef = useRef<HTMLInputElement>(null);
@@ -574,7 +771,9 @@ export default function ProjectEditPage() {
       });
       if (!res.ok) {
         setSessions([]);
-        setSessionsError("Não foi possível carregar as sessões.");
+        setSessionsError(
+          "Não foi possível carregar a lista de sessões. Atualize a página ou tente de novo.",
+        );
         return;
       }
       const data = (await res.json()) as { sessions: RecordingSessionDto[] };
@@ -582,7 +781,9 @@ export default function ProjectEditPage() {
       setSessionVisibleCount(AGENDA_PAGE_SIZE);
     } catch {
       setSessions([]);
-      setSessionsError("Não foi possível carregar as sessões.");
+      setSessionsError(
+        "Falha de rede ao carregar sessões. Verifique a conexão e tente de novo.",
+      );
     } finally {
       setSessionsLoading(false);
     }
@@ -609,6 +810,15 @@ export default function ProjectEditPage() {
       void loadCastMembers();
     }
   }, [activeTab, loadSessions, loadEpisodes, loadCharacters, loadCastMembers]);
+
+  useEffect(() => {
+    if (!sessionSuggestionAppliedHint) return;
+    const t = window.setTimeout(
+      () => setSessionSuggestionAppliedHint(null),
+      2800,
+    );
+    return () => window.clearTimeout(t);
+  }, [sessionSuggestionAppliedHint]);
 
   useEffect(() => {
     return () => {
@@ -860,23 +1070,22 @@ export default function ProjectEditPage() {
     setEditingSessionId(null);
     setSessionForm(EMPTY_SESSION_FORM);
     setSessionTitleTouched(false);
+    setSessionSuggestionAppliedHint(null);
   }, []);
 
   const onEditSession = useCallback((session: RecordingSessionDto) => {
-    const startParts = parseTimeTo12hParts(isoToTimeInput(session.startAt));
-    const endParts = parseTimeTo12hParts(isoToTimeInput(session.endAt));
+    const startParts = partsFromIso(session.startAt);
+    const endParts = partsFromIso(session.endAt);
     setEditingSessionId(session.id);
     setSessionForm({
       title: session.title,
       castMemberId: session.castMemberId,
-      startDate: isoToDateInput(session.startAt),
-      startHour: startParts.hour12,
+      startDate: startParts.dateYmd,
+      startHour24: startParts.hour24,
       startMinute: startParts.minute,
-      startPeriod: startParts.period,
-      endDate: isoToDateInput(session.endAt),
-      endHour: endParts.hour12,
+      endDate: endParts.dateYmd,
+      endHour24: endParts.hour24,
       endMinute: endParts.minute,
-      endPeriod: endParts.period,
       status: session.status,
       format: session.format,
       notes: session.notes ?? "",
@@ -934,6 +1143,7 @@ export default function ProjectEditPage() {
   const onSaveSession = useCallback(async () => {
     if (!id) return;
     setSessionFeedback(null);
+    setSessionSuggestionAppliedHint(null);
     setSessionsError(null);
     if (!sessionForm.title.trim()) {
       setSessionFeedbackTone("error");
@@ -947,21 +1157,59 @@ export default function ProjectEditPage() {
     }
     const startIso = composeDateAndTimeToIso(
       sessionForm.startDate,
-      sessionForm.startHour,
+      sessionForm.startHour24,
       sessionForm.startMinute,
-      sessionForm.startPeriod,
     );
     const endIso = composeDateAndTimeToIso(
       sessionForm.endDate,
-      sessionForm.endHour,
+      sessionForm.endHour24,
       sessionForm.endMinute,
-      sessionForm.endPeriod,
     );
     if (!startIso || !endIso) {
       setSessionFeedbackTone("error");
       setSessionFeedback("Informe início e fim válidos.");
       return;
     }
+
+    const proposedConflict = buildConflictSummaryForProposedSession({
+      startAt: startIso,
+      endAt: endIso,
+      castMemberId: sessionForm.castMemberId,
+      excludeSessionId: editingSessionId,
+      sessions,
+      availByMember: castMemberAvailabilities,
+    });
+
+    if (proposedConflict.severity === "hard") {
+      const ok = await confirm({
+        title: "Período bloqueado",
+        description:
+          "Este horário está em um período bloqueado do dublador. Deseja realmente salvar?",
+        confirmLabel: "Continuar",
+        cancelLabel: "Cancelar",
+        variant: "danger",
+      });
+      if (!ok) return;
+    } else if (proposedConflict.severity === "medium") {
+      const ok = await confirm({
+        title: "Período indisponível",
+        description:
+          "Este horário está em um período indisponível do dublador. Deseja continuar?",
+        confirmLabel: "Continuar",
+        cancelLabel: "Cancelar",
+      });
+      if (!ok) return;
+    } else if (proposedConflict.severity === "soft") {
+      const ok = await confirm({
+        title: "Sobreposição na agenda",
+        description:
+          "Este horário coincide com outra sessão deste dublador. Deseja continuar?",
+        confirmLabel: "Continuar",
+        cancelLabel: "Cancelar",
+      });
+      if (!ok) return;
+    }
+
     const basePayload = {
       title: sessionForm.title.trim(),
       castMemberId: sessionForm.castMemberId,
@@ -993,22 +1241,37 @@ export default function ProjectEditPage() {
         const msg =
           typeof raw === "object" && raw && "error" in raw
             ? String((raw as { error?: unknown }).error)
-            : "Não foi possível salvar a sessão.";
+            : "Não foi possível salvar a sessão. Verifique os dados e tente de novo.";
         setSessionFeedbackTone("error");
         setSessionFeedback(msg);
         return;
       }
       setSessionFeedbackTone("success");
-      setSessionFeedback(isEdit ? "Sessão atualizada." : "Sessão criada.");
+      setSessionFeedback(
+        isEdit
+          ? "Sessão atualizada com sucesso."
+          : "Sessão criada com sucesso.",
+      );
       resetSessionForm();
       await loadSessions();
     } catch {
       setSessionFeedbackTone("error");
-      setSessionFeedback("Falha de rede ao salvar sessão.");
+      setSessionFeedback(
+        "Falha de rede ao salvar a sessão. Tente de novo em instantes.",
+      );
     } finally {
       setSessionSaving(false);
     }
-  }, [editingSessionId, id, loadSessions, resetSessionForm, sessionForm]);
+  }, [
+    castMemberAvailabilities,
+    confirm,
+    editingSessionId,
+    id,
+    loadSessions,
+    resetSessionForm,
+    sessionForm,
+    sessions,
+  ]);
 
   const onDeleteSession = useCallback(
     async (session: RecordingSessionDto) => {
@@ -1034,18 +1297,20 @@ export default function ProjectEditPage() {
           const msg =
             typeof raw === "object" && raw && "error" in raw
               ? String((raw as { error?: unknown }).error)
-              : "Não foi possível remover a sessão.";
+              : "Não foi possível remover a sessão. Tente de novo.";
           setSessionFeedbackTone("error");
           setSessionFeedback(msg);
           return;
         }
         if (editingSessionId === session.id) resetSessionForm();
         setSessionFeedbackTone("success");
-        setSessionFeedback("Sessão removida.");
+        setSessionFeedback("Sessão removida com sucesso.");
         await loadSessions();
       } catch {
         setSessionFeedbackTone("error");
-        setSessionFeedback("Falha de rede ao remover sessão.");
+        setSessionFeedback(
+          "Falha de rede ao remover a sessão. Verifique a conexão.",
+        );
       } finally {
         setSessionDeletingId(null);
       }
@@ -1152,7 +1417,7 @@ export default function ProjectEditPage() {
     STATUS_LABELS.find((s) => s.value === currentStatus)?.label ??
     String(currentStatus);
 
-  const groupedSessions = useMemo(() => {
+  const filteredSortedSessions = useMemo(() => {
     const now = new Date();
     const filtered = sessions.filter((session) => {
       if (
@@ -1169,7 +1434,7 @@ export default function ProjectEditPage() {
         return false;
       return true;
     });
-    const sorted = [...filtered].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       const aStart = new Date(a.startAt).getTime();
       const bStart = new Date(b.startAt).getTime();
       if (aStart !== bStart) return aStart - bStart;
@@ -1177,41 +1442,182 @@ export default function ProjectEditPage() {
       const bCreated = new Date(b.createdAt).getTime();
       return aCreated - bCreated;
     });
-    const visible = sorted.slice(0, sessionVisibleCount);
-    const groups: Array<{
-      dayKey: string;
-      label: string;
-      items: RecordingSessionDto[];
-    }> = [];
-    for (const session of visible) {
-      const dt = new Date(session.startAt);
-      if (Number.isNaN(dt.getTime())) continue;
-      const dayKey = getLocalDayKey(dt);
-      const last = groups[groups.length - 1];
-      if (!last || last.dayKey !== dayKey) {
-        groups.push({
-          dayKey,
-          label: getDayHeaderLabel(dayKey, now),
-          items: [session],
-        });
-      } else {
-        last.items.push(session);
-      }
-    }
-    return {
-      total: sessions.length,
-      filteredCount: sorted.length,
-      visibleCount: visible.length,
-      hasMore: visible.length < sorted.length,
-      groups,
-    };
   }, [
     sessionCastFilter,
     sessionPeriodFilter,
     sessionStatusFilter,
-    sessionVisibleCount,
     sessions,
   ]);
+
+  const groupedSessions = useMemo(() => {
+    const now = new Date();
+    const visible = filteredSortedSessions.slice(0, sessionVisibleCount);
+    const groups = buildSessionDayGroups(visible, now);
+    return {
+      total: sessions.length,
+      filteredCount: filteredSortedSessions.length,
+      visibleCount: visible.length,
+      hasMore: visible.length < filteredSortedSessions.length,
+      groups,
+    };
+  }, [filteredSortedSessions, sessionVisibleCount, sessions.length]);
+
+  const agendaVisualDayGroups = useMemo(() => {
+    const now = new Date();
+    return buildSessionDayGroups(filteredSortedSessions, now);
+  }, [filteredSortedSessions]);
+
+  const sessionOverlapConflictIds = useMemo(
+    () => computeSessionOverlapConflicts(filteredSortedSessions),
+    [filteredSortedSessions],
+  );
+
+  const agendaCastMemberIds = useMemo(
+    () =>
+      [
+        ...new Set(filteredSortedSessions.map((s) => s.castMemberId)),
+      ].filter((x): x is string => Boolean(x)),
+    [filteredSortedSessions],
+  );
+
+  const agendaAvailabilityMemberIds = useMemo(() => {
+    const ids = new Set<string>(agendaCastMemberIds);
+    if (activeTab === "agenda" && sessionForm.castMemberId.trim()) {
+      ids.add(sessionForm.castMemberId);
+    }
+    return [...ids];
+  }, [activeTab, agendaCastMemberIds, sessionForm.castMemberId]);
+
+  useEffect(() => {
+    if (activeTab !== "agenda") {
+      agendaAvailabilityFetchedRef.current.clear();
+      setCastMemberAvailabilities({});
+      return;
+    }
+    for (const mid of agendaAvailabilityMemberIds) {
+      if (agendaAvailabilityFetchedRef.current.has(mid)) continue;
+      agendaAvailabilityFetchedRef.current.add(mid);
+      void fetch(
+        `/api/cast-members/${encodeURIComponent(mid)}/availability`,
+        { cache: "no-store" },
+      )
+        .then(async (res) => {
+          if (!res.ok) {
+            agendaAvailabilityFetchedRef.current.delete(mid);
+            return;
+          }
+          const data = (await res.json()) as {
+            availabilities: CastMemberAvailabilityDto[];
+          };
+          setCastMemberAvailabilities((prev) => ({
+            ...prev,
+            [mid]: data.availabilities ?? [],
+          }));
+        })
+        .catch(() => {
+          agendaAvailabilityFetchedRef.current.delete(mid);
+        });
+    }
+  }, [activeTab, agendaAvailabilityMemberIds]);
+
+  const sessionSuggestionAnchorYmd = useMemo(() => {
+    if (
+      sessionForm.startDate &&
+      /^\d{4}-\d{2}-\d{2}$/.test(sessionForm.startDate)
+    ) {
+      return sessionForm.startDate;
+    }
+    return getLocalDayKey(new Date());
+  }, [sessionForm.startDate]);
+
+  const sessionFormDurationMs = useMemo(() => {
+    const startIso = composeDateAndTimeToIso(
+      sessionForm.startDate,
+      sessionForm.startHour24,
+      sessionForm.startMinute,
+    );
+    const endIso = composeDateAndTimeToIso(
+      sessionForm.endDate,
+      sessionForm.endHour24,
+      sessionForm.endMinute,
+    );
+    if (!startIso || !endIso) return 60 * 60 * 1000;
+    const ms = new Date(endIso).getTime() - new Date(startIso).getTime();
+    if (ms >= 60 * 1000) return ms;
+    return 60 * 60 * 1000;
+  }, [
+    sessionForm.startDate,
+    sessionForm.startHour24,
+    sessionForm.startMinute,
+    sessionForm.endDate,
+    sessionForm.endHour24,
+    sessionForm.endMinute,
+  ]);
+
+  const sessionMinStartMsForSuggestions = useMemo(() => {
+    const today = getLocalDayKey(new Date());
+    if (sessionSuggestionAnchorYmd !== today) return undefined;
+    return Date.now();
+  }, [sessionSuggestionAnchorYmd]);
+
+  const sessionTimeSuggestions = useMemo(() => {
+    if (activeTab !== "agenda") return [];
+    if (!sessionForm.castMemberId.trim()) return [];
+    return computeSessionTimeSuggestions({
+      anchorDateYmd: sessionSuggestionAnchorYmd,
+      durationMs: sessionFormDurationMs,
+      castMemberId: sessionForm.castMemberId,
+      sessions,
+      availabilities: castMemberAvailabilities[sessionForm.castMemberId],
+      excludeSessionId: editingSessionId,
+      minStartMs: sessionMinStartMsForSuggestions,
+    });
+  }, [
+    activeTab,
+    castMemberAvailabilities,
+    editingSessionId,
+    sessionForm.castMemberId,
+    sessionFormDurationMs,
+    sessionMinStartMsForSuggestions,
+    sessionSuggestionAnchorYmd,
+    sessions,
+  ]);
+
+  const sessionConflictSummaryById = useMemo(() => {
+    const map = new Map<string, SessionConflictSummary>();
+    for (const s of filteredSortedSessions) {
+      map.set(
+        s.id,
+        buildSessionConflictSummary(
+          s,
+          sessionOverlapConflictIds.has(s.id),
+          castMemberAvailabilities,
+        ),
+      );
+    }
+    return map;
+  }, [
+    filteredSortedSessions,
+    sessionOverlapConflictIds,
+    castMemberAvailabilities,
+  ]);
+
+  const agendaDayConflictStatsByDayKey = useMemo(() => {
+    const m = new Map<string, AgendaDayConflictStats>();
+    for (const s of filteredSortedSessions) {
+      const summary = sessionConflictSummaryById.get(s.id);
+      if (!summary?.hasConflict || !summary.severity) continue;
+      const dt = new Date(s.startAt);
+      if (Number.isNaN(dt.getTime())) continue;
+      const dk = getLocalDayKey(dt);
+      const cur = m.get(dk) ?? { total: 0, hard: 0, medium: 0 };
+      cur.total += 1;
+      if (summary.severity === "hard") cur.hard += 1;
+      else if (summary.severity === "medium") cur.medium += 1;
+      m.set(dk, cur);
+    }
+    return m;
+  }, [filteredSortedSessions, sessionConflictSummaryById]);
 
   useEffect(() => {
     setSessionVisibleCount(AGENDA_PAGE_SIZE);
@@ -2225,8 +2631,8 @@ export default function ProjectEditPage() {
                           Sessões de gravação
                         </h2>
                         <p className="mt-[2px] text-[11px] text-[#505050]">
-                          Cadastro simples de sessões do projeto (sem calendário
-                          visual).
+                          Cadastro de sessões: use a lista ou a visão por dia com
+                          blocos de horário (sem calendário externo).
                         </p>
                       </div>
 
@@ -2282,101 +2688,93 @@ export default function ProjectEditPage() {
                               ))}
                             </select>
                           </div>
-                          <div>
-                            <label className={labelCls}>Início</label>
-                            <div className="grid grid-cols-4 gap-[6px]">
-                              <DateInput
-                                value={sessionForm.startDate}
-                                onChange={(v) =>
-                                  setSessionForm((prev) => ({
-                                    ...prev,
-                                    startDate: v,
-                                  }))
-                                }
-                                className={inputCls}
-                              />
-                              <SessionTimeOptionSelect
-                                value={sessionForm.startHour}
-                                options={HOUR_OPTIONS_12H}
-                                onChange={(hour) =>
-                                  setSessionForm((prev) => ({
-                                    ...prev,
-                                    startHour: hour,
-                                  }))
-                                }
-                              />
-                              <SessionTimeOptionSelect
-                                value={sessionForm.startMinute}
-                                options={MINUTE_OPTIONS}
-                                onChange={(minute) =>
-                                  setSessionForm((prev) => ({
-                                    ...prev,
-                                    startMinute: minute,
-                                  }))
-                                }
-                              />
-                              <select
-                                className={inputCls}
-                                value={sessionForm.startPeriod}
-                                onChange={(e) =>
-                                  setSessionForm((prev) => ({
-                                    ...prev,
-                                    startPeriod: e.target.value as "AM" | "PM",
-                                  }))
-                                }
-                              >
-                                <option value="AM">AM</option>
-                                <option value="PM">PM</option>
-                              </select>
-                            </div>
-                          </div>
-                          <div>
-                            <label className={labelCls}>Fim</label>
-                            <div className="grid grid-cols-4 gap-[6px]">
-                              <DateInput
-                                value={sessionForm.endDate}
-                                onChange={(v) =>
-                                  setSessionForm((prev) => ({
-                                    ...prev,
-                                    endDate: v,
-                                  }))
-                                }
-                                className={inputCls}
-                              />
-                              <SessionTimeOptionSelect
-                                value={sessionForm.endHour}
-                                options={HOUR_OPTIONS_12H}
-                                onChange={(hour) =>
-                                  setSessionForm((prev) => ({
-                                    ...prev,
-                                    endHour: hour,
-                                  }))
-                                }
-                              />
-                              <SessionTimeOptionSelect
-                                value={sessionForm.endMinute}
-                                options={MINUTE_OPTIONS}
-                                onChange={(minute) =>
-                                  setSessionForm((prev) => ({
-                                    ...prev,
-                                    endMinute: minute,
-                                  }))
-                                }
-                              />
-                              <select
-                                className={inputCls}
-                                value={sessionForm.endPeriod}
-                                onChange={(e) =>
-                                  setSessionForm((prev) => ({
-                                    ...prev,
-                                    endPeriod: e.target.value as "AM" | "PM",
-                                  }))
-                                }
-                              >
-                                <option value="AM">AM</option>
-                                <option value="PM">PM</option>
-                              </select>
-                            </div>
+                          <SessionDatetimeField
+                            label="Início"
+                            labelClassName={labelCls}
+                            inputClassName={inputCls}
+                            value={{
+                              dateYmd: sessionForm.startDate,
+                              hour24: sessionForm.startHour24,
+                              minute: sessionForm.startMinute,
+                            }}
+                            onChange={(v) =>
+                              setSessionForm((prev) => ({
+                                ...prev,
+                                startDate: v.dateYmd,
+                                startHour24: v.hour24,
+                                startMinute: v.minute,
+                              }))
+                            }
+                          />
+                          <SessionDatetimeField
+                            label="Fim"
+                            labelClassName={labelCls}
+                            inputClassName={inputCls}
+                            value={{
+                              dateYmd: sessionForm.endDate,
+                              hour24: sessionForm.endHour24,
+                              minute: sessionForm.endMinute,
+                            }}
+                            onChange={(v) =>
+                              setSessionForm((prev) => ({
+                                ...prev,
+                                endDate: v.dateYmd,
+                                endHour24: v.hour24,
+                                endMinute: v.minute,
+                              }))
+                            }
+                          />
+                          <div className="md:col-span-2">
+                            <p className={`${labelCls} mb-[6px]`}>
+                              Sugestões de horário
+                            </p>
+                            {!sessionForm.castMemberId.trim() ? (
+                              <p className="text-[11px] text-[#505050]">
+                                Selecione um dublador para ver sugestões para o
+                                dia considerado (data de início ou hoje).
+                              </p>
+                            ) : sessionTimeSuggestions.length > 0 ? (
+                              <>
+                                <div className="flex flex-wrap gap-[6px]">
+                                  {sessionTimeSuggestions.map((sug, idx) => (
+                                    <button
+                                      key={`${sug.startIso}-${idx}`}
+                                      type="button"
+                                      onClick={() => {
+                                        const sp = partsFromIso(sug.startIso);
+                                        const ep = partsFromIso(sug.endIso);
+                                        setSessionForm((prev) => ({
+                                          ...prev,
+                                          startDate: sp.dateYmd,
+                                          startHour24: sp.hour24,
+                                          startMinute: sp.minute,
+                                          endDate: ep.dateYmd,
+                                          endHour24: ep.hour24,
+                                          endMinute: ep.minute,
+                                        }));
+                                        setSessionSuggestionAppliedHint(
+                                          "Horário sugerido aplicado aos campos de início e fim.",
+                                        );
+                                      }}
+                                      className="rounded-[5px] border border-[#333] bg-[#222] px-[8px] py-[4px] text-[11px] text-[#c8c8c8] hover:bg-[#2a2a2a]"
+                                    >
+                                      {sug.label}
+                                    </button>
+                                  ))}
+                                </div>
+                                {sessionSuggestionAppliedHint ? (
+                                  <p className="mt-[6px] text-[11px] text-[#5DCAA5]">
+                                    {sessionSuggestionAppliedHint}
+                                  </p>
+                                ) : null}
+                              </>
+                            ) : (
+                              <p className="text-[11px] text-[#505050]">
+                                Nenhum intervalo livre neste dia com a duração
+                                atual. Ajuste data, horários ou cadastre
+                                disponibilidade do dublador em Elenco (opcional).
+                              </p>
+                            )}
                           </div>
                           <div>
                             <label className={labelCls}>Status</label>
@@ -2530,7 +2928,9 @@ export default function ProjectEditPage() {
                             className={`mt-[8px] text-[11px] ${
                               sessionFeedbackTone === "error"
                                 ? "text-[#F09595]"
-                                : "text-[#5DCAA5]"
+                                : sessionFeedbackTone === "info"
+                                  ? "text-[#7EC8E3]"
+                                  : "text-[#5DCAA5]"
                             }`}
                           >
                             {sessionFeedback}
@@ -2546,7 +2946,7 @@ export default function ProjectEditPage() {
                             className="rounded-[5px] border border-[#0F6E56] bg-[#1D9E75] px-[12px] py-[6px] text-[11px] font-[500] text-white hover:bg-[#0F6E56] disabled:opacity-40"
                           >
                             {sessionSaving
-                              ? "Salvando..."
+                              ? "Salvando sessão..."
                               : editingSessionId
                                 ? "Salvar edição"
                                 : "Criar sessão"}
@@ -2566,10 +2966,53 @@ export default function ProjectEditPage() {
 
                       <div className="rounded-[10px] border border-[#252525] bg-[#1a1a1a] p-[14px]">
                         <div className="mb-[8px] flex flex-wrap items-center justify-between gap-[8px]">
-                          <h3 className="text-[12px] font-[600] text-[#e8e8e8]">
-                            Sessões cadastradas ({groupedSessions.visibleCount}/
-                            {groupedSessions.filteredCount})
-                          </h3>
+                          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-[10px]">
+                            <h3 className="text-[12px] font-[600] text-[#e8e8e8]">
+                              Sessões cadastradas
+                              {sessionAgendaViewMode === "list" ? (
+                                <>
+                                  {" "}
+                                  ({groupedSessions.visibleCount}/
+                                  {groupedSessions.filteredCount})
+                                </>
+                              ) : (
+                                <>
+                                  {" "}
+                                  ({groupedSessions.filteredCount})
+                                </>
+                              )}
+                            </h3>
+                            <div
+                              className="inline-flex rounded-[6px] border border-[#2e2e2e] bg-[#141414] p-[2px]"
+                              role="group"
+                              aria-label="Modo de visualização da agenda"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => setSessionAgendaViewMode("list")}
+                                className={`rounded-[4px] px-[10px] py-[4px] text-[11px] font-[500] transition-colors ${
+                                  sessionAgendaViewMode === "list"
+                                    ? "bg-[#2a2a2a] text-[#e8e8e8]"
+                                    : "text-[#707070] hover:text-[#b0b0b0]"
+                                }`}
+                              >
+                                Lista
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSessionAgendaViewMode("visual")
+                                }
+                                className={`rounded-[4px] px-[10px] py-[4px] text-[11px] font-[500] transition-colors ${
+                                  sessionAgendaViewMode === "visual"
+                                    ? "bg-[#2a2a2a] text-[#e8e8e8]"
+                                    : "text-[#707070] hover:text-[#b0b0b0]"
+                                }`}
+                              >
+                                Visual
+                              </button>
+                            </div>
+                          </div>
                           <div className="grid w-full grid-cols-1 gap-[6px] md:w-auto md:grid-cols-3">
                             <select
                               className={inputCls}
@@ -2621,30 +3064,175 @@ export default function ProjectEditPage() {
                             </select>
                           </div>
                         </div>
+                        {sessionDeletingId ? (
+                          <p className="mb-[8px] text-[11px] text-[#909090]">
+                            Removendo sessão...
+                          </p>
+                        ) : null}
                         {sessionsLoading ? (
-                          <p className="text-[12px] text-[#505050]">
-                            Carregando sessões...
+                          <p className="text-[12px] text-[#909090]">
+                            Carregando lista de sessões...
                           </p>
                         ) : sessionsError ? (
                           <p className="text-[12px] text-[#F09595]">
                             {sessionsError}
                           </p>
+                        ) : sessions.length === 0 ? (
+                          <p className="text-[12px] text-[#505050]">
+                            Nenhuma sessão cadastrada neste projeto. Use o
+                            formulário acima para criar a primeira.
+                          </p>
                         ) : groupedSessions.filteredCount === 0 ? (
                           <p className="text-[12px] text-[#505050]">
-                            Nenhuma sessão encontrada para os filtros
-                            selecionados.
+                            Nenhuma sessão corresponde aos filtros. Ajuste
+                            status, dublador ou período.
                           </p>
+                        ) : sessionAgendaViewMode === "visual" ? (
+                          <div className="flex flex-col gap-[14px]">
+                            {agendaVisualDayGroups.map((group) => {
+                              const dayStats =
+                                agendaDayConflictStatsByDayKey.get(
+                                  group.dayKey,
+                                );
+                              return (
+                                <div
+                                  key={group.dayKey}
+                                  className="flex flex-col gap-[8px]"
+                                >
+                                  <p className="text-[11px] font-[600] uppercase tracking-[0.06em] text-[#7b7b7b]">
+                                    {group.label}
+                                    {dayStats && dayStats.total > 0 ? (
+                                      <span
+                                        className={`ml-[6px] font-[500] normal-case tracking-normal ${dayConflictHeaderAccentClass(dayStats)}`}
+                                      >
+                                        · {dayStats.total}{" "}
+                                        {dayStats.total === 1
+                                          ? "conflito"
+                                          : "conflitos"}
+                                        {dayStats.hard > 0
+                                          ? ` (${dayStats.hard} crítico${dayStats.hard === 1 ? "" : "s"})`
+                                          : ""}
+                                      </span>
+                                    ) : null}
+                                  </p>
+                                  <div className="flex flex-col gap-[6px] border-l border-[#2e2e2e] pl-[12px]">
+                                    {group.items.map((session) => {
+                                      const isEditing =
+                                        editingSessionId === session.id;
+                                      const conflict =
+                                        sessionConflictSummaryForId(
+                                          sessionConflictSummaryById,
+                                          session.id,
+                                        );
+                                      const badge =
+                                        conflict.hasConflict &&
+                                        conflict.severity
+                                          ? agendaConflictBadgePresentation(
+                                              conflict.severity,
+                                            )
+                                          : null;
+                                      const conflictTooltip =
+                                        conflict.detailLines.join(" · ");
+                                      return (
+                                        <button
+                                          key={session.id}
+                                          type="button"
+                                          disabled={
+                                            sessionSaving ||
+                                            Boolean(sessionDeletingId)
+                                          }
+                                          onClick={() =>
+                                            onEditSession(session)
+                                          }
+                                          className={`w-full rounded-[8px] border p-[10px] text-left transition-colors disabled:opacity-40 ${agendaConflictCardClassNames(
+                                            conflict.severity,
+                                            isEditing,
+                                          )}`}
+                                        >
+                                          <div className="flex flex-wrap items-start justify-between gap-[8px]">
+                                            <p className="min-w-0 flex-1 truncate text-[12px] font-[600] text-[#e8e8e8]">
+                                              {session.title}
+                                            </p>
+                                            <span className="shrink-0 text-[11px] tabular-nums text-[#909090]">
+                                              {formatSessionTimeRange(
+                                                session.startAt,
+                                                session.endAt,
+                                              )}
+                                            </span>
+                                          </div>
+                                          <p className="mt-[4px] text-[11px] text-[#707070]">
+                                            {session.castMember?.name ??
+                                              "Dublador não informado"}
+                                          </p>
+                                          <div className="mt-[8px] flex flex-wrap items-center gap-[5px]">
+                                            {badge ? (
+                                              <span
+                                                className={badge.className}
+                                                title={
+                                                  conflictTooltip ||
+                                                  badge.label
+                                                }
+                                              >
+                                                <span aria-hidden>⚠</span>
+                                                {badge.label}
+                                              </span>
+                                            ) : null}
+                                            <span
+                                              className={`rounded-[4px] border px-[6px] py-[1px] text-[10px] font-[600] uppercase tracking-[0.04em] ${getSessionStatusBadgeClass(
+                                                session.status,
+                                              )}`}
+                                            >
+                                              {getSessionStatusLabel(
+                                                session.status,
+                                              )}
+                                            </span>
+                                            <span
+                                              className={`rounded-[4px] border px-[6px] py-[1px] text-[10px] font-[600] uppercase tracking-[0.04em] ${getSessionFormatBadgeClass(
+                                                session.format,
+                                              )}`}
+                                            >
+                                              {getSessionFormatLabel(
+                                                session.format,
+                                              )}
+                                            </span>
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         ) : (
                           <div className="flex flex-col gap-[8px]">
-                            {groupedSessions.groups.map((group) => (
-                              <div
-                                key={group.dayKey}
-                                className="flex flex-col gap-[8px]"
-                              >
-                                <p className="text-[11px] font-[600] uppercase tracking-[0.06em] text-[#7b7b7b]">
-                                  {group.label}
-                                </p>
-                                {group.items.map((session) => {
+                            {groupedSessions.groups.map((group) => {
+                              const dayStats =
+                                agendaDayConflictStatsByDayKey.get(
+                                  group.dayKey,
+                                );
+                              return (
+                                <div
+                                  key={group.dayKey}
+                                  className="flex flex-col gap-[8px]"
+                                >
+                                  <p className="text-[11px] font-[600] uppercase tracking-[0.06em] text-[#7b7b7b]">
+                                    {group.label}
+                                    {dayStats && dayStats.total > 0 ? (
+                                      <span
+                                        className={`ml-[6px] font-[500] normal-case tracking-normal ${dayConflictHeaderAccentClass(dayStats)}`}
+                                      >
+                                        · {dayStats.total}{" "}
+                                        {dayStats.total === 1
+                                          ? "conflito"
+                                          : "conflitos"}
+                                        {dayStats.hard > 0
+                                          ? ` (${dayStats.hard} crítico${dayStats.hard === 1 ? "" : "s"})`
+                                          : ""}
+                                      </span>
+                                    ) : null}
+                                  </p>
+                                  {group.items.map((session) => {
                                   const epSummaries =
                                     session.episodes &&
                                     session.episodes.length > 0
@@ -2682,10 +3270,29 @@ export default function ProjectEditPage() {
                                   const ch = characters.find(
                                     (item) => item.id === session.characterId,
                                   );
+                                  const listEditing =
+                                    editingSessionId === session.id;
+                                  const listConflict =
+                                    sessionConflictSummaryForId(
+                                      sessionConflictSummaryById,
+                                      session.id,
+                                    );
+                                  const listBadge =
+                                    listConflict.hasConflict &&
+                                    listConflict.severity
+                                      ? agendaConflictListBadgePresentation(
+                                          listConflict.severity,
+                                        )
+                                      : null;
+                                  const listConflictTooltip =
+                                    listConflict.detailLines.join(" · ");
                                   return (
                                     <div
                                       key={session.id}
-                                      className="rounded-[8px] border border-[#252525] bg-[#141414] p-[10px]"
+                                      className={`rounded-[8px] border p-[10px] ${agendaConflictCardClassNames(
+                                        listConflict.severity,
+                                        listEditing,
+                                      )}`}
                                     >
                                       <div className="flex flex-wrap items-start justify-between gap-[8px]">
                                         <div className="min-w-0">
@@ -2723,7 +3330,7 @@ export default function ProjectEditPage() {
                                             className="rounded-[5px] border border-[#5a1515] px-[8px] py-[4px] text-[10px] text-[#F09595] hover:bg-[#2a0a0a] disabled:opacity-40"
                                           >
                                             {sessionDeletingId === session.id
-                                              ? "Removendo..."
+                                              ? "Removendo sessão..."
                                               : "Remover"}
                                           </button>
                                         </div>
@@ -2761,6 +3368,18 @@ export default function ProjectEditPage() {
                                             session.format,
                                           )}
                                         </span>
+                                        {listBadge ? (
+                                          <span
+                                            className={listBadge.className}
+                                            title={
+                                              listConflictTooltip ||
+                                              listBadge.label
+                                            }
+                                          >
+                                            <span aria-hidden>⚠</span>
+                                            {listBadge.label}
+                                          </span>
+                                        ) : null}
                                         {epSummaries.length === 1 ? (
                                           <span>
                                             Episódio: EP{" "}
@@ -2796,22 +3415,23 @@ export default function ProjectEditPage() {
                                   );
                                 })}
                               </div>
-                            ))}
-                            {groupedSessions.hasMore ? (
-                              <div className="pt-[4px]">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setSessionVisibleCount(
-                                      (prev) => prev + AGENDA_PAGE_SIZE,
-                                    )
-                                  }
-                                  className="rounded-[5px] border border-[#2e2e2e] px-[12px] py-[6px] text-[11px] text-[#909090] hover:bg-[#252525]"
-                                >
-                                  Carregar mais
-                                </button>
-                              </div>
-                            ) : null}
+                            );
+                          })}
+                          {groupedSessions.hasMore ? (
+                            <div className="pt-[4px]">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSessionVisibleCount(
+                                    (prev) => prev + AGENDA_PAGE_SIZE,
+                                  )
+                                }
+                                className="rounded-[5px] border border-[#2e2e2e] px-[12px] py-[6px] text-[11px] text-[#909090] hover:bg-[#252525]"
+                              >
+                                Carregar mais
+                              </button>
+                            </div>
+                          ) : null}
                           </div>
                         )}
                       </div>

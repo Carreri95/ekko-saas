@@ -88,6 +88,11 @@ export type Episode = Prisma.EpisodeModel
  */
 export type CastMember = Prisma.CastMemberModel
 /**
+ * Model CastMemberAvailability
+ * 
+ */
+export type CastMemberAvailability = Prisma.CastMemberAvailabilityModel
+/**
  * Model ProjectCharacter
  * 
  */

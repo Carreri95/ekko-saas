@@ -398,6 +398,7 @@ export const ModelName = {
   DubbingProject: 'DubbingProject',
   Episode: 'Episode',
   CastMember: 'CastMember',
+  CastMemberAvailability: 'CastMemberAvailability',
   ProjectCharacter: 'ProjectCharacter',
   ProjectCharacterAssignment: 'ProjectCharacterAssignment',
   RecordingSession: 'RecordingSession',
@@ -418,7 +419,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "invite" | "inviteEmailDispatch" | "session" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "episode" | "castMember" | "projectCharacter" | "projectCharacterAssignment" | "recordingSession" | "recordingSessionEpisode" | "mediaAsset"
+    modelProps: "user" | "invite" | "inviteEmailDispatch" | "session" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "episode" | "castMember" | "castMemberAvailability" | "projectCharacter" | "projectCharacterAssignment" | "recordingSession" | "recordingSessionEpisode" | "mediaAsset"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1458,6 +1459,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CastMemberAvailability: {
+      payload: Prisma.$CastMemberAvailabilityPayload<ExtArgs>
+      fields: Prisma.CastMemberAvailabilityFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CastMemberAvailabilityFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CastMemberAvailabilityPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CastMemberAvailabilityFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CastMemberAvailabilityPayload>
+        }
+        findFirst: {
+          args: Prisma.CastMemberAvailabilityFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CastMemberAvailabilityPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CastMemberAvailabilityFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CastMemberAvailabilityPayload>
+        }
+        findMany: {
+          args: Prisma.CastMemberAvailabilityFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CastMemberAvailabilityPayload>[]
+        }
+        create: {
+          args: Prisma.CastMemberAvailabilityCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CastMemberAvailabilityPayload>
+        }
+        createMany: {
+          args: Prisma.CastMemberAvailabilityCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CastMemberAvailabilityCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CastMemberAvailabilityPayload>[]
+        }
+        delete: {
+          args: Prisma.CastMemberAvailabilityDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CastMemberAvailabilityPayload>
+        }
+        update: {
+          args: Prisma.CastMemberAvailabilityUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CastMemberAvailabilityPayload>
+        }
+        deleteMany: {
+          args: Prisma.CastMemberAvailabilityDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CastMemberAvailabilityUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CastMemberAvailabilityUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CastMemberAvailabilityPayload>[]
+        }
+        upsert: {
+          args: Prisma.CastMemberAvailabilityUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CastMemberAvailabilityPayload>
+        }
+        aggregate: {
+          args: Prisma.CastMemberAvailabilityAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCastMemberAvailability>
+        }
+        groupBy: {
+          args: Prisma.CastMemberAvailabilityGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CastMemberAvailabilityGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CastMemberAvailabilityCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CastMemberAvailabilityCountAggregateOutputType> | number
+        }
+      }
+    }
     ProjectCharacter: {
       payload: Prisma.$ProjectCharacterPayload<ExtArgs>
       fields: Prisma.ProjectCharacterFieldRefs
@@ -2093,6 +2168,20 @@ export const CastMemberScalarFieldEnum = {
 export type CastMemberScalarFieldEnum = (typeof CastMemberScalarFieldEnum)[keyof typeof CastMemberScalarFieldEnum]
 
 
+export const CastMemberAvailabilityScalarFieldEnum = {
+  id: 'id',
+  castMemberId: 'castMemberId',
+  startAt: 'startAt',
+  endAt: 'endAt',
+  type: 'type',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CastMemberAvailabilityScalarFieldEnum = (typeof CastMemberAvailabilityScalarFieldEnum)[keyof typeof CastMemberAvailabilityScalarFieldEnum]
+
+
 export const ProjectCharacterScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
@@ -2496,6 +2585,20 @@ export type ListEnumCastMemberStatusFieldRefInput<$PrismaModel> = FieldRefInputT
 
 
 /**
+ * Reference to a field of type 'CastMemberAvailabilityType'
+ */
+export type EnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CastMemberAvailabilityType'>
+    
+
+
+/**
+ * Reference to a field of type 'CastMemberAvailabilityType[]'
+ */
+export type ListEnumCastMemberAvailabilityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CastMemberAvailabilityType[]'>
+    
+
+
+/**
  * Reference to a field of type 'CharacterImportance'
  */
 export type EnumCharacterImportanceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CharacterImportance'>
@@ -2743,6 +2846,7 @@ export type GlobalOmitConfig = {
   dubbingProject?: Prisma.DubbingProjectOmit
   episode?: Prisma.EpisodeOmit
   castMember?: Prisma.CastMemberOmit
+  castMemberAvailability?: Prisma.CastMemberAvailabilityOmit
   projectCharacter?: Prisma.ProjectCharacterOmit
   projectCharacterAssignment?: Prisma.ProjectCharacterAssignmentOmit
   recordingSession?: Prisma.RecordingSessionOmit

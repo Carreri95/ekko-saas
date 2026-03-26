@@ -406,6 +406,9 @@ bloqueado
 Observação importante:
 Hoje o backend já recalcula parcialmente a ocupação do elenco com base em vínculos ativos de personagem. Isso é útil, mas ainda não substitui agenda real.
 
+CastMemberAvailability (disponibilidade manual):
+Períodos explícitos ligados ao dublador (`AVAILABLE`, `UNAVAILABLE`, `BLOCKED`), cadastrados manualmente. São uma camada separada de `RecordingSession`: nesta fase não bloqueiam criação de sessão nem são validadas contra a agenda. Integração futura (avisos ou restrições no agendamento) virá em PRs posteriores.
+
 4.12 ProjectCharacterAssignment
 
 Esta é a próxima entidade estrutural mais importante.
