@@ -12,7 +12,6 @@ import {
   useState,
   type ChangeEvent,
 } from "react";
-import { createPortal } from "react-dom";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,10 +24,7 @@ import type { DubbingProjectDto } from "../types";
 import type { DubbingProjectStatus } from "../domain";
 import type { ProjectCharacterDto } from "@/app/types/project-character";
 import type { CastMemberDto } from "@/app/types/cast-member";
-import type {
-  DubbingEpisodeDto,
-  DubbingEpisodeStatus,
-} from "@/app/types/dubbing-episode";
+import type { DubbingEpisodeDto } from "@/app/types/dubbing-episode";
 import { CharacterCard } from "./components/character-card";
 import { CharacterModal } from "./components/character-modal";
 import { LanguageCombobox } from "../components/language-combobox";
@@ -79,26 +75,31 @@ const labelCls =
   "mb-[5px] block text-[10px] font-[600] uppercase tracking-[0.07em] text-[#505050]";
 const errorCls = "mt-[3px] text-[11px] text-[#F09595]";
 
-const EPISODE_STATUS_BADGE: Record<
-  DubbingEpisodeStatus,
-  { className: string; label: string }
-> = {
-  PENDING: {
-    className:
-      "border border-[#404040] bg-[#2a2a2a] text-[#909090]",
-    label: "Pendente",
-  },
-  TRANSCRIBING: {
-    className:
-      "border border-[#5c4a20] bg-[#3d3520] text-[#EF9F27]",
-    label: "Em transcrição",
-  },
-  DONE: {
-    className:
-      "border border-[#0F6E56] bg-[#0d3d2a] text-[#5DCAA5]",
-    label: "Concluído",
-  },
-};
+function getWorkflowBadge(ep: DubbingEpisodeDto): {
+  className: string;
+  label: string;
+  spinning?: boolean;
+} {
+  if (ep.status === "TRANSCRIBING") {
+    return { className: "badge-transcribing", label: "Em transcrição", spinning: true };
+  }
+  const map: Record<typeof ep.workflowState, { className: string; label: string }> = {
+    sem_audio: { className: "badge-no-audio", label: "Sem áudio" },
+    audio_enviado: { className: "badge-audio", label: "Áudio enviado" },
+    transcrevendo: { className: "badge-transcribing", label: "Transcrevendo" },
+    pronto_para_editar: { className: "badge-ready", label: "Pronto p/ editar" },
+    em_edicao: { className: "badge-editing", label: "Em edição" },
+    concluido: { className: "badge-done", label: "Concluído" },
+  };
+  return map[ep.workflowState];
+}
+
+function formatEpisodeTimestamp(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
 
 function isoToInput(iso?: string | null) {
   if (!iso) return "";
@@ -162,15 +163,6 @@ export default function ProjectEditPage() {
   const [episodeInlineError, setEpisodeInlineError] = useState<
     Record<string, string>
   >({});
-  const [openEpisodeMenuId, setOpenEpisodeMenuId] = useState<string | null>(
-    null,
-  );
-  /** Posição do dropdown (portal + fixed) — evita recorte por `overflow-y-auto` do painel. */
-  const [episodeMenuFixed, setEpisodeMenuFixed] = useState<{
-    top: number;
-    right: number;
-  } | null>(null);
-  const episodesTabScrollRef = useRef<HTMLDivElement | null>(null);
   const [exportSrtsBusy, setExportSrtsBusy] = useState(false);
   const [exportSrtsError, setExportSrtsError] = useState<string | null>(null);
   const audioTargetEpRef = useRef<string | null>(null);
@@ -274,46 +266,6 @@ export default function ProjectEditPage() {
     };
   }, []);
 
-  useEffect(() => {
-    const onDocPointerDown = (e: PointerEvent) => {
-      const target = e.target;
-      if (!(target instanceof Element)) {
-        setOpenEpisodeMenuId(null);
-        setEpisodeMenuFixed(null);
-        return;
-      }
-      const inside =
-        target.closest("[data-episode-menu-root='1']") ||
-        target.closest("[data-episode-menu-portal='1']");
-      if (!inside) {
-        setOpenEpisodeMenuId(null);
-        setEpisodeMenuFixed(null);
-      }
-    };
-    document.addEventListener("pointerdown", onDocPointerDown);
-    return () => document.removeEventListener("pointerdown", onDocPointerDown);
-  }, []);
-
-  useEffect(() => {
-    if (!openEpisodeMenuId) return;
-    const onScrollOrResize = () => {
-      setOpenEpisodeMenuId(null);
-      setEpisodeMenuFixed(null);
-    };
-    window.addEventListener("resize", onScrollOrResize);
-    const el = episodesTabScrollRef.current;
-    el?.addEventListener("scroll", onScrollOrResize, { passive: true });
-    return () => {
-      window.removeEventListener("resize", onScrollOrResize);
-      el?.removeEventListener("scroll", onScrollOrResize);
-    };
-  }, [openEpisodeMenuId]);
-
-  useEffect(() => {
-    setOpenEpisodeMenuId(null);
-    setEpisodeMenuFixed(null);
-  }, [activeTab]);
-
   const patchEpisodeRow = useCallback(
     async (epId: string, body: Record<string, unknown>) => {
       if (!id) return null;
@@ -358,7 +310,8 @@ export default function ProjectEditPage() {
         if (st === "DONE") {
           stopTranscriptionPoll(epId);
           const updated = await patchEpisodeRow(epId, {
-            status: "DONE",
+            // "DONE" fica reservado ao fluxo editorial no editor de SRT.
+            status: "PENDING",
             subtitleFileId: data.subtitleFileId ?? null,
           });
           if (updated) {
@@ -534,6 +487,14 @@ export default function ProjectEditPage() {
         [ep.id]: "Falha de rede ao iniciar transcrição.",
       }));
     }
+  };
+
+  const onMarkEpisodeDone = async (ep: DubbingEpisodeDto) => {
+    if (!id || ep.status === "DONE" || !ep.subtitleFileId) return;
+    setEpisodeInlineError((prev) => ({
+      ...prev,
+      [ep.id]: "Conclua no editor de SRT (botão “Salvar e concluir”).",
+    }));
   };
 
   const openNewChar = () => {
@@ -1303,19 +1264,32 @@ export default function ProjectEditPage() {
                   </div>
                 )}
                 {activeTab === "episodios" && (
-                  <div
-                    ref={episodesTabScrollRef}
-                    className="flex-1 overflow-y-auto px-[24px] py-[20px]"
-                  >
+                  <div className="flex-1 overflow-y-auto px-[24px] py-[20px]">
+                    {/* estilos locais da lista */}
+                    <style>{`
+                      .ep-item { transition: background 0.12s; }
+                      .ep-item:hover { background: #1a1a1a; }
+                      .badge-done        { background:#0d3d2a; border:1px solid #0F6E56; color:#5DCAA5; }
+                      .badge-no-audio    { background:#2a2a2a; border:1px solid #404040; color:#909090; }
+                      .badge-audio       { background:#2a3140; border:1px solid #3d4450; color:#A8B4CC; }
+                      .badge-transcribing{ background:#3d3520; border:1px solid #5c4a20; color:#EF9F27; }
+                      .badge-ready       { background:#152a3d; border:1px solid #1a4d6e; color:#7EC8E3; }
+                      .badge-editing     { background:#0d3d2a; border:1px solid #0F6E56; color:#5DCAA5; }
+                      .ep-spin { display:inline-block; width:10px; height:10px; border:2px solid #EF9F27;
+                                 border-top-color:transparent; border-radius:50%;
+                                 animation:ep-spin-anim 0.7s linear infinite; }
+                      @keyframes ep-spin-anim { to { transform: rotate(360deg); } }
+                      .meta-chip-has { color:#5DCAA5 !important; border-color:#0F6E5644 !important; background:#0d3d2a55 !important; }
+                      .act-btn-primary { border-color:#0F6E56 !important; background:#0d3d2a88 !important; color:#5DCAA5 !important; }
+                      .act-btn-primary:hover:not(:disabled) { background:#0d3d2acc !important; }
+                    `}</style>
+
                     <div className="mx-auto" style={{ maxWidth: 900 }}>
+                      {/* cabeçalho da seção */}
                       <div className="mb-[16px] flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <h2 className="text-[14px] font-[600] text-[#e8e8e8]">
-                            Episódios
-                          </h2>
-                          <p className="mt-[2px] text-[11px] text-[#505050]">
-                            Lista editorial por número
-                          </p>
+                          <h2 className="text-[14px] font-[600] text-[#e8e8e8]">Episódios</h2>
+                          <p className="mt-[2px] text-[11px] text-[#505050]">Lista editorial por número</p>
                         </div>
                         {hasAnyDoneEpisode ? (
                           <button
@@ -1328,10 +1302,9 @@ export default function ProjectEditPage() {
                           </button>
                         ) : null}
                       </div>
+
                       {exportSrtsError ? (
-                        <p className="mb-[12px] text-[11px] text-[#F09595]">
-                          {exportSrtsError}
-                        </p>
+                        <p className="mb-[12px] text-[11px] text-[#F09595]">{exportSrtsError}</p>
                       ) : null}
 
                       {episodesLoading ? (
@@ -1352,23 +1325,20 @@ export default function ProjectEditPage() {
                             aria-hidden
                             onChange={onEpisodeAudioSelected}
                           />
-                          <div className="mb-[16px] overflow-hidden rounded-[10px] border border-[#252525] bg-[#1a1a1a]">
+
+                          {/* barra de progresso */}
+                          <div className="mb-[12px] overflow-hidden rounded-[10px] border border-[#252525] bg-[#1a1a1a]">
                             <div className="border-b border-[#252525] px-[14px] py-[10px]">
-                              <span className="text-[12px] font-[600] text-[#e8e8e8]">
-                                Progresso
-                              </span>
+                              <span className="text-[12px] font-[600] text-[#e8e8e8]">Progresso</span>
                             </div>
                             <div className="p-[14px]">
-                              <p className="mb-[10px] text-[12px] text-[#909090]">
-                                {episodeDoneCount} de {episodeTotal} episódios
-                                concluídos
+                              <p className="mb-[8px] text-[12px] text-[#909090]">
+                                {episodeDoneCount} de {episodeTotal} episódios concluídos
                               </p>
-                              <div className="h-[8px] w-full overflow-hidden rounded-full bg-[#252525]">
+                              <div className="h-[6px] w-full overflow-hidden rounded-full bg-[#252525]">
                                 <div
-                                  className="h-full rounded-full bg-[#1D9E75] transition-[width]"
-                                  style={{
-                                    width: `${episodeProgressPct}%`,
-                                  }}
+                                  className="h-full rounded-full bg-[#1D9E75] transition-[width] duration-300"
+                                  style={{ width: `${episodeProgressPct}%` }}
                                   aria-hidden
                                 />
                               </div>
@@ -1385,210 +1355,171 @@ export default function ProjectEditPage() {
                               </p>
                             </div>
                           ) : (
-                            <div className="overflow-visible rounded-[10px] border border-[#252525] bg-[#1a1a1a]">
+                            <div className="overflow-visible rounded-[10px] border border-[#252525] bg-[#141414]">
                               <div className="border-b border-[#252525] px-[14px] py-[10px]">
                                 <span className="text-[12px] font-[600] text-[#e8e8e8]">
                                   Lista ({episodes.length})
                                 </span>
                               </div>
+
                               <ul className="divide-y divide-[#252525]">
                                 {episodes.map((ep) => {
-                                  const title =
-                                    ep.title?.trim() ||
-                                    `Episódio ${ep.number}`;
-                                  const badge = EPISODE_STATUS_BADGE[ep.status];
-                                  const busy =
-                                    ep.status === "TRANSCRIBING" ||
-                                    uploadingEpisodeId === ep.id;
+                                  const title = ep.title?.trim() || `Episódio ${ep.number}`;
+                                  const badge = getWorkflowBadge(ep);
+                                  const busy = ep.status === "TRANSCRIBING" || uploadingEpisodeId === ep.id;
                                   const inlineErr = episodeInlineError[ep.id];
-                                  const isMenuOpen = openEpisodeMenuId === ep.id;
-                                  const closeEpisodeMenu = () => {
-                                    setOpenEpisodeMenuId(null);
-                                    setEpisodeMenuFixed(null);
-                                  };
+                                  const editedStr = formatEpisodeTimestamp(ep.editedAt);
+                                  const updatedStr = formatEpisodeTimestamp(ep.updatedAt);
 
-                                  const episodeMenuPanel =
-                                    isMenuOpen &&
-                                    episodeMenuFixed &&
-                                    typeof document !== "undefined"
-                                      ? createPortal(
-                                          <div
-                                            data-episode-menu-portal="1"
-                                            className="fixed z-[9999] min-w-[170px] overflow-hidden rounded-[8px] border border-[#2e2e2e] bg-[#141414] shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
-                                            style={{
-                                              top: episodeMenuFixed.top,
-                                              right: episodeMenuFixed.right,
-                                            }}
-                                          >
-                                            {ep.status === "PENDING" &&
-                                            !ep.audioFileId ? (
-                                              <button
-                                                type="button"
-                                                disabled={busy}
-                                                onClick={() => {
-                                                  closeEpisodeMenu();
-                                                  onPickEpisodeAudio(ep.id);
-                                                }}
-                                                className="block w-full px-[10px] py-[8px] text-left text-[11px] text-[#cfcfcf] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
-                                              >
-                                                ↑ Enviar áudio
-                                              </button>
-                                            ) : null}
+                                  // ações possíveis
+                                  const canSendAudio = !busy;
+                                  const canStartTx = Boolean(ep.audioFileId) && !busy && !ep.subtitleFileId;
+                                  const canOpenEditor = Boolean(ep.subtitleFileId);
+                                  const canMarkDone = false;
 
-                                            {ep.status === "PENDING" &&
-                                            ep.audioFileId ? (
-                                              <>
-                                                <button
-                                                  type="button"
-                                                  disabled={busy}
-                                                  onClick={() => {
-                                                    closeEpisodeMenu();
-                                                    onPickEpisodeAudio(ep.id);
-                                                  }}
-                                                  className="block w-full px-[10px] py-[8px] text-left text-[11px] text-[#cfcfcf] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
-                                                >
-                                                  ↑ Substituir áudio
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  disabled={busy}
-                                                  onClick={() => {
-                                                    closeEpisodeMenu();
-                                                    void onGenerateEpisodeSrt(ep);
-                                                  }}
-                                                  className="block w-full border-t border-[#252525] px-[10px] py-[8px] text-left text-[11px] text-[#5DCAA5] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
-                                                >
-                                                  Gerar SRT
-                                                </button>
-                                              </>
-                                            ) : null}
+                                  // qual é a ação principal do momento?
+                                  const primaryAction =
+                                    !ep.audioFileId ? "audio" :
+                                    !ep.subtitleFileId ? "transcribe" :
+                                    ep.status !== "DONE" ? "editor" : null;
 
-                                            {ep.status === "TRANSCRIBING" ? (
-                                              <span className="block w-full cursor-not-allowed px-[10px] py-[8px] text-left text-[11px] text-[#707070]">
-                                                Transcrevendo...
-                                              </span>
-                                            ) : null}
-
-                                            {ep.status === "DONE" ? (
-                                              <>
-                                                <button
-                                                  type="button"
-                                                  disabled={!ep.subtitleFileId}
-                                                  onClick={() => {
-                                                    if (!ep.subtitleFileId) return;
-                                                    closeEpisodeMenu();
-                                                    router.push(
-                                                      `/subtitle-file-edit?fileId=${encodeURIComponent(ep.subtitleFileId)}&episodeId=${encodeURIComponent(ep.id)}&projectId=${encodeURIComponent(id)}`,
-                                                    );
-                                                  }}
-                                                  className="block w-full px-[10px] py-[8px] text-left text-[11px] text-[#5DCAA5] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
-                                                >
-                                                  Abrir editor
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  disabled={busy}
-                                                  onClick={() => {
-                                                    closeEpisodeMenu();
-                                                    onPickEpisodeAudio(ep.id);
-                                                  }}
-                                                  className="block w-full border-t border-[#252525] px-[10px] py-[8px] text-left text-[11px] text-[#cfcfcf] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
-                                                >
-                                                  ↑ Substituir áudio
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  disabled={busy}
-                                                  onClick={() => {
-                                                    closeEpisodeMenu();
-                                                    void onGenerateEpisodeSrt(ep);
-                                                  }}
-                                                  className="block w-full border-t border-[#252525] px-[10px] py-[8px] text-left text-[11px] text-[#5DCAA5] transition-colors hover:bg-[#252525] disabled:cursor-not-allowed disabled:opacity-40"
-                                                >
-                                                  Gerar SRT
-                                                </button>
-                                              </>
-                                            ) : null}
-                                          </div>,
-                                          document.body,
-                                        )
-                                      : null;
+                                  const baseBtnCls =
+                                    "rounded-[5px] border border-[#2e2e2e] bg-[#141414] px-[8px] py-[4px] text-[10px] font-[500] text-[#cfcfcf] transition-colors hover:bg-[#252525] hover:text-[#e8e8e8] disabled:cursor-not-allowed disabled:opacity-35";
 
                                   return (
-                                    <li
-                                      key={ep.id}
-                                      className="flex items-start justify-between gap-[10px] px-[14px] py-[12px]"
-                                    >
-                                      <div className="min-w-0 flex-1">
-                                        <div className="flex min-w-0 flex-row flex-wrap items-center gap-x-2 gap-y-1">
-                                          <span className="shrink-0 font-mono text-[11px] text-[#505050]">
-                                            #{ep.number}
-                                          </span>
-                                          {ep.status === "TRANSCRIBING" ? (
-                                            <span className="inline-flex shrink-0 items-center gap-[6px] text-[10px] font-[600] uppercase tracking-[0.05em] text-[#EF9F27]">
+                                    <li key={ep.id} className="ep-item flex flex-col gap-[10px] px-[14px] py-[12px]">
+                                      {/* linha principal: número · conteúdo */}
+                                      <div className="flex min-w-0 items-start gap-[10px]">
+                                        {/* número */}
+                                        <span className="w-[22px] shrink-0 pt-[2px] font-mono text-[11px] text-[#505050]">
+                                          #{ep.number}
+                                        </span>
+
+                                        {/* conteúdo */}
+                                        <div className="min-w-0 flex-1">
+                                          {/* badge + título */}
+                                          <div className="mb-[6px] flex flex-wrap items-center gap-x-[8px] gap-y-[4px]">
+                                            {badge.spinning ? (
+                                              <span className="inline-flex items-center gap-[5px] rounded-[4px] border border-[#5c4a20] bg-[#3d3520] px-[8px] py-[2px] text-[10px] font-[600] uppercase tracking-[0.05em] text-[#EF9F27]">
+                                                <span className="ep-spin" aria-hidden />
+                                                Em transcrição
+                                              </span>
+                                            ) : (
                                               <span
-                                                className="inline-block h-[12px] w-[12px] animate-spin rounded-full border-2 border-[#EF9F27] border-t-transparent"
-                                                aria-hidden
-                                              />
-                                              Em transcrição
-                                            </span>
-                                          ) : (
+                                                className={`inline-flex items-center rounded-[4px] px-[8px] py-[2px] text-[10px] font-[600] uppercase tracking-[0.05em] ${badge.className}`}
+                                              >
+                                                {badge.label === "Concluído" ? "✓ " : ""}
+                                                {badge.label}
+                                              </span>
+                                            )}
                                             <span
-                                              className={`inline-flex shrink-0 rounded-[4px] px-[8px] py-[2px] text-[10px] font-[600] uppercase tracking-[0.05em] ${badge.className}`}
+                                              className="min-w-0 truncate text-[13px] font-[500] text-[#e8e8e8]"
+                                              title={title}
                                             >
-                                              {badge.label}
+                                              {title}
                                             </span>
-                                          )}
-                                          {ep.editedAt !== null ? (
-                                            <span className="inline-flex shrink-0 rounded-[4px] border border-[#0F6E56] bg-[#0d3d2a] px-[8px] py-[2px] text-[10px] font-[600] uppercase tracking-[0.05em] text-[#5DCAA5]">
-                                              Editado
-                                            </span>
+                                          </div>
+
+                                          {/* meta chips */}
+                                          <div className="mb-[6px] flex flex-wrap gap-[5px]">
+                                            {(
+                                              [
+                                                { key: "audio", has: Boolean(ep.audioFileId), label: "Áudio" },
+                                                { key: "tx", has: Boolean(ep.transcriptionProjectId), label: "Transcrição" },
+                                                { key: "legenda", has: Boolean(ep.subtitleFileId), label: "Legenda" },
+                                              ] as const
+                                            ).map(({ key, has, label }) => (
+                                              <span
+                                                key={key}
+                                                className={`rounded-[3px] border border-[#333] bg-[#1e1e1e] px-[6px] py-[1px] text-[10px] text-[#606060] ${has ? "meta-chip-has" : ""}`}
+                                              >
+                                                {has ? "✓ " : ""}{label}
+                                              </span>
+                                            ))}
+                                          </div>
+
+                                          {/* timestamp */}
+                                          {(editedStr || updatedStr) ? (
+                                            <p className="mb-[6px] text-[10px] text-[#505050]">
+                                              {editedStr ? <>Editado: {editedStr}</> : null}
+                                              {editedStr && updatedStr ? " · " : null}
+                                              {!editedStr && updatedStr ? <>Atualizado: {updatedStr}</> : null}
+                                            </p>
                                           ) : null}
-                                          <span
-                                            className="min-w-0 flex-1 truncate text-[13px] font-[500] text-[#e8e8e8]"
-                                            title={title}
-                                          >
-                                            {title}
-                                          </span>
+
+                                          {/* erro inline */}
+                                          {inlineErr ? (
+                                            <p className="mb-[6px] text-[11px] text-[#F09595]">{inlineErr}</p>
+                                          ) : null}
                                         </div>
-                                        {inlineErr ? (
-                                          <p className="mt-[6px] text-[11px] text-[#F09595]">
-                                            {inlineErr}
-                                          </p>
-                                        ) : null}
                                       </div>
-                                      <div
-                                        className="relative flex shrink-0 items-start justify-end pt-[1px]"
-                                        data-episode-menu-root="1"
-                                      >
+
+                                      {/* linha de ações */}
+                                      <div className="flex flex-wrap gap-[6px] pl-[32px]">
                                         <button
                                           type="button"
-                                          aria-label={`Ações do episódio ${ep.number}`}
-                                          aria-expanded={isMenuOpen}
-                                          onClick={(e) => {
-                                            if (openEpisodeMenuId === ep.id) {
-                                              closeEpisodeMenu();
-                                              return;
-                                            }
-                                            const rect =
-                                              e.currentTarget.getBoundingClientRect();
-                                            setEpisodeMenuFixed({
-                                              top: rect.bottom + 6,
-                                              right:
-                                                window.innerWidth - rect.right,
-                                            });
-                                            setOpenEpisodeMenuId(ep.id);
-                                          }}
-                                          className="rounded-[5px] border border-[#2e2e2e] bg-[#141414] px-[9px] py-[5px] text-[12px] leading-none text-[#909090] transition-colors hover:bg-[#252525] hover:text-[#e8e8e8]"
+                                          disabled={!canSendAudio}
+                                          onClick={() => onPickEpisodeAudio(ep.id)}
+                                          className={`${baseBtnCls} ${primaryAction === "audio" ? "act-btn-primary" : ""}`}
                                         >
-                                          •••
+                                          {ep.audioFileId ? "Substituir áudio" : "Enviar áudio"}
                                         </button>
-                                        {episodeMenuPanel}
+
+                                        <button
+                                          type="button"
+                                          disabled={!canStartTx}
+                                          onClick={() => void onGenerateEpisodeSrt(ep)}
+                                          className={`${baseBtnCls} ${primaryAction === "transcribe" ? "act-btn-primary" : ""}`}
+                                        >
+                                          Iniciar transcrição
+                                        </button>
+
+                                        <span
+                                          title={
+                                            canOpenEditor
+                                              ? "Abrir o editor de legendas deste episódio"
+                                              : "Aguardando ficheiro de legenda"
+                                          }
+                                          className="inline-flex"
+                                        >
+                                          <button
+                                            type="button"
+                                            disabled={!canOpenEditor || !id}
+                                            onClick={() => {
+                                              if (!id || !canOpenEditor) return;
+                                              router.push(
+                                                `/subtitle-file-edit?projectId=${encodeURIComponent(id)}&episodeId=${encodeURIComponent(ep.id)}`,
+                                              );
+                                            }}
+                                            className={`${baseBtnCls} ${primaryAction === "editor" ? "act-btn-primary" : ""}`}
+                                          >
+                                            {canOpenEditor ? "Abrir editor" : "Aguardando transcrição"}
+                                          </button>
+                                        </span>
+
+                                        <button
+                                          type="button"
+                                          disabled={!canMarkDone}
+                                          className={baseBtnCls}
+                                          title="Concluir apenas no editor de SRT (Salvar e concluir)"
+                                        >
+                                          Concluir no editor
+                                        </button>
                                       </div>
                                     </li>
                                   );
                                 })}
                               </ul>
+
+                              {/* 3 pontinhos no fim */}
+                              <div className="flex items-center justify-center gap-[6px] py-[14px]">
+                                {[0, 1, 2].map((i) => (
+                                  <span
+                                    key={i}
+                                    className="block h-[4px] w-[4px] rounded-full bg-[#2e2e2e]"
+                                  />
+                                ))}
+                              </div>
                             </div>
                           )}
                         </>

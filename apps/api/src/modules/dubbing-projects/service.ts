@@ -353,6 +353,14 @@ export class DubbingProjectsService {
     return { episodes: rows.map(serializeEpisode) };
   }
 
+  async getEpisode(projectId: string, episodeId: string) {
+    const project = await this.repo.findById(projectId);
+    if (!project) return null;
+    const ep = await this.repo.findEpisodeInProject(projectId, episodeId);
+    if (!ep) return null;
+    return { episode: serializeEpisode(ep) };
+  }
+
   /**
    * Empacota SRTs de episódios DONE (com legenda) num ZIP.
    * Nomes: ep01.srt, ep02.srt, … com padding conforme o total planeado de episódios.
@@ -513,7 +521,13 @@ export class DubbingProjectsService {
     const subtitleFileId = result.ok.subtitleFileId;
     const updated = await prisma.episode.update({
       where: { id: ep.id },
-      data: { audioFileId: subtitleFileId },
+      data: {
+        audioFileId: subtitleFileId,
+        // Novo áudio invalida a legenda/edição anterior.
+        subtitleFileId: null,
+        editedAt: null,
+        status: EpisodeStatus.PENDING,
+      },
     });
 
     return { episode: serializeEpisode(updated) };

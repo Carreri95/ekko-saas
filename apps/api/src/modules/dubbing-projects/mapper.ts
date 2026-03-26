@@ -53,6 +53,14 @@ export type CharacterRow = {
   createdAt: Date;
 };
 
+import type { EpisodeStatus } from "../../generated/prisma/client.js";
+import {
+  deriveEpisodeWorkflowState,
+  type EpisodeWorkflowState,
+} from "./episode-workflow-state.js";
+
+export type { EpisodeWorkflowState };
+
 export type EpisodeSerializeInput = {
   id: string;
   createdAt: Date;
@@ -60,23 +68,35 @@ export type EpisodeSerializeInput = {
   editedAt: Date | null;
   number: number;
   title: string | null;
-  status: string;
+  status: EpisodeStatus;
   subtitleFileId: string | null;
   audioFileId: string | null;
+  transcriptionProjectId: string | null;
   projectId: string;
 };
 
 export function serializeEpisode(e: EpisodeSerializeInput) {
+  const workflowState = deriveEpisodeWorkflowState({
+    status: e.status,
+    audioFileId: e.audioFileId,
+    subtitleFileId: e.subtitleFileId,
+    transcriptionProjectId: e.transcriptionProjectId,
+    editedAt: e.editedAt,
+    updatedAt: e.updatedAt,
+  });
+
   return {
     id: e.id,
-    createdAt: e.createdAt.toISOString(),
-    updatedAt: e.updatedAt.toISOString(),
-    editedAt: e.editedAt?.toISOString() ?? null,
     number: e.number,
     title: e.title,
     status: e.status,
-    subtitleFileId: e.subtitleFileId,
     audioFileId: e.audioFileId,
+    subtitleFileId: e.subtitleFileId,
+    transcriptionProjectId: e.transcriptionProjectId,
+    editedAt: e.editedAt?.toISOString() ?? null,
+    updatedAt: e.updatedAt.toISOString(),
+    workflowState,
+    createdAt: e.createdAt.toISOString(),
     projectId: e.projectId,
   };
 }

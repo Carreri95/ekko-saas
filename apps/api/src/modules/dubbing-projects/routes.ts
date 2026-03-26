@@ -76,6 +76,15 @@ export async function registerDubbingProjectRoutes(app: FastifyInstance) {
       .send(result.ok.buffer);
   });
 
+  app.get<{ Params: ParamsEpisode }>(
+    "/api/dubbing-projects/:id/episodes/:epId",
+    async (request, reply) => {
+      const result = await service.getEpisode(request.params.id, request.params.epId);
+      if (!result) return reply.code(404).send({ error: "Não encontrado" });
+      return reply.send(result);
+    },
+  );
+
   app.post<{ Params: ParamsEpisode }>(
     "/api/dubbing-projects/:id/episodes/:epId/audio",
     async (request, reply) => {

@@ -202,6 +202,10 @@ function SubtitleFileEditPageInner() {
   const [dubbingEpisodesError, setDubbingEpisodesError] = useState<
     string | null
   >(null);
+  /** Resolução de `subtitleFileId` a partir de `episodeId` quando a URL não traz `fileId`. */
+  const [dubbingEpisodeResolve, setDubbingEpisodeResolve] = useState<
+    "idle" | "loading" | "ok" | "no_subtitle" | "error"
+  >("idle");
   const [saveCompleteBusy, setSaveCompleteBusy] = useState(false);
   const redirectAfterSaveTimerRef = useRef<number | null>(null);
   /** Vista geral da faixa (scroll) — barra por baixo da waveform. */
@@ -237,6 +241,60 @@ function SubtitleFileEditPageInner() {
       );
     }
   }, [fileIdParam]);
+
+  useEffect(() => {
+    if (!dubbingContextActive) {
+      setDubbingEpisodeResolve("idle");
+      return;
+    }
+    const pid = projectIdParam.trim();
+    const eid = episodeIdParam.trim();
+    if (!pid || !eid) {
+      setDubbingEpisodeResolve("idle");
+      return;
+    }
+    if (sanitizeSubtitleFileId(fileIdParam)) {
+      setDubbingEpisodeResolve("ok");
+      return;
+    }
+    setSubtitleFileId("");
+    setCues([]);
+    setFilename(null);
+    setWavFilename(null);
+    setWavPath(null);
+    setMediaSourceUrl(null);
+    setMediaKind(null);
+    setError(null);
+    setLocalWaveformData(null);
+    lastSavedServerHashRef.current = "";
+    let cancelled = false;
+    setDubbingEpisodeResolve("loading");
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/dubbing-projects/${encodeURIComponent(pid)}/episodes/${encodeURIComponent(eid)}`,
+        );
+        if (!res.ok) {
+          if (!cancelled) setDubbingEpisodeResolve("error");
+          return;
+        }
+        const data = (await res.json()) as { episode?: DubbingEpisodeDto };
+        if (cancelled) return;
+        const ep = data.episode;
+        if (ep?.subtitleFileId) {
+          setSubtitleFileId(ep.subtitleFileId);
+          setDubbingEpisodeResolve("ok");
+        } else {
+          setDubbingEpisodeResolve("no_subtitle");
+        }
+      } catch {
+        if (!cancelled) setDubbingEpisodeResolve("error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dubbingContextActive, projectIdParam, episodeIdParam, fileIdParam]);
 
   useEffect(() => {
     if (!dubbingContextActive) {
@@ -1339,9 +1397,9 @@ function SubtitleFileEditPageInner() {
             loading={dubbingEpisodesLoading}
             error={dubbingEpisodesError}
             onSelectDoneEpisode={(ep) => {
-              if (ep.status !== "DONE" || !ep.subtitleFileId) return;
+              if (!ep.subtitleFileId) return;
               router.push(
-                `/subtitle-file-edit?fileId=${encodeURIComponent(ep.subtitleFileId)}&episodeId=${encodeURIComponent(ep.id)}&projectId=${encodeURIComponent(projectIdParam.trim())}`,
+                `/subtitle-file-edit?projectId=${encodeURIComponent(projectIdParam.trim())}&episodeId=${encodeURIComponent(ep.id)}`,
               );
             }}
             onSaveAndComplete={handleSaveAndComplete}
@@ -1647,6 +1705,39 @@ function SubtitleFileEditPageInner() {
                 </div>
               </div>
             </section>
+          ) : dubbingContextActive &&
+            dubbingEpisodeResolve === "loading" &&
+            !sanitizeSubtitleFileId(fileIdParam) &&
+            !hasServerSubtitleFile ? (
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 text-center text-[13px] text-[var(--text-muted)]">
+              <span
+                className="mb-3 inline-block h-6 w-6 animate-spin rounded-full border-2 border-[#1D9E75] border-t-transparent"
+                aria-hidden
+              />
+              A preparar o episódio…
+            </div>
+          ) : dubbingContextActive &&
+            (dubbingEpisodeResolve === "no_subtitle" ||
+              dubbingEpisodeResolve === "error") &&
+            !hasServerSubtitleFile ? (
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+              <p className="max-w-md text-[13px] text-[var(--text-primary)]">
+                {dubbingEpisodeResolve === "error"
+                  ? "Não foi possível carregar este episódio."
+                  : "Este episódio ainda não tem ficheiro de legenda. Na página do projeto, envie áudio e inicie a transcrição."}
+              </p>
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/projetos/${encodeURIComponent(projectIdParam.trim())}?tab=episodios`,
+                  )
+                }
+                className="rounded-md border border-[#0F6E56] bg-[#1D9E75] px-4 py-2 text-[12px] font-medium text-white transition-colors hover:bg-[#0F6E56]"
+              >
+                Voltar aos episódios
+              </button>
+            </div>
           ) : (
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden transition-opacity duration-300 ease-out">
               <UploadScreen
