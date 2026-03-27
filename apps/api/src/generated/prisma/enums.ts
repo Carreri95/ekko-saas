@@ -198,6 +198,34 @@ export const RecordingSessionFormat = {
 export type RecordingSessionFormat = (typeof RecordingSessionFormat)[keyof typeof RecordingSessionFormat]
 
 
+export const CommunicationChannel = {
+  EMAIL: 'EMAIL',
+  WHATSAPP: 'WHATSAPP',
+  SYSTEM: 'SYSTEM'
+} as const
+
+export type CommunicationChannel = (typeof CommunicationChannel)[keyof typeof CommunicationChannel]
+
+
+export const CommunicationDirection = {
+  OUTBOUND: 'OUTBOUND',
+  INBOUND: 'INBOUND'
+} as const
+
+export type CommunicationDirection = (typeof CommunicationDirection)[keyof typeof CommunicationDirection]
+
+
+export const CommunicationStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  SENT: 'SENT',
+  RECEIVED: 'RECEIVED',
+  FAILED: 'FAILED'
+} as const
+
+export type CommunicationStatus = (typeof CommunicationStatus)[keyof typeof CommunicationStatus]
+
+
 export const MediaAssetKind = {
   AUDIO: 'AUDIO',
   VIDEO: 'VIDEO',

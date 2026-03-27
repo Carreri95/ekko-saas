@@ -498,42 +498,39 @@ a agenda da tela deve ser só uma visão; o dado real precisa viver em Recording
 
 4.14 CommunicationLog
 
-Histórico de comunicação.
+Histórico de comunicação operacional: registo manual de contactos (canal, direção, estado, corpo, destinatários e vínculos opcionais a projeto, episódio, dublador, cliente, sessão). Não é ActivityLog nem AuditLog (esses seriam auditoria de ações de utilizador). WhatsApp real, webhooks inbound e automações novas por evento continuam fora de âmbito até PRs futuros.
 
-Também ainda não existe de forma estrutural e deve vir depois da agenda.
+Implementação atual: modelo Prisma `CommunicationLog` (fonte de verdade); API REST escopada ao projeto (`GET`/`POST` `/api/dubbing-projects/:id/communication-logs`, `PATCH`/`DELETE` `.../communication-logs/:logId`); UI mínima na página do projeto (aba «Comunicação»).
 
-Campos base:
+Na agenda do projeto, cada sessão pode abrir «Registrar comunicação»: muda para a aba Comunicação e pré-preenche o formulário a partir da `RecordingSession` (dublador, sessão, texto sugerido).
 
-id
-canal
-direção
-templateKey opcional
-assunto opcional
-corpo
-status
-destinatárioNome
-destinatárioEmail opcional
-destinatárioWhatsapp opcional
-dubbingProjectId opcional
-episodeId opcional
-blockId opcional
-castMemberId opcional
-clientId opcional
-sessionId opcional
-sentAt opcional
-erro opcional
-createdAt
+**Envio real (PR 23 + PR 24 + PR 25):** O pedido `POST .../communication-logs/:logId/send` apenas **enfileira** o envio (HTTP **202**, estado `PROCESSING`); o **apps/worker** processa `CommunicationLog` assíncrono, aplica lock/retry e actualiza `SENT` / `FAILED`, `sentAt`, `error`, `providerMessageId`.
 
-Canais:
+No PR 24, o fluxo ganhou robustez incremental sem ampliar domínio: `providerMessageId` (idempotência básica/rastreio do aceite no provider), `nextRetryAt` (retry temporal simples e previsível), logs estruturados por `communicationLogId`.
 
-email
-whatsapp
-system
+No PR 25, o mesmo pipeline passou a suportar dois canais de envio real:
+- `EMAIL` (`OUTBOUND`) via Resend
+- `WHATSAPP` (`OUTBOUND`) via Evolution API (texto simples)
 
-Direções:
+Sem arquitectura paralela: `CommunicationLog` continua fonte de verdade/outbox, API só faz enqueue e worker faz dispatch por canal. Ainda fora de escopo: inbound/webhook, confirmação de leitura/entrega, mídia/anexos, chat/inbox e automações novas por evento.
 
-outbound
-inbound 5. Relações principais
+Envio automático opcional (PR 22 + 23): no formulário de sessão na agenda, checkbox explícito ao guardar — cria o `CommunicationLog` (`POST`) e chama `send` (fila); não bloqueia a gravação da sessão à espera do Resend.
+
+No PR 26, o prefill de comunicação passou a usar templates básicos por tipo (`SESSION_CREATED`, `SESSION_UPDATED`, `SESSION_REMINDER`, `SESSION_CANCELED`) com `templateKey` coerente (`session_created`, `session_updated`, etc.). Não há engine avançada: subject/body continuam editáveis pelo utilizador antes de guardar/enviar.
+
+No PR 27, a aba Comunicação ganhou seleção explícita de template básico no formulário e ação de aplicar template (regenera `subject`, `body` e `templateKey`). O conteúdo permanece totalmente editável após aplicação; não existe engine avançada nem administração de templates.
+
+No PR 28, houve polimento final de UX na aba Comunicação (frontend): copy mais direta, envio em lote (`Enviar todos` para OUTBOUND `PENDING`/`FAILED`), chips visuais consistentes para status/canal/direção e simplificação do formulário (sem edição manual de estado/erro). Não houve alteração no backend, worker ou fluxo de outbox/envio.
+
+Campos ver schema Prisma (inclui `templateKey` opcional, campos de outbox mínimos no próprio `CommunicationLog`).
+
+Canais (enum): EMAIL, WHATSAPP, SYSTEM.
+
+Direções (enum): OUTBOUND, INBOUND.
+
+Estados (enum): PENDING, **PROCESSING** (pedido de envio e-mail na fila / a processar), SENT, RECEIVED, FAILED.
+
+5. Relações principais
 Núcleo administrativo
 User 1:N Invite
 User 1:N Client

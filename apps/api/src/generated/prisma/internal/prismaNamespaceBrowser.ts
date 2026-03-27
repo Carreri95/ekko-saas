@@ -69,6 +69,7 @@ export const ModelName = {
   ProjectCharacter: 'ProjectCharacter',
   ProjectCharacterAssignment: 'ProjectCharacterAssignment',
   RecordingSession: 'RecordingSession',
+  CommunicationLog: 'CommunicationLog',
   RecordingSessionEpisode: 'RecordingSessionEpisode',
   MediaAsset: 'MediaAsset'
 } as const
@@ -379,6 +380,36 @@ export const RecordingSessionScalarFieldEnum = {
 } as const
 
 export type RecordingSessionScalarFieldEnum = (typeof RecordingSessionScalarFieldEnum)[keyof typeof RecordingSessionScalarFieldEnum]
+
+
+export const CommunicationLogScalarFieldEnum = {
+  id: 'id',
+  channel: 'channel',
+  direction: 'direction',
+  status: 'status',
+  subject: 'subject',
+  body: 'body',
+  templateKey: 'templateKey',
+  recipientName: 'recipientName',
+  recipientEmail: 'recipientEmail',
+  recipientWhatsapp: 'recipientWhatsapp',
+  dubbingProjectId: 'dubbingProjectId',
+  episodeId: 'episodeId',
+  castMemberId: 'castMemberId',
+  clientId: 'clientId',
+  sessionId: 'sessionId',
+  sentAt: 'sentAt',
+  error: 'error',
+  providerMessageId: 'providerMessageId',
+  sendLockedAt: 'sendLockedAt',
+  sendAttemptCount: 'sendAttemptCount',
+  lastSendAttemptAt: 'lastSendAttemptAt',
+  nextRetryAt: 'nextRetryAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CommunicationLogScalarFieldEnum = (typeof CommunicationLogScalarFieldEnum)[keyof typeof CommunicationLogScalarFieldEnum]
 
 
 export const RecordingSessionEpisodeScalarFieldEnum = {

@@ -215,6 +215,7 @@ export type ClientWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Client"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Client"> | Date | string
   projects?: Prisma.DubbingProjectListRelationFilter
+  communicationLogs?: Prisma.CommunicationLogListRelationFilter
 }
 
 export type ClientOrderByWithRelationInput = {
@@ -228,6 +229,7 @@ export type ClientOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projects?: Prisma.DubbingProjectOrderByRelationAggregateInput
+  communicationLogs?: Prisma.CommunicationLogOrderByRelationAggregateInput
 }
 
 export type ClientWhereUniqueInput = Prisma.AtLeast<{
@@ -244,6 +246,7 @@ export type ClientWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Client"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Client"> | Date | string
   projects?: Prisma.DubbingProjectListRelationFilter
+  communicationLogs?: Prisma.CommunicationLogListRelationFilter
 }, "id" | "email" | "phone">
 
 export type ClientOrderByWithAggregationInput = {
@@ -287,6 +290,7 @@ export type ClientCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.DubbingProjectCreateNestedManyWithoutClientRefInput
+  communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutClientInput
 }
 
 export type ClientUncheckedCreateInput = {
@@ -300,6 +304,7 @@ export type ClientUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projects?: Prisma.DubbingProjectUncheckedCreateNestedManyWithoutClientRefInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedCreateNestedManyWithoutClientInput
 }
 
 export type ClientUpdateInput = {
@@ -313,6 +318,7 @@ export type ClientUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.DubbingProjectUpdateManyWithoutClientRefNestedInput
+  communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutClientNestedInput
 }
 
 export type ClientUncheckedUpdateInput = {
@@ -326,6 +332,7 @@ export type ClientUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projects?: Prisma.DubbingProjectUncheckedUpdateManyWithoutClientRefNestedInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedUpdateManyWithoutClientNestedInput
 }
 
 export type ClientCreateManyInput = {
@@ -425,6 +432,22 @@ export type ClientUpdateOneWithoutProjectsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ClientUpdateToOneWithWhereWithoutProjectsInput, Prisma.ClientUpdateWithoutProjectsInput>, Prisma.ClientUncheckedUpdateWithoutProjectsInput>
 }
 
+export type ClientCreateNestedOneWithoutCommunicationLogsInput = {
+  create?: Prisma.XOR<Prisma.ClientCreateWithoutCommunicationLogsInput, Prisma.ClientUncheckedCreateWithoutCommunicationLogsInput>
+  connectOrCreate?: Prisma.ClientCreateOrConnectWithoutCommunicationLogsInput
+  connect?: Prisma.ClientWhereUniqueInput
+}
+
+export type ClientUpdateOneWithoutCommunicationLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.ClientCreateWithoutCommunicationLogsInput, Prisma.ClientUncheckedCreateWithoutCommunicationLogsInput>
+  connectOrCreate?: Prisma.ClientCreateOrConnectWithoutCommunicationLogsInput
+  upsert?: Prisma.ClientUpsertWithoutCommunicationLogsInput
+  disconnect?: Prisma.ClientWhereInput | boolean
+  delete?: Prisma.ClientWhereInput | boolean
+  connect?: Prisma.ClientWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ClientUpdateToOneWithWhereWithoutCommunicationLogsInput, Prisma.ClientUpdateWithoutCommunicationLogsInput>, Prisma.ClientUncheckedUpdateWithoutCommunicationLogsInput>
+}
+
 export type ClientCreateWithoutProjectsInput = {
   id?: string
   name: string
@@ -435,6 +458,7 @@ export type ClientCreateWithoutProjectsInput = {
   status?: $Enums.ClientStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutClientInput
 }
 
 export type ClientUncheckedCreateWithoutProjectsInput = {
@@ -447,6 +471,7 @@ export type ClientUncheckedCreateWithoutProjectsInput = {
   status?: $Enums.ClientStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  communicationLogs?: Prisma.CommunicationLogUncheckedCreateNestedManyWithoutClientInput
 }
 
 export type ClientCreateOrConnectWithoutProjectsInput = {
@@ -475,6 +500,7 @@ export type ClientUpdateWithoutProjectsInput = {
   status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutClientNestedInput
 }
 
 export type ClientUncheckedUpdateWithoutProjectsInput = {
@@ -487,6 +513,75 @@ export type ClientUncheckedUpdateWithoutProjectsInput = {
   status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  communicationLogs?: Prisma.CommunicationLogUncheckedUpdateManyWithoutClientNestedInput
+}
+
+export type ClientCreateWithoutCommunicationLogsInput = {
+  id?: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  country?: string | null
+  notes?: string | null
+  status?: $Enums.ClientStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  projects?: Prisma.DubbingProjectCreateNestedManyWithoutClientRefInput
+}
+
+export type ClientUncheckedCreateWithoutCommunicationLogsInput = {
+  id?: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  country?: string | null
+  notes?: string | null
+  status?: $Enums.ClientStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  projects?: Prisma.DubbingProjectUncheckedCreateNestedManyWithoutClientRefInput
+}
+
+export type ClientCreateOrConnectWithoutCommunicationLogsInput = {
+  where: Prisma.ClientWhereUniqueInput
+  create: Prisma.XOR<Prisma.ClientCreateWithoutCommunicationLogsInput, Prisma.ClientUncheckedCreateWithoutCommunicationLogsInput>
+}
+
+export type ClientUpsertWithoutCommunicationLogsInput = {
+  update: Prisma.XOR<Prisma.ClientUpdateWithoutCommunicationLogsInput, Prisma.ClientUncheckedUpdateWithoutCommunicationLogsInput>
+  create: Prisma.XOR<Prisma.ClientCreateWithoutCommunicationLogsInput, Prisma.ClientUncheckedCreateWithoutCommunicationLogsInput>
+  where?: Prisma.ClientWhereInput
+}
+
+export type ClientUpdateToOneWithWhereWithoutCommunicationLogsInput = {
+  where?: Prisma.ClientWhereInput
+  data: Prisma.XOR<Prisma.ClientUpdateWithoutCommunicationLogsInput, Prisma.ClientUncheckedUpdateWithoutCommunicationLogsInput>
+}
+
+export type ClientUpdateWithoutCommunicationLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projects?: Prisma.DubbingProjectUpdateManyWithoutClientRefNestedInput
+}
+
+export type ClientUncheckedUpdateWithoutCommunicationLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projects?: Prisma.DubbingProjectUncheckedUpdateManyWithoutClientRefNestedInput
 }
 
 
@@ -496,10 +591,12 @@ export type ClientUncheckedUpdateWithoutProjectsInput = {
 
 export type ClientCountOutputType = {
   projects: number
+  communicationLogs: number
 }
 
 export type ClientCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   projects?: boolean | ClientCountOutputTypeCountProjectsArgs
+  communicationLogs?: boolean | ClientCountOutputTypeCountCommunicationLogsArgs
 }
 
 /**
@@ -519,6 +616,13 @@ export type ClientCountOutputTypeCountProjectsArgs<ExtArgs extends runtime.Types
   where?: Prisma.DubbingProjectWhereInput
 }
 
+/**
+ * ClientCountOutputType without action
+ */
+export type ClientCountOutputTypeCountCommunicationLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CommunicationLogWhereInput
+}
+
 
 export type ClientSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -531,6 +635,7 @@ export type ClientSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   createdAt?: boolean
   updatedAt?: boolean
   projects?: boolean | Prisma.Client$projectsArgs<ExtArgs>
+  communicationLogs?: boolean | Prisma.Client$communicationLogsArgs<ExtArgs>
   _count?: boolean | Prisma.ClientCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["client"]>
 
@@ -573,6 +678,7 @@ export type ClientSelectScalar = {
 export type ClientOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "country" | "notes" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["client"]>
 export type ClientInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   projects?: boolean | Prisma.Client$projectsArgs<ExtArgs>
+  communicationLogs?: boolean | Prisma.Client$communicationLogsArgs<ExtArgs>
   _count?: boolean | Prisma.ClientCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ClientIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -582,6 +688,7 @@ export type $ClientPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
   name: "Client"
   objects: {
     projects: Prisma.$DubbingProjectPayload<ExtArgs>[]
+    communicationLogs: Prisma.$CommunicationLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -988,6 +1095,7 @@ readonly fields: ClientFieldRefs;
 export interface Prisma__ClientClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   projects<T extends Prisma.Client$projectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Client$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DubbingProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  communicationLogs<T extends Prisma.Client$communicationLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Client$communicationLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommunicationLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1440,6 +1548,30 @@ export type Client$projectsArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.DubbingProjectScalarFieldEnum | Prisma.DubbingProjectScalarFieldEnum[]
+}
+
+/**
+ * Client.communicationLogs
+ */
+export type Client$communicationLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CommunicationLog
+   */
+  select?: Prisma.CommunicationLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CommunicationLog
+   */
+  omit?: Prisma.CommunicationLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CommunicationLogInclude<ExtArgs> | null
+  where?: Prisma.CommunicationLogWhereInput
+  orderBy?: Prisma.CommunicationLogOrderByWithRelationInput | Prisma.CommunicationLogOrderByWithRelationInput[]
+  cursor?: Prisma.CommunicationLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CommunicationLogScalarFieldEnum | Prisma.CommunicationLogScalarFieldEnum[]
 }
 
 /**

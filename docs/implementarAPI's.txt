@@ -1,0 +1,136 @@
+Mini documento — Configuração futura de envio (E-mail + WhatsApp)
+Objetivo
+
+Deixar registrado o que precisa ser configurado para o sistema enviar mensagens de verdade pelos canais já implementados.
+
+Hoje o sistema já suporta:
+
+CommunicationLog
+envio real por e-mail
+envio real por WhatsApp
+fila/outbox com worker
+status de envio (PROCESSING, SENT, FAILED)
+
+Mas para isso funcionar no ambiente real, ainda será necessário configurar as credenciais dos providers. Os nomes de variáveis e o pipeline já estão definidos no projeto.
+
+1. E-mail — Resend
+Variáveis necessárias
+RESEND_API_KEY=...
+EMAIL_FROM=SubtitleStudio <no-reply@seudominio.com>
+O que cada variável faz
+
+RESEND_API_KEY
+
+chave da conta Resend
+autoriza o envio de e-mail
+
+EMAIL_FROM
+
+remetente usado no envio
+em produção deve usar domínio verificado
+Onde configurar
+
+Preencher no ambiente de:
+
+apps/api/.env
+apps/worker/.env
+
+O pipeline atual usa a API para validar o enqueue e o worker para enviar de fato.
+
+Observação
+
+Em ambiente de teste o remetente padrão da Resend pode ter limitações. Em produção será necessário domínio validado.
+
+2. WhatsApp — Evolution API
+Variáveis necessárias
+EVOLUTION_API_URL=...
+EVOLUTION_API_KEY=...
+EVOLUTION_INSTANCE_NAME=...
+O que cada variável faz
+
+EVOLUTION_API_URL
+
+URL base da Evolution API
+
+EVOLUTION_API_KEY
+
+chave de autenticação da Evolution
+
+EVOLUTION_INSTANCE_NAME
+
+nome da instância do WhatsApp conectada
+Onde configurar
+
+Preencher no ambiente de:
+
+apps/api/.env
+apps/worker/.env
+
+No estado atual, a API valida os dados do enqueue e o worker processa o envio real por WhatsApp.
+
+Observação
+
+O envio atual é apenas:
+
+WHATSAPP
+OUTBOUND
+texto simples
+
+Ainda não há:
+
+inbound
+mídia
+chat UI
+automações novas por evento
+3. Como o fluxo funciona hoje
+E-mail
+o sistema cria ou enfileira um CommunicationLog
+a API marca como PROCESSING
+o worker processa
+o provider envia
+o log vira SENT ou FAILED
+WhatsApp
+o sistema cria ou enfileira um CommunicationLog
+a API marca como PROCESSING
+o worker processa
+a Evolution API envia
+o log vira SENT ou FAILED
+
+Tudo continua usando CommunicationLog como fonte da verdade.
+
+4. O que validar quando for configurar
+E-mail
+RESEND_API_KEY válida
+EMAIL_FROM válido
+worker rodando
+log EMAIL com OUTBOUND, corpo e destinatário
+verificar transição:
+PROCESSING → SENT
+ou PROCESSING → FAILED
+WhatsApp
+EVOLUTION_API_URL correta
+EVOLUTION_API_KEY correta
+EVOLUTION_INSTANCE_NAME existente e conectada
+worker rodando
+log WHATSAPP com OUTBOUND, corpo e recipientWhatsapp
+verificar transição:
+PROCESSING → SENT
+ou PROCESSING → FAILED
+5. O que ainda não está no escopo
+
+Mesmo depois da configuração, ainda ficam para depois:
+
+envio automático invisível por qualquer evento novo
+inbound de WhatsApp
+webhooks
+templates avançados
+dashboard de mensagens
+múltiplos providers
+ActivityLog / AuditLog
+6. Conclusão
+
+Quando essas variáveis forem configuradas corretamente:
+
+o sistema já estará pronto para enviar de verdade
+sem alterar a arquitetura atual
+usando a base que já foi implementada

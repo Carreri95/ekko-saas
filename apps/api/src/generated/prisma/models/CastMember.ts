@@ -222,6 +222,7 @@ export type CastMemberWhereInput = {
   characterAssignments?: Prisma.ProjectCharacterAssignmentListRelationFilter
   recordingSessions?: Prisma.RecordingSessionListRelationFilter
   availabilities?: Prisma.CastMemberAvailabilityListRelationFilter
+  communicationLogs?: Prisma.CommunicationLogListRelationFilter
 }
 
 export type CastMemberOrderByWithRelationInput = {
@@ -239,6 +240,7 @@ export type CastMemberOrderByWithRelationInput = {
   characterAssignments?: Prisma.ProjectCharacterAssignmentOrderByRelationAggregateInput
   recordingSessions?: Prisma.RecordingSessionOrderByRelationAggregateInput
   availabilities?: Prisma.CastMemberAvailabilityOrderByRelationAggregateInput
+  communicationLogs?: Prisma.CommunicationLogOrderByRelationAggregateInput
 }
 
 export type CastMemberWhereUniqueInput = Prisma.AtLeast<{
@@ -259,6 +261,7 @@ export type CastMemberWhereUniqueInput = Prisma.AtLeast<{
   characterAssignments?: Prisma.ProjectCharacterAssignmentListRelationFilter
   recordingSessions?: Prisma.RecordingSessionListRelationFilter
   availabilities?: Prisma.CastMemberAvailabilityListRelationFilter
+  communicationLogs?: Prisma.CommunicationLogListRelationFilter
 }, "id" | "whatsapp" | "email">
 
 export type CastMemberOrderByWithAggregationInput = {
@@ -308,6 +311,7 @@ export type CastMemberCreateInput = {
   characterAssignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCastMemberInput
   recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutCastMemberInput
   availabilities?: Prisma.CastMemberAvailabilityCreateNestedManyWithoutCastMemberInput
+  communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutCastMemberInput
 }
 
 export type CastMemberUncheckedCreateInput = {
@@ -325,6 +329,7 @@ export type CastMemberUncheckedCreateInput = {
   characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCastMemberInput
   recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutCastMemberInput
   availabilities?: Prisma.CastMemberAvailabilityUncheckedCreateNestedManyWithoutCastMemberInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedCreateNestedManyWithoutCastMemberInput
 }
 
 export type CastMemberUpdateInput = {
@@ -342,6 +347,7 @@ export type CastMemberUpdateInput = {
   characterAssignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCastMemberNestedInput
   recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutCastMemberNestedInput
   availabilities?: Prisma.CastMemberAvailabilityUpdateManyWithoutCastMemberNestedInput
+  communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutCastMemberNestedInput
 }
 
 export type CastMemberUncheckedUpdateInput = {
@@ -359,6 +365,7 @@ export type CastMemberUncheckedUpdateInput = {
   characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCastMemberNestedInput
   recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutCastMemberNestedInput
   availabilities?: Prisma.CastMemberAvailabilityUncheckedUpdateManyWithoutCastMemberNestedInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedUpdateManyWithoutCastMemberNestedInput
 }
 
 export type CastMemberCreateManyInput = {
@@ -526,6 +533,22 @@ export type CastMemberUpdateOneRequiredWithoutRecordingSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CastMemberUpdateToOneWithWhereWithoutRecordingSessionsInput, Prisma.CastMemberUpdateWithoutRecordingSessionsInput>, Prisma.CastMemberUncheckedUpdateWithoutRecordingSessionsInput>
 }
 
+export type CastMemberCreateNestedOneWithoutCommunicationLogsInput = {
+  create?: Prisma.XOR<Prisma.CastMemberCreateWithoutCommunicationLogsInput, Prisma.CastMemberUncheckedCreateWithoutCommunicationLogsInput>
+  connectOrCreate?: Prisma.CastMemberCreateOrConnectWithoutCommunicationLogsInput
+  connect?: Prisma.CastMemberWhereUniqueInput
+}
+
+export type CastMemberUpdateOneWithoutCommunicationLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.CastMemberCreateWithoutCommunicationLogsInput, Prisma.CastMemberUncheckedCreateWithoutCommunicationLogsInput>
+  connectOrCreate?: Prisma.CastMemberCreateOrConnectWithoutCommunicationLogsInput
+  upsert?: Prisma.CastMemberUpsertWithoutCommunicationLogsInput
+  disconnect?: Prisma.CastMemberWhereInput | boolean
+  delete?: Prisma.CastMemberWhereInput | boolean
+  connect?: Prisma.CastMemberWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CastMemberUpdateToOneWithWhereWithoutCommunicationLogsInput, Prisma.CastMemberUpdateWithoutCommunicationLogsInput>, Prisma.CastMemberUncheckedUpdateWithoutCommunicationLogsInput>
+}
+
 export type CastMemberCreateWithoutAvailabilitiesInput = {
   id?: string
   name: string
@@ -540,6 +563,7 @@ export type CastMemberCreateWithoutAvailabilitiesInput = {
   characters?: Prisma.ProjectCharacterCreateNestedManyWithoutCastMemberInput
   characterAssignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCastMemberInput
   recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutCastMemberInput
+  communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutCastMemberInput
 }
 
 export type CastMemberUncheckedCreateWithoutAvailabilitiesInput = {
@@ -556,6 +580,7 @@ export type CastMemberUncheckedCreateWithoutAvailabilitiesInput = {
   characters?: Prisma.ProjectCharacterUncheckedCreateNestedManyWithoutCastMemberInput
   characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCastMemberInput
   recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutCastMemberInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedCreateNestedManyWithoutCastMemberInput
 }
 
 export type CastMemberCreateOrConnectWithoutAvailabilitiesInput = {
@@ -588,6 +613,7 @@ export type CastMemberUpdateWithoutAvailabilitiesInput = {
   characters?: Prisma.ProjectCharacterUpdateManyWithoutCastMemberNestedInput
   characterAssignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCastMemberNestedInput
   recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutCastMemberNestedInput
+  communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutCastMemberNestedInput
 }
 
 export type CastMemberUncheckedUpdateWithoutAvailabilitiesInput = {
@@ -604,6 +630,7 @@ export type CastMemberUncheckedUpdateWithoutAvailabilitiesInput = {
   characters?: Prisma.ProjectCharacterUncheckedUpdateManyWithoutCastMemberNestedInput
   characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCastMemberNestedInput
   recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutCastMemberNestedInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedUpdateManyWithoutCastMemberNestedInput
 }
 
 export type CastMemberCreateWithoutCharactersInput = {
@@ -620,6 +647,7 @@ export type CastMemberCreateWithoutCharactersInput = {
   characterAssignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCastMemberInput
   recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutCastMemberInput
   availabilities?: Prisma.CastMemberAvailabilityCreateNestedManyWithoutCastMemberInput
+  communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutCastMemberInput
 }
 
 export type CastMemberUncheckedCreateWithoutCharactersInput = {
@@ -636,6 +664,7 @@ export type CastMemberUncheckedCreateWithoutCharactersInput = {
   characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCastMemberInput
   recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutCastMemberInput
   availabilities?: Prisma.CastMemberAvailabilityUncheckedCreateNestedManyWithoutCastMemberInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedCreateNestedManyWithoutCastMemberInput
 }
 
 export type CastMemberCreateOrConnectWithoutCharactersInput = {
@@ -668,6 +697,7 @@ export type CastMemberUpdateWithoutCharactersInput = {
   characterAssignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCastMemberNestedInput
   recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutCastMemberNestedInput
   availabilities?: Prisma.CastMemberAvailabilityUpdateManyWithoutCastMemberNestedInput
+  communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutCastMemberNestedInput
 }
 
 export type CastMemberUncheckedUpdateWithoutCharactersInput = {
@@ -684,6 +714,7 @@ export type CastMemberUncheckedUpdateWithoutCharactersInput = {
   characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCastMemberNestedInput
   recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutCastMemberNestedInput
   availabilities?: Prisma.CastMemberAvailabilityUncheckedUpdateManyWithoutCastMemberNestedInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedUpdateManyWithoutCastMemberNestedInput
 }
 
 export type CastMemberCreateWithoutCharacterAssignmentsInput = {
@@ -700,6 +731,7 @@ export type CastMemberCreateWithoutCharacterAssignmentsInput = {
   characters?: Prisma.ProjectCharacterCreateNestedManyWithoutCastMemberInput
   recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutCastMemberInput
   availabilities?: Prisma.CastMemberAvailabilityCreateNestedManyWithoutCastMemberInput
+  communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutCastMemberInput
 }
 
 export type CastMemberUncheckedCreateWithoutCharacterAssignmentsInput = {
@@ -716,6 +748,7 @@ export type CastMemberUncheckedCreateWithoutCharacterAssignmentsInput = {
   characters?: Prisma.ProjectCharacterUncheckedCreateNestedManyWithoutCastMemberInput
   recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutCastMemberInput
   availabilities?: Prisma.CastMemberAvailabilityUncheckedCreateNestedManyWithoutCastMemberInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedCreateNestedManyWithoutCastMemberInput
 }
 
 export type CastMemberCreateOrConnectWithoutCharacterAssignmentsInput = {
@@ -748,6 +781,7 @@ export type CastMemberUpdateWithoutCharacterAssignmentsInput = {
   characters?: Prisma.ProjectCharacterUpdateManyWithoutCastMemberNestedInput
   recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutCastMemberNestedInput
   availabilities?: Prisma.CastMemberAvailabilityUpdateManyWithoutCastMemberNestedInput
+  communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutCastMemberNestedInput
 }
 
 export type CastMemberUncheckedUpdateWithoutCharacterAssignmentsInput = {
@@ -764,6 +798,7 @@ export type CastMemberUncheckedUpdateWithoutCharacterAssignmentsInput = {
   characters?: Prisma.ProjectCharacterUncheckedUpdateManyWithoutCastMemberNestedInput
   recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutCastMemberNestedInput
   availabilities?: Prisma.CastMemberAvailabilityUncheckedUpdateManyWithoutCastMemberNestedInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedUpdateManyWithoutCastMemberNestedInput
 }
 
 export type CastMemberCreateWithoutRecordingSessionsInput = {
@@ -780,6 +815,7 @@ export type CastMemberCreateWithoutRecordingSessionsInput = {
   characters?: Prisma.ProjectCharacterCreateNestedManyWithoutCastMemberInput
   characterAssignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCastMemberInput
   availabilities?: Prisma.CastMemberAvailabilityCreateNestedManyWithoutCastMemberInput
+  communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutCastMemberInput
 }
 
 export type CastMemberUncheckedCreateWithoutRecordingSessionsInput = {
@@ -796,6 +832,7 @@ export type CastMemberUncheckedCreateWithoutRecordingSessionsInput = {
   characters?: Prisma.ProjectCharacterUncheckedCreateNestedManyWithoutCastMemberInput
   characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCastMemberInput
   availabilities?: Prisma.CastMemberAvailabilityUncheckedCreateNestedManyWithoutCastMemberInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedCreateNestedManyWithoutCastMemberInput
 }
 
 export type CastMemberCreateOrConnectWithoutRecordingSessionsInput = {
@@ -828,6 +865,7 @@ export type CastMemberUpdateWithoutRecordingSessionsInput = {
   characters?: Prisma.ProjectCharacterUpdateManyWithoutCastMemberNestedInput
   characterAssignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCastMemberNestedInput
   availabilities?: Prisma.CastMemberAvailabilityUpdateManyWithoutCastMemberNestedInput
+  communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutCastMemberNestedInput
 }
 
 export type CastMemberUncheckedUpdateWithoutRecordingSessionsInput = {
@@ -844,6 +882,91 @@ export type CastMemberUncheckedUpdateWithoutRecordingSessionsInput = {
   characters?: Prisma.ProjectCharacterUncheckedUpdateManyWithoutCastMemberNestedInput
   characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCastMemberNestedInput
   availabilities?: Prisma.CastMemberAvailabilityUncheckedUpdateManyWithoutCastMemberNestedInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedUpdateManyWithoutCastMemberNestedInput
+}
+
+export type CastMemberCreateWithoutCommunicationLogsInput = {
+  id?: string
+  name: string
+  role?: string | null
+  whatsapp?: string | null
+  email?: string | null
+  specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
+  status?: $Enums.CastMemberStatus
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  characters?: Prisma.ProjectCharacterCreateNestedManyWithoutCastMemberInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentCreateNestedManyWithoutCastMemberInput
+  recordingSessions?: Prisma.RecordingSessionCreateNestedManyWithoutCastMemberInput
+  availabilities?: Prisma.CastMemberAvailabilityCreateNestedManyWithoutCastMemberInput
+}
+
+export type CastMemberUncheckedCreateWithoutCommunicationLogsInput = {
+  id?: string
+  name: string
+  role?: string | null
+  whatsapp?: string | null
+  email?: string | null
+  specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
+  status?: $Enums.CastMemberStatus
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  characters?: Prisma.ProjectCharacterUncheckedCreateNestedManyWithoutCastMemberInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedCreateNestedManyWithoutCastMemberInput
+  recordingSessions?: Prisma.RecordingSessionUncheckedCreateNestedManyWithoutCastMemberInput
+  availabilities?: Prisma.CastMemberAvailabilityUncheckedCreateNestedManyWithoutCastMemberInput
+}
+
+export type CastMemberCreateOrConnectWithoutCommunicationLogsInput = {
+  where: Prisma.CastMemberWhereUniqueInput
+  create: Prisma.XOR<Prisma.CastMemberCreateWithoutCommunicationLogsInput, Prisma.CastMemberUncheckedCreateWithoutCommunicationLogsInput>
+}
+
+export type CastMemberUpsertWithoutCommunicationLogsInput = {
+  update: Prisma.XOR<Prisma.CastMemberUpdateWithoutCommunicationLogsInput, Prisma.CastMemberUncheckedUpdateWithoutCommunicationLogsInput>
+  create: Prisma.XOR<Prisma.CastMemberCreateWithoutCommunicationLogsInput, Prisma.CastMemberUncheckedCreateWithoutCommunicationLogsInput>
+  where?: Prisma.CastMemberWhereInput
+}
+
+export type CastMemberUpdateToOneWithWhereWithoutCommunicationLogsInput = {
+  where?: Prisma.CastMemberWhereInput
+  data: Prisma.XOR<Prisma.CastMemberUpdateWithoutCommunicationLogsInput, Prisma.CastMemberUncheckedUpdateWithoutCommunicationLogsInput>
+}
+
+export type CastMemberUpdateWithoutCommunicationLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
+  status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  characters?: Prisma.ProjectCharacterUpdateManyWithoutCastMemberNestedInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUpdateManyWithoutCastMemberNestedInput
+  recordingSessions?: Prisma.RecordingSessionUpdateManyWithoutCastMemberNestedInput
+  availabilities?: Prisma.CastMemberAvailabilityUpdateManyWithoutCastMemberNestedInput
+}
+
+export type CastMemberUncheckedUpdateWithoutCommunicationLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
+  status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  characters?: Prisma.ProjectCharacterUncheckedUpdateManyWithoutCastMemberNestedInput
+  characterAssignments?: Prisma.ProjectCharacterAssignmentUncheckedUpdateManyWithoutCastMemberNestedInput
+  recordingSessions?: Prisma.RecordingSessionUncheckedUpdateManyWithoutCastMemberNestedInput
+  availabilities?: Prisma.CastMemberAvailabilityUncheckedUpdateManyWithoutCastMemberNestedInput
 }
 
 
@@ -856,6 +979,7 @@ export type CastMemberCountOutputType = {
   characterAssignments: number
   recordingSessions: number
   availabilities: number
+  communicationLogs: number
 }
 
 export type CastMemberCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -863,6 +987,7 @@ export type CastMemberCountOutputTypeSelect<ExtArgs extends runtime.Types.Extens
   characterAssignments?: boolean | CastMemberCountOutputTypeCountCharacterAssignmentsArgs
   recordingSessions?: boolean | CastMemberCountOutputTypeCountRecordingSessionsArgs
   availabilities?: boolean | CastMemberCountOutputTypeCountAvailabilitiesArgs
+  communicationLogs?: boolean | CastMemberCountOutputTypeCountCommunicationLogsArgs
 }
 
 /**
@@ -903,6 +1028,13 @@ export type CastMemberCountOutputTypeCountAvailabilitiesArgs<ExtArgs extends run
   where?: Prisma.CastMemberAvailabilityWhereInput
 }
 
+/**
+ * CastMemberCountOutputType without action
+ */
+export type CastMemberCountOutputTypeCountCommunicationLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CommunicationLogWhereInput
+}
+
 
 export type CastMemberSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -919,6 +1051,7 @@ export type CastMemberSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   characterAssignments?: boolean | Prisma.CastMember$characterAssignmentsArgs<ExtArgs>
   recordingSessions?: boolean | Prisma.CastMember$recordingSessionsArgs<ExtArgs>
   availabilities?: boolean | Prisma.CastMember$availabilitiesArgs<ExtArgs>
+  communicationLogs?: boolean | Prisma.CastMember$communicationLogsArgs<ExtArgs>
   _count?: boolean | Prisma.CastMemberCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["castMember"]>
 
@@ -967,6 +1100,7 @@ export type CastMemberInclude<ExtArgs extends runtime.Types.Extensions.InternalA
   characterAssignments?: boolean | Prisma.CastMember$characterAssignmentsArgs<ExtArgs>
   recordingSessions?: boolean | Prisma.CastMember$recordingSessionsArgs<ExtArgs>
   availabilities?: boolean | Prisma.CastMember$availabilitiesArgs<ExtArgs>
+  communicationLogs?: boolean | Prisma.CastMember$communicationLogsArgs<ExtArgs>
   _count?: boolean | Prisma.CastMemberCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CastMemberIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -979,6 +1113,7 @@ export type $CastMemberPayload<ExtArgs extends runtime.Types.Extensions.Internal
     characterAssignments: Prisma.$ProjectCharacterAssignmentPayload<ExtArgs>[]
     recordingSessions: Prisma.$RecordingSessionPayload<ExtArgs>[]
     availabilities: Prisma.$CastMemberAvailabilityPayload<ExtArgs>[]
+    communicationLogs: Prisma.$CommunicationLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1389,6 +1524,7 @@ export interface Prisma__CastMemberClient<T, Null = never, ExtArgs extends runti
   characterAssignments<T extends Prisma.CastMember$characterAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CastMember$characterAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjectCharacterAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   recordingSessions<T extends Prisma.CastMember$recordingSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CastMember$recordingSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecordingSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   availabilities<T extends Prisma.CastMember$availabilitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CastMember$availabilitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CastMemberAvailabilityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  communicationLogs<T extends Prisma.CastMember$communicationLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CastMember$communicationLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommunicationLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1914,6 +2050,30 @@ export type CastMember$availabilitiesArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.CastMemberAvailabilityScalarFieldEnum | Prisma.CastMemberAvailabilityScalarFieldEnum[]
+}
+
+/**
+ * CastMember.communicationLogs
+ */
+export type CastMember$communicationLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CommunicationLog
+   */
+  select?: Prisma.CommunicationLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CommunicationLog
+   */
+  omit?: Prisma.CommunicationLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CommunicationLogInclude<ExtArgs> | null
+  where?: Prisma.CommunicationLogWhereInput
+  orderBy?: Prisma.CommunicationLogOrderByWithRelationInput | Prisma.CommunicationLogOrderByWithRelationInput[]
+  cursor?: Prisma.CommunicationLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CommunicationLogScalarFieldEnum | Prisma.CommunicationLogScalarFieldEnum[]
 }
 
 /**
