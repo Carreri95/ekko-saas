@@ -362,6 +362,7 @@ model CastMember {
   role        String?
   whatsapp    String?          @unique
   email       String?          @unique
+  preferredCommunicationChannel PreferredCommunicationChannel?
   specialties String[]
   status      CastMemberStatus @default(AVAILABLE)
   notes       String?
@@ -496,6 +497,11 @@ enum CommunicationChannel {
   EMAIL
   WHATSAPP
   SYSTEM
+}
+
+enum PreferredCommunicationChannel {
+  EMAIL
+  WHATSAPP
 }
 
 enum CommunicationDirection {

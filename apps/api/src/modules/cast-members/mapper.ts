@@ -19,6 +19,7 @@ type CastMemberLike = {
   role: string | null;
   whatsapp: string | null;
   email: string | null;
+  preferredCommunicationChannel: "EMAIL" | "WHATSAPP" | null;
   specialties: string[];
   status: "AVAILABLE" | "BUSY" | "INACTIVE";
   notes: string | null;
@@ -33,6 +34,7 @@ export function serializeCastMember(member: CastMemberLike, activeProjectCount =
     role: member.role,
     whatsapp: member.whatsapp ? formatBrazilPhone(member.whatsapp) : null,
     email: member.email,
+    preferredCommunicationChannel: member.preferredCommunicationChannel,
     specialties: member.specialties,
     status: member.status,
     notes: member.notes,

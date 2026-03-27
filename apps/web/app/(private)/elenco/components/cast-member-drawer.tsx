@@ -44,6 +44,7 @@ function getDefaults(m: CastMemberDto | null): CastMemberFormInput {
       role: "",
       whatsapp: "",
       email: "",
+      preferredCommunicationChannel: "EMAIL",
       specialties: [],
       manualInactive: false,
       notes: "",
@@ -53,6 +54,7 @@ function getDefaults(m: CastMemberDto | null): CastMemberFormInput {
     role: m.role ?? "",
     whatsapp: formatBrazilPhone(m.whatsapp ?? ""),
     email: m.email ?? "",
+    preferredCommunicationChannel: m.preferredCommunicationChannel ?? "EMAIL",
     specialties: m.specialties ?? [],
     manualInactive: m.status === "INACTIVE",
     notes: m.notes ?? "",
@@ -100,6 +102,7 @@ export function CastMemberDrawer({ member, onClose, onSaved }: Props) {
           role: data.role.trim(),
           whatsapp: normalizePhoneForStorage(data.whatsapp) ?? "",
           email: data.email.trim(),
+          preferredCommunicationChannel: data.preferredCommunicationChannel,
           specialties: data.specialties,
           manualInactive: data.manualInactive,
           notes: data.notes?.trim() ?? "",
@@ -265,6 +268,27 @@ export function CastMemberDrawer({ member, onClose, onSaved }: Props) {
               />
               {errors.email ? (
                 <p className={errorCls}>{errors.email.message}</p>
+              ) : null}
+            </div>
+
+            <div>
+              <label className={labelCls} htmlFor="cast-preferred-channel">
+                Canal preferido de comunicação
+              </label>
+              <select
+                id="cast-preferred-channel"
+                {...register("preferredCommunicationChannel")}
+                className={
+                  errors.preferredCommunicationChannel ? inputErrorCls : inputValidCls
+                }
+              >
+                <option value="EMAIL">E-mail</option>
+                <option value="WHATSAPP">WhatsApp</option>
+              </select>
+              {errors.preferredCommunicationChannel ? (
+                <p className={errorCls}>
+                  {errors.preferredCommunicationChannel.message}
+                </p>
               ) : null}
             </div>
           </div>

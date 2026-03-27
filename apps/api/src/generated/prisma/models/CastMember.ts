@@ -30,6 +30,7 @@ export type CastMemberMinAggregateOutputType = {
   role: string | null
   whatsapp: string | null
   email: string | null
+  preferredCommunicationChannel: $Enums.PreferredCommunicationChannel | null
   status: $Enums.CastMemberStatus | null
   notes: string | null
   createdAt: Date | null
@@ -42,6 +43,7 @@ export type CastMemberMaxAggregateOutputType = {
   role: string | null
   whatsapp: string | null
   email: string | null
+  preferredCommunicationChannel: $Enums.PreferredCommunicationChannel | null
   status: $Enums.CastMemberStatus | null
   notes: string | null
   createdAt: Date | null
@@ -54,6 +56,7 @@ export type CastMemberCountAggregateOutputType = {
   role: number
   whatsapp: number
   email: number
+  preferredCommunicationChannel: number
   specialties: number
   status: number
   notes: number
@@ -69,6 +72,7 @@ export type CastMemberMinAggregateInputType = {
   role?: true
   whatsapp?: true
   email?: true
+  preferredCommunicationChannel?: true
   status?: true
   notes?: true
   createdAt?: true
@@ -81,6 +85,7 @@ export type CastMemberMaxAggregateInputType = {
   role?: true
   whatsapp?: true
   email?: true
+  preferredCommunicationChannel?: true
   status?: true
   notes?: true
   createdAt?: true
@@ -93,6 +98,7 @@ export type CastMemberCountAggregateInputType = {
   role?: true
   whatsapp?: true
   email?: true
+  preferredCommunicationChannel?: true
   specialties?: true
   status?: true
   notes?: true
@@ -179,6 +185,7 @@ export type CastMemberGroupByOutputType = {
   role: string | null
   whatsapp: string | null
   email: string | null
+  preferredCommunicationChannel: $Enums.PreferredCommunicationChannel | null
   specialties: string[]
   status: $Enums.CastMemberStatus
   notes: string | null
@@ -213,6 +220,7 @@ export type CastMemberWhereInput = {
   role?: Prisma.StringNullableFilter<"CastMember"> | string | null
   whatsapp?: Prisma.StringNullableFilter<"CastMember"> | string | null
   email?: Prisma.StringNullableFilter<"CastMember"> | string | null
+  preferredCommunicationChannel?: Prisma.EnumPreferredCommunicationChannelNullableFilter<"CastMember"> | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.StringNullableListFilter<"CastMember">
   status?: Prisma.EnumCastMemberStatusFilter<"CastMember"> | $Enums.CastMemberStatus
   notes?: Prisma.StringNullableFilter<"CastMember"> | string | null
@@ -231,6 +239,7 @@ export type CastMemberOrderByWithRelationInput = {
   role?: Prisma.SortOrderInput | Prisma.SortOrder
   whatsapp?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
+  preferredCommunicationChannel?: Prisma.SortOrderInput | Prisma.SortOrder
   specialties?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -252,6 +261,7 @@ export type CastMemberWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.CastMemberWhereInput | Prisma.CastMemberWhereInput[]
   name?: Prisma.StringFilter<"CastMember"> | string
   role?: Prisma.StringNullableFilter<"CastMember"> | string | null
+  preferredCommunicationChannel?: Prisma.EnumPreferredCommunicationChannelNullableFilter<"CastMember"> | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.StringNullableListFilter<"CastMember">
   status?: Prisma.EnumCastMemberStatusFilter<"CastMember"> | $Enums.CastMemberStatus
   notes?: Prisma.StringNullableFilter<"CastMember"> | string | null
@@ -270,6 +280,7 @@ export type CastMemberOrderByWithAggregationInput = {
   role?: Prisma.SortOrderInput | Prisma.SortOrder
   whatsapp?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
+  preferredCommunicationChannel?: Prisma.SortOrderInput | Prisma.SortOrder
   specialties?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -289,6 +300,7 @@ export type CastMemberScalarWhereWithAggregatesInput = {
   role?: Prisma.StringNullableWithAggregatesFilter<"CastMember"> | string | null
   whatsapp?: Prisma.StringNullableWithAggregatesFilter<"CastMember"> | string | null
   email?: Prisma.StringNullableWithAggregatesFilter<"CastMember"> | string | null
+  preferredCommunicationChannel?: Prisma.EnumPreferredCommunicationChannelNullableWithAggregatesFilter<"CastMember"> | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.StringNullableListFilter<"CastMember">
   status?: Prisma.EnumCastMemberStatusWithAggregatesFilter<"CastMember"> | $Enums.CastMemberStatus
   notes?: Prisma.StringNullableWithAggregatesFilter<"CastMember"> | string | null
@@ -302,6 +314,7 @@ export type CastMemberCreateInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -320,6 +333,7 @@ export type CastMemberUncheckedCreateInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -338,6 +352,7 @@ export type CastMemberUpdateInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -356,6 +371,7 @@ export type CastMemberUncheckedUpdateInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -374,6 +390,7 @@ export type CastMemberCreateManyInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -387,6 +404,7 @@ export type CastMemberUpdateManyMutationInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -400,6 +418,7 @@ export type CastMemberUncheckedUpdateManyInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -421,6 +440,7 @@ export type CastMemberCountOrderByAggregateInput = {
   role?: Prisma.SortOrder
   whatsapp?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  preferredCommunicationChannel?: Prisma.SortOrder
   specialties?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
@@ -434,6 +454,7 @@ export type CastMemberMaxOrderByAggregateInput = {
   role?: Prisma.SortOrder
   whatsapp?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  preferredCommunicationChannel?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -446,6 +467,7 @@ export type CastMemberMinOrderByAggregateInput = {
   role?: Prisma.SortOrder
   whatsapp?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  preferredCommunicationChannel?: Prisma.SortOrder
   status?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -464,6 +486,10 @@ export type CastMemberNullableScalarRelationFilter = {
 
 export type CastMemberCreatespecialtiesInput = {
   set: string[]
+}
+
+export type NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput = {
+  set?: $Enums.PreferredCommunicationChannel | null
 }
 
 export type CastMemberUpdatespecialtiesInput = {
@@ -555,6 +581,7 @@ export type CastMemberCreateWithoutAvailabilitiesInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -572,6 +599,7 @@ export type CastMemberUncheckedCreateWithoutAvailabilitiesInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -605,6 +633,7 @@ export type CastMemberUpdateWithoutAvailabilitiesInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -622,6 +651,7 @@ export type CastMemberUncheckedUpdateWithoutAvailabilitiesInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -639,6 +669,7 @@ export type CastMemberCreateWithoutCharactersInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -656,6 +687,7 @@ export type CastMemberUncheckedCreateWithoutCharactersInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -689,6 +721,7 @@ export type CastMemberUpdateWithoutCharactersInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -706,6 +739,7 @@ export type CastMemberUncheckedUpdateWithoutCharactersInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -723,6 +757,7 @@ export type CastMemberCreateWithoutCharacterAssignmentsInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -740,6 +775,7 @@ export type CastMemberUncheckedCreateWithoutCharacterAssignmentsInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -773,6 +809,7 @@ export type CastMemberUpdateWithoutCharacterAssignmentsInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -790,6 +827,7 @@ export type CastMemberUncheckedUpdateWithoutCharacterAssignmentsInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -807,6 +845,7 @@ export type CastMemberCreateWithoutRecordingSessionsInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -824,6 +863,7 @@ export type CastMemberUncheckedCreateWithoutRecordingSessionsInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -857,6 +897,7 @@ export type CastMemberUpdateWithoutRecordingSessionsInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -874,6 +915,7 @@ export type CastMemberUncheckedUpdateWithoutRecordingSessionsInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -891,6 +933,7 @@ export type CastMemberCreateWithoutCommunicationLogsInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -908,6 +951,7 @@ export type CastMemberUncheckedCreateWithoutCommunicationLogsInput = {
   role?: string | null
   whatsapp?: string | null
   email?: string | null
+  preferredCommunicationChannel?: $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberCreatespecialtiesInput | string[]
   status?: $Enums.CastMemberStatus
   notes?: string | null
@@ -941,6 +985,7 @@ export type CastMemberUpdateWithoutCommunicationLogsInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -958,6 +1003,7 @@ export type CastMemberUncheckedUpdateWithoutCommunicationLogsInput = {
   role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   whatsapp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredCommunicationChannel?: Prisma.NullableEnumPreferredCommunicationChannelFieldUpdateOperationsInput | $Enums.PreferredCommunicationChannel | null
   specialties?: Prisma.CastMemberUpdatespecialtiesInput | string[]
   status?: Prisma.EnumCastMemberStatusFieldUpdateOperationsInput | $Enums.CastMemberStatus
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1042,6 +1088,7 @@ export type CastMemberSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   role?: boolean
   whatsapp?: boolean
   email?: boolean
+  preferredCommunicationChannel?: boolean
   specialties?: boolean
   status?: boolean
   notes?: boolean
@@ -1061,6 +1108,7 @@ export type CastMemberSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   role?: boolean
   whatsapp?: boolean
   email?: boolean
+  preferredCommunicationChannel?: boolean
   specialties?: boolean
   status?: boolean
   notes?: boolean
@@ -1074,6 +1122,7 @@ export type CastMemberSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   role?: boolean
   whatsapp?: boolean
   email?: boolean
+  preferredCommunicationChannel?: boolean
   specialties?: boolean
   status?: boolean
   notes?: boolean
@@ -1087,6 +1136,7 @@ export type CastMemberSelectScalar = {
   role?: boolean
   whatsapp?: boolean
   email?: boolean
+  preferredCommunicationChannel?: boolean
   specialties?: boolean
   status?: boolean
   notes?: boolean
@@ -1094,7 +1144,7 @@ export type CastMemberSelectScalar = {
   updatedAt?: boolean
 }
 
-export type CastMemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "role" | "whatsapp" | "email" | "specialties" | "status" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["castMember"]>
+export type CastMemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "role" | "whatsapp" | "email" | "preferredCommunicationChannel" | "specialties" | "status" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["castMember"]>
 export type CastMemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   characters?: boolean | Prisma.CastMember$charactersArgs<ExtArgs>
   characterAssignments?: boolean | Prisma.CastMember$characterAssignmentsArgs<ExtArgs>
@@ -1121,6 +1171,7 @@ export type $CastMemberPayload<ExtArgs extends runtime.Types.Extensions.Internal
     role: string | null
     whatsapp: string | null
     email: string | null
+    preferredCommunicationChannel: $Enums.PreferredCommunicationChannel | null
     specialties: string[]
     status: $Enums.CastMemberStatus
     notes: string | null
@@ -1559,6 +1610,7 @@ export interface CastMemberFieldRefs {
   readonly role: Prisma.FieldRef<"CastMember", 'String'>
   readonly whatsapp: Prisma.FieldRef<"CastMember", 'String'>
   readonly email: Prisma.FieldRef<"CastMember", 'String'>
+  readonly preferredCommunicationChannel: Prisma.FieldRef<"CastMember", 'PreferredCommunicationChannel'>
   readonly specialties: Prisma.FieldRef<"CastMember", 'String[]'>
   readonly status: Prisma.FieldRef<"CastMember", 'CastMemberStatus'>
   readonly notes: Prisma.FieldRef<"CastMember", 'String'>

@@ -133,6 +133,7 @@ export class CastMembersService {
       role: input.role?.trim() || null,
       whatsapp,
       email: email || null,
+      preferredCommunicationChannel: input.preferredCommunicationChannel,
       specialties: input.specialties ?? [],
       status: input.manualInactive ? "INACTIVE" : "AVAILABLE",
       notes: input.notes?.trim() || null,
@@ -189,6 +190,9 @@ export class CastMembersService {
       ...(input.whatsapp !== undefined ? { whatsapp: normalizePhoneForStorage(input.whatsapp) } : {}),
       ...(input.email !== undefined
         ? { email: input.email.trim() ? input.email.trim().toLowerCase() : null }
+        : {}),
+      ...(input.preferredCommunicationChannel !== undefined
+        ? { preferredCommunicationChannel: input.preferredCommunicationChannel }
         : {}),
       ...(input.specialties !== undefined ? { specialties: input.specialties } : {}),
       ...(input.manualInactive !== undefined

@@ -4,13 +4,13 @@ import { buildCommunicationFormPrefillFromSession } from "./communication-sessio
 import type { CommunicationTemplateType } from "./communication-templates";
 
 export type SessionSaveEmailAutomationResult =
-  | { kind: "skipped_no_email" }
+  | { kind: "skipped_no_recipient" }
   | { kind: "create_failed"; message: string }
   | { kind: "send_failed"; message: string }
   | { kind: "queued" };
 
 /**
- * Após guardar a sessão: cria CommunicationLog (canal e-mail) e chama POST .../send (enfileirado no worker).
+ * Após guardar a sessão: cria CommunicationLog no canal predefinido e chama POST .../send (enfileirado no worker).
  * Reaproveita o pré-preenchimento da sessão; falhas de create/send não desfazem a sessão já persistida.
  */
 export async function runSessionSaveEmailAutomation(params: {
@@ -26,21 +26,23 @@ export async function runSessionSaveEmailAutomation(params: {
     templateType: params.templateType ?? "SESSION_CREATED",
   });
 
-  const email = prefill.recipientEmail?.trim();
-  if (!email) {
-    return { kind: "skipped_no_email" };
-  }
+  const email = prefill.recipientEmail?.trim() ?? "";
+  const whatsapp = prefill.recipientWhatsapp?.trim() ?? "";
+  const channel = prefill.channel;
+  const hasChannelRecipient =
+    channel === "WHATSAPP" ? Boolean(whatsapp) : Boolean(email);
+  if (!hasChannelRecipient) return { kind: "skipped_no_recipient" };
 
   const createBody = {
-    channel: "EMAIL" as const,
+    channel,
     direction: prefill.direction,
     status: prefill.status,
     subject: prefill.subject.trim() || undefined,
     body: prefill.body,
     templateKey: `${prefill.templateKey}:auto_on_save`,
     recipientName: prefill.recipientName.trim() || undefined,
-    recipientEmail: email,
-    recipientWhatsapp: prefill.recipientWhatsapp.trim() || undefined,
+    recipientEmail: email || undefined,
+    recipientWhatsapp: whatsapp || undefined,
     sessionId: prefill.sessionId || null,
     castMemberId: prefill.castMemberId || null,
     clientId: prefill.clientId || null,
@@ -88,7 +90,7 @@ export async function runSessionSaveEmailAutomation(params: {
       message:
         typeof sendData.error === "string"
           ? sendData.error
-          : "Não foi possível pedir o envio do e-mail.",
+          : "Não foi possível pedir o envio da comunicação.",
     };
   }
 

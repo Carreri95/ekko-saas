@@ -501,11 +501,28 @@ export type EnumEpisodeStatusWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumEpisodeStatusFilter<$PrismaModel>
 }
 
+export type EnumPreferredCommunicationChannelNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.PreferredCommunicationChannel | Prisma.EnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  in?: $Enums.PreferredCommunicationChannel[] | Prisma.ListEnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.PreferredCommunicationChannel[] | Prisma.ListEnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumPreferredCommunicationChannelNullableFilter<$PrismaModel> | $Enums.PreferredCommunicationChannel | null
+}
+
 export type EnumCastMemberStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.CastMemberStatus | Prisma.EnumCastMemberStatusFieldRefInput<$PrismaModel>
   in?: $Enums.CastMemberStatus[] | Prisma.ListEnumCastMemberStatusFieldRefInput<$PrismaModel>
   notIn?: $Enums.CastMemberStatus[] | Prisma.ListEnumCastMemberStatusFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumCastMemberStatusFilter<$PrismaModel> | $Enums.CastMemberStatus
+}
+
+export type EnumPreferredCommunicationChannelNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PreferredCommunicationChannel | Prisma.EnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  in?: $Enums.PreferredCommunicationChannel[] | Prisma.ListEnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.PreferredCommunicationChannel[] | Prisma.ListEnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumPreferredCommunicationChannelNullableWithAggregatesFilter<$PrismaModel> | $Enums.PreferredCommunicationChannel | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPreferredCommunicationChannelNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPreferredCommunicationChannelNullableFilter<$PrismaModel>
 }
 
 export type EnumCastMemberStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -1222,11 +1239,28 @@ export type NestedEnumEpisodeStatusWithAggregatesFilter<$PrismaModel = never> = 
   _max?: Prisma.NestedEnumEpisodeStatusFilter<$PrismaModel>
 }
 
+export type NestedEnumPreferredCommunicationChannelNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.PreferredCommunicationChannel | Prisma.EnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  in?: $Enums.PreferredCommunicationChannel[] | Prisma.ListEnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.PreferredCommunicationChannel[] | Prisma.ListEnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumPreferredCommunicationChannelNullableFilter<$PrismaModel> | $Enums.PreferredCommunicationChannel | null
+}
+
 export type NestedEnumCastMemberStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.CastMemberStatus | Prisma.EnumCastMemberStatusFieldRefInput<$PrismaModel>
   in?: $Enums.CastMemberStatus[] | Prisma.ListEnumCastMemberStatusFieldRefInput<$PrismaModel>
   notIn?: $Enums.CastMemberStatus[] | Prisma.ListEnumCastMemberStatusFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumCastMemberStatusFilter<$PrismaModel> | $Enums.CastMemberStatus
+}
+
+export type NestedEnumPreferredCommunicationChannelNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PreferredCommunicationChannel | Prisma.EnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  in?: $Enums.PreferredCommunicationChannel[] | Prisma.ListEnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.PreferredCommunicationChannel[] | Prisma.ListEnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumPreferredCommunicationChannelNullableWithAggregatesFilter<$PrismaModel> | $Enums.PreferredCommunicationChannel | null
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPreferredCommunicationChannelNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPreferredCommunicationChannelNullableFilter<$PrismaModel>
 }
 
 export type NestedEnumCastMemberStatusWithAggregatesFilter<$PrismaModel = never> = {

@@ -79,6 +79,7 @@ function getDefaults(m: CastMemberDto): CastMemberFormInput {
     role: m.role ?? "",
     whatsapp: formatBrazilPhone(m.whatsapp ?? ""),
     email: m.email ?? "",
+    preferredCommunicationChannel: m.preferredCommunicationChannel ?? "EMAIL",
     specialties: m.specialties ?? [],
     manualInactive: m.status === "INACTIVE",
     notes: m.notes ?? "",
@@ -399,6 +400,7 @@ export default function CastMemberEditPage() {
         role: data.role.trim(),
         whatsapp: normalizePhoneForStorage(data.whatsapp) ?? "",
         email: data.email.trim(),
+        preferredCommunicationChannel: data.preferredCommunicationChannel,
         specialties: data.specialties,
         manualInactive: data.manualInactive,
         notes: data.notes?.trim() ?? "",
@@ -681,6 +683,31 @@ export default function CastMemberEditPage() {
                             />
                             {errors.email && (
                               <p className={errorCls}>{errors.email.message}</p>
+                            )}
+                          </div>
+                          <div className="col-span-2">
+                            <label
+                              className={labelCls}
+                              htmlFor="edit-preferred-channel"
+                            >
+                              Canal preferido de comunicação
+                            </label>
+                            <select
+                              id="edit-preferred-channel"
+                              {...register("preferredCommunicationChannel")}
+                              className={
+                                errors.preferredCommunicationChannel
+                                  ? inputErrCls
+                                  : inputCls
+                              }
+                            >
+                              <option value="EMAIL">E-mail</option>
+                              <option value="WHATSAPP">WhatsApp</option>
+                            </select>
+                            {errors.preferredCommunicationChannel && (
+                              <p className={errorCls}>
+                                {errors.preferredCommunicationChannel.message}
+                              </p>
                             )}
                           </div>
                         </div>

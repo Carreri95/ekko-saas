@@ -306,6 +306,7 @@ export const CastMemberScalarFieldEnum = {
   role: 'role',
   whatsapp: 'whatsapp',
   email: 'email',
+  preferredCommunicationChannel: 'preferredCommunicationChannel',
   specialties: 'specialties',
   status: 'status',
   notes: 'notes',

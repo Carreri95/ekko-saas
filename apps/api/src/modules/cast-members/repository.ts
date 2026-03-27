@@ -61,6 +61,7 @@ export class CastMembersRepository {
     role: string | null;
     whatsapp: string | null;
     email: string | null;
+    preferredCommunicationChannel: "EMAIL" | "WHATSAPP" | null;
     specialties: string[];
     status: "AVAILABLE" | "BUSY" | "INACTIVE";
     notes: string | null;
@@ -75,6 +76,7 @@ export class CastMembersRepository {
       role: string | null;
       whatsapp: string | null;
       email: string | null;
+      preferredCommunicationChannel: "EMAIL" | "WHATSAPP" | null;
       specialties: string[];
       status: "AVAILABLE" | "BUSY" | "INACTIVE";
       notes: string | null;

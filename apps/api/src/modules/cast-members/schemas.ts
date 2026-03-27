@@ -1,10 +1,13 @@
 import { z } from "zod";
 
+const preferredCommunicationChannelSchema = z.enum(["EMAIL", "WHATSAPP"]);
+
 export const castMemberFormSchema = z.object({
   name: z.string().min(1, "Nome completo é obrigatório").max(120, "Nome muito longo"),
   role: z.string().min(1, "Função / cargo é obrigatório").max(80, "Função muito longa"),
   whatsapp: z.string().min(8, "WhatsApp é obrigatório").max(20, "WhatsApp inválido"),
   email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
+  preferredCommunicationChannel: preferredCommunicationChannelSchema,
   specialties: z
     .array(z.string().min(1))
     .min(1, "Adicione pelo menos uma especialidade")
