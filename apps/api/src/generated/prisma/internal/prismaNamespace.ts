@@ -402,6 +402,7 @@ export const ModelName = {
   ProjectCharacter: 'ProjectCharacter',
   ProjectCharacterAssignment: 'ProjectCharacterAssignment',
   RecordingSession: 'RecordingSession',
+  CommunicationLog: 'CommunicationLog',
   RecordingSessionEpisode: 'RecordingSessionEpisode',
   MediaAsset: 'MediaAsset'
 } as const
@@ -419,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "invite" | "inviteEmailDispatch" | "session" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "episode" | "castMember" | "castMemberAvailability" | "projectCharacter" | "projectCharacterAssignment" | "recordingSession" | "recordingSessionEpisode" | "mediaAsset"
+    modelProps: "user" | "invite" | "inviteEmailDispatch" | "session" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "episode" | "castMember" | "castMemberAvailability" | "projectCharacter" | "projectCharacterAssignment" | "recordingSession" | "communicationLog" | "recordingSessionEpisode" | "mediaAsset"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1755,6 +1756,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CommunicationLog: {
+      payload: Prisma.$CommunicationLogPayload<ExtArgs>
+      fields: Prisma.CommunicationLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CommunicationLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunicationLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CommunicationLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunicationLogPayload>
+        }
+        findFirst: {
+          args: Prisma.CommunicationLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunicationLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CommunicationLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunicationLogPayload>
+        }
+        findMany: {
+          args: Prisma.CommunicationLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunicationLogPayload>[]
+        }
+        create: {
+          args: Prisma.CommunicationLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunicationLogPayload>
+        }
+        createMany: {
+          args: Prisma.CommunicationLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CommunicationLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunicationLogPayload>[]
+        }
+        delete: {
+          args: Prisma.CommunicationLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunicationLogPayload>
+        }
+        update: {
+          args: Prisma.CommunicationLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunicationLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.CommunicationLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CommunicationLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CommunicationLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunicationLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.CommunicationLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CommunicationLogPayload>
+        }
+        aggregate: {
+          args: Prisma.CommunicationLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCommunicationLog>
+        }
+        groupBy: {
+          args: Prisma.CommunicationLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommunicationLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CommunicationLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CommunicationLogCountAggregateOutputType> | number
+        }
+      }
+    }
     RecordingSessionEpisode: {
       payload: Prisma.$RecordingSessionEpisodePayload<ExtArgs>
       fields: Prisma.RecordingSessionEpisodeFieldRefs
@@ -2234,6 +2309,36 @@ export const RecordingSessionScalarFieldEnum = {
 export type RecordingSessionScalarFieldEnum = (typeof RecordingSessionScalarFieldEnum)[keyof typeof RecordingSessionScalarFieldEnum]
 
 
+export const CommunicationLogScalarFieldEnum = {
+  id: 'id',
+  channel: 'channel',
+  direction: 'direction',
+  status: 'status',
+  subject: 'subject',
+  body: 'body',
+  templateKey: 'templateKey',
+  recipientName: 'recipientName',
+  recipientEmail: 'recipientEmail',
+  recipientWhatsapp: 'recipientWhatsapp',
+  dubbingProjectId: 'dubbingProjectId',
+  episodeId: 'episodeId',
+  castMemberId: 'castMemberId',
+  clientId: 'clientId',
+  sessionId: 'sessionId',
+  sentAt: 'sentAt',
+  error: 'error',
+  providerMessageId: 'providerMessageId',
+  sendLockedAt: 'sendLockedAt',
+  sendAttemptCount: 'sendAttemptCount',
+  lastSendAttemptAt: 'lastSendAttemptAt',
+  nextRetryAt: 'nextRetryAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CommunicationLogScalarFieldEnum = (typeof CommunicationLogScalarFieldEnum)[keyof typeof CommunicationLogScalarFieldEnum]
+
+
 export const RecordingSessionEpisodeScalarFieldEnum = {
   id: 'id',
   sessionId: 'sessionId',
@@ -2669,6 +2774,48 @@ export type ListEnumRecordingSessionFormatFieldRefInput<$PrismaModel> = FieldRef
 
 
 /**
+ * Reference to a field of type 'CommunicationChannel'
+ */
+export type EnumCommunicationChannelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunicationChannel'>
+    
+
+
+/**
+ * Reference to a field of type 'CommunicationChannel[]'
+ */
+export type ListEnumCommunicationChannelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunicationChannel[]'>
+    
+
+
+/**
+ * Reference to a field of type 'CommunicationDirection'
+ */
+export type EnumCommunicationDirectionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunicationDirection'>
+    
+
+
+/**
+ * Reference to a field of type 'CommunicationDirection[]'
+ */
+export type ListEnumCommunicationDirectionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunicationDirection[]'>
+    
+
+
+/**
+ * Reference to a field of type 'CommunicationStatus'
+ */
+export type EnumCommunicationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunicationStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'CommunicationStatus[]'
+ */
+export type ListEnumCommunicationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunicationStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'MediaAssetKind'
  */
 export type EnumMediaAssetKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MediaAssetKind'>
@@ -2850,6 +2997,7 @@ export type GlobalOmitConfig = {
   projectCharacter?: Prisma.ProjectCharacterOmit
   projectCharacterAssignment?: Prisma.ProjectCharacterAssignmentOmit
   recordingSession?: Prisma.RecordingSessionOmit
+  communicationLog?: Prisma.CommunicationLogOmit
   recordingSessionEpisode?: Prisma.RecordingSessionEpisodeOmit
   mediaAsset?: Prisma.MediaAssetOmit
 }

@@ -12,6 +12,7 @@ import {
   partsFromIso,
 } from "@/app/lib/session-datetime";
 import { computeSessionTimeSuggestions } from "@/app/lib/session-time-suggestions";
+import { buildCommunicationFormPrefillFromSession } from "@/app/lib/communication-session-prefill";
 import {
   useCallback,
   useEffect,
@@ -53,12 +54,17 @@ import {
   storedTotalToFormUnit,
   valueFieldLabel,
 } from "../lib/project-finance";
+import {
+  ProjectCommunicationTab,
+  type CommunicationTabDraft,
+} from "./components/project-communication-tab";
 
 const TABS = [
   { id: "info", label: "Informações", enabled: true },
   { id: "elenco", label: "Elenco", enabled: true },
   { id: "episodios", label: "Episódios", enabled: true },
   { id: "agenda", label: "Agenda", enabled: true },
+  { id: "comunicacao", label: "Comunicação", enabled: true },
   { id: "gravacoes", label: "Gravações", enabled: false },
   { id: "financeiro", label: "Financeiro", enabled: false },
 ] as const;
@@ -626,9 +632,12 @@ export default function ProjectEditPage() {
   const [project, setProject] = useState<DubbingProjectDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabId>(
-    searchParams.get("tab") === "episodios" ? "episodios" : "info",
-  );
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    const t = searchParams.get("tab");
+    if (t === "episodios") return "episodios";
+    if (t === "comunicacao") return "comunicacao";
+    return "info";
+  });
   const [savedMsg, setSavedMsg] = useState(false);
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [clientListRefresh, setClientListRefresh] = useState(0);
@@ -677,6 +686,8 @@ export default function ProjectEditPage() {
   const [sessionAgendaViewMode, setSessionAgendaViewMode] = useState<
     "list" | "visual"
   >("list");
+  const [communicationTabDraft, setCommunicationTabDraft] =
+    useState<CommunicationTabDraft | null>(null);
   const [castMemberAvailabilities, setCastMemberAvailabilities] = useState<
     Record<string, CastMemberAvailabilityDto[]>
   >({});
@@ -810,6 +821,13 @@ export default function ProjectEditPage() {
       void loadCastMembers();
     }
   }, [activeTab, loadSessions, loadEpisodes, loadCharacters, loadCastMembers]);
+
+  useEffect(() => {
+    if (activeTab === "comunicacao") {
+      void loadSessions();
+      void loadCastMembers();
+    }
+  }, [activeTab, loadSessions, loadCastMembers]);
 
   useEffect(() => {
     if (!sessionSuggestionAppliedHint) return;
@@ -1102,6 +1120,25 @@ export default function ProjectEditPage() {
     setSessionTitleTouched(true);
   }, []);
 
+  const openCommunicationFromSession = useCallback(
+    (session: RecordingSessionDto) => {
+      const member =
+        castMembers.find((c) => c.id === session.castMemberId) ?? null;
+      const prefill = buildCommunicationFormPrefillFromSession(session, {
+        projectName: project?.name?.trim() ? project.name : "Projeto",
+        castMember: member,
+        templateType: "SESSION_REMINDER",
+      });
+      setCommunicationTabDraft({ seed: Date.now(), prefill });
+      setActiveTab("comunicacao");
+    },
+    [castMembers, project?.name],
+  );
+
+  const handleCommunicationDraftConsumed = useCallback(() => {
+    setCommunicationTabDraft(null);
+  }, []);
+
   useEffect(() => {
     if (editingSessionId) return;
     if (sessionTitleTouched) return;
@@ -1246,12 +1283,12 @@ export default function ProjectEditPage() {
         setSessionFeedback(msg);
         return;
       }
+
+      let feedbackMsg = isEdit
+        ? "Sessão atualizada com sucesso."
+        : "Sessão criada com sucesso.";
       setSessionFeedbackTone("success");
-      setSessionFeedback(
-        isEdit
-          ? "Sessão atualizada com sucesso."
-          : "Sessão criada com sucesso.",
-      );
+      setSessionFeedback(feedbackMsg);
       resetSessionForm();
       await loadSessions();
     } catch {
@@ -2623,6 +2660,22 @@ export default function ProjectEditPage() {
                     </div>
                   </div>
                 )}
+                {activeTab === "comunicacao" && id ? (
+                  <div className="flex-1 overflow-y-auto px-[24px] py-[20px]">
+                    <div className="mx-auto flex max-w-[980px] flex-col gap-[12px]">
+                      <ProjectCommunicationTab
+                        projectId={id}
+                        projectName={project?.name?.trim() ? project.name : "Projeto"}
+                        castMembers={castMembers}
+                        sessions={sessions}
+                        communicationDraft={communicationTabDraft}
+                        onCommunicationDraftConsumed={
+                          handleCommunicationDraftConsumed
+                        }
+                      />
+                    </div>
+                  </div>
+                ) : null}
                 {activeTab === "agenda" && (
                   <div className="flex-1 overflow-y-auto px-[24px] py-[20px]">
                     <div className="mx-auto flex max-w-[980px] flex-col gap-[12px]">
@@ -3133,21 +3186,34 @@ export default function ProjectEditPage() {
                                           : null;
                                       const conflictTooltip =
                                         conflict.detailLines.join(" · ");
+                                      const cardDisabled =
+                                        sessionSaving ||
+                                        Boolean(sessionDeletingId);
                                       return (
-                                        <button
+                                        <div
                                           key={session.id}
-                                          type="button"
-                                          disabled={
-                                            sessionSaving ||
-                                            Boolean(sessionDeletingId)
-                                          }
-                                          onClick={() =>
-                                            onEditSession(session)
-                                          }
-                                          className={`w-full rounded-[8px] border p-[10px] text-left transition-colors disabled:opacity-40 ${agendaConflictCardClassNames(
+                                          role="button"
+                                          tabIndex={cardDisabled ? -1 : 0}
+                                          aria-disabled={cardDisabled}
+                                          className={`w-full rounded-[8px] border p-[10px] text-left transition-colors ${agendaConflictCardClassNames(
                                             conflict.severity,
                                             isEditing,
-                                          )}`}
+                                          )} ${
+                                            cardDisabled
+                                              ? "pointer-events-none opacity-40"
+                                              : "cursor-pointer"
+                                          }`}
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter" || e.key === " ") {
+                                              e.preventDefault();
+                                              if (!cardDisabled)
+                                                onEditSession(session);
+                                            }
+                                          }}
+                                          onClick={() => {
+                                            if (!cardDisabled)
+                                              onEditSession(session);
+                                          }}
                                         >
                                           <div className="flex flex-wrap items-start justify-between gap-[8px]">
                                             <p className="min-w-0 flex-1 truncate text-[12px] font-[600] text-[#e8e8e8]">
@@ -3196,7 +3262,25 @@ export default function ProjectEditPage() {
                                               )}
                                             </span>
                                           </div>
-                                        </button>
+                                          <div
+                                            className="mt-[8px] flex justify-end border-t border-[#2a2a2a] pt-[8px]"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <button
+                                              type="button"
+                                              disabled={cardDisabled}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                openCommunicationFromSession(
+                                                  session,
+                                                );
+                                              }}
+                                              className="rounded-[5px] border border-[#0d3d2a] px-[8px] py-[4px] text-[10px] text-[#5DCAA5] hover:bg-[#0a2018] disabled:opacity-40"
+                                            >
+                                              Registrar comunicação
+                                            </button>
+                                          </div>
+                                        </div>
                                       );
                                     })}
                                   </div>
@@ -3304,7 +3388,7 @@ export default function ProjectEditPage() {
                                               "Dublador não informado"}
                                           </p>
                                         </div>
-                                        <div className="flex items-center gap-[6px]">
+                                        <div className="flex flex-wrap items-center gap-[6px]">
                                           <button
                                             type="button"
                                             disabled={
@@ -3317,6 +3401,21 @@ export default function ProjectEditPage() {
                                             className="rounded-[5px] border border-[#2e2e2e] px-[8px] py-[4px] text-[10px] text-[#909090] hover:bg-[#252525] disabled:opacity-40"
                                           >
                                             Editar
+                                          </button>
+                                          <button
+                                            type="button"
+                                            disabled={
+                                              sessionSaving ||
+                                              Boolean(sessionDeletingId)
+                                            }
+                                            onClick={() =>
+                                              openCommunicationFromSession(
+                                                session,
+                                              )
+                                            }
+                                            className="rounded-[5px] border border-[#0d3d2a] px-[8px] py-[4px] text-[10px] text-[#5DCAA5] hover:bg-[#0a2018] disabled:opacity-40"
+                                          >
+                                            Registrar comunicação
                                           </button>
                                           <button
                                             type="button"
@@ -3441,7 +3540,8 @@ export default function ProjectEditPage() {
                 {activeTab !== "info" &&
                 activeTab !== "elenco" &&
                 activeTab !== "episodios" &&
-                activeTab !== "agenda" ? (
+                activeTab !== "agenda" &&
+                activeTab !== "comunicacao" ? (
                   <div className="flex min-h-[200px] items-center justify-center rounded-[10px] border border-[#252525] bg-[#1a1a1a] py-16 text-[13px] text-[#444]">
                     Em breve
                   </div>

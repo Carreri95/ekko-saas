@@ -38,4 +38,12 @@ export const env = {
    * Deve ser idêntico no apps/api e apps/worker.
    */
   openAiKeyEncryptionSecret: process.env.OPENAI_KEY_ENCRYPTION_SECRET?.trim() || "",
+  /** Resend — envio síncrono de CommunicationLog (e-mail). Omisso: desativado até configurar. */
+  resendApiKey: process.env.RESEND_API_KEY?.trim() || "",
+  emailFrom:
+    process.env.EMAIL_FROM?.trim() || "SubtitleBot <onboarding@resend.dev>",
+  /** Evolution API — envio real de CommunicationLog por WhatsApp (outbound). */
+  evolutionApiUrl: process.env.EVOLUTION_API_URL?.trim() || "",
+  evolutionApiKey: process.env.EVOLUTION_API_KEY?.trim() || "",
+  evolutionInstanceName: process.env.EVOLUTION_INSTANCE_NAME?.trim() || "",
 };

@@ -132,6 +132,11 @@ export type ProjectCharacterAssignment = Prisma.ProjectCharacterAssignmentModel
  */
 export type RecordingSession = Prisma.RecordingSessionModel
 /**
+ * Model CommunicationLog
+ * Histórico manual de comunicação (e-mail, WhatsApp, sistema). Não envia mensagens; não é auditoria de ações.
+ */
+export type CommunicationLog = Prisma.CommunicationLogModel
+/**
  * Model RecordingSessionEpisode
  * Liga sessão de gravação a um ou mais episódios (N:N).
  */

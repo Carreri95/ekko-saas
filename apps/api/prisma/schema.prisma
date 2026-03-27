@@ -247,7 +247,8 @@ model Client {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  projects DubbingProject[]
+  projects          DubbingProject[]
+  communicationLogs CommunicationLog[]
 }
 
 enum ClientStatus {
@@ -278,7 +279,8 @@ model DubbingProject {
   characters    ProjectCharacter[]
   characterAssignments ProjectCharacterAssignment[]
   recordingSessions RecordingSession[]
-  episodes      Episode[]
+  episodes          Episode[]
+  communicationLogs CommunicationLog[]
 
   @@index([status])
   @@index([deadline])
@@ -303,6 +305,7 @@ model Episode {
   project        DubbingProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   recordingSessions RecordingSession[]
   recordingSessionEpisodes RecordingSessionEpisode[]
+  communicationLogs      CommunicationLog[]
 
   @@unique([projectId, number])
   @@index([projectId])
@@ -367,7 +370,8 @@ model CastMember {
   characters  ProjectCharacter[]
   characterAssignments ProjectCharacterAssignment[]
   recordingSessions RecordingSession[]
-  availabilities CastMemberAvailability[]
+  availabilities    CastMemberAvailability[]
+  communicationLogs CommunicationLog[]
 }
 
 model CastMemberAvailability {
@@ -479,12 +483,74 @@ model RecordingSession {
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
   sessionEpisodes RecordingSessionEpisode[]
+  communicationLogs CommunicationLog[]
 
   @@index([projectId])
   @@index([castMemberId])
   @@index([episodeId])
   @@index([characterId])
   @@index([projectId, startAt])
+}
+
+enum CommunicationChannel {
+  EMAIL
+  WHATSAPP
+  SYSTEM
+}
+
+enum CommunicationDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum CommunicationStatus {
+  PENDING
+  /// Pedido de envio por e-mail em fila / a processar pelo worker (PR 23).
+  PROCESSING
+  SENT
+  RECEIVED
+  FAILED
+}
+
+/// Histórico manual de comunicação (e-mail, WhatsApp, sistema). Não envia mensagens; não é auditoria de ações.
+model CommunicationLog {
+  id                 String                  @id @default(cuid())
+  channel            CommunicationChannel
+  direction          CommunicationDirection
+  status             CommunicationStatus
+  subject            String?
+  body               String
+  templateKey        String?
+  recipientName      String?
+  recipientEmail     String?
+  recipientWhatsapp  String?
+  dubbingProjectId   String?
+  dubbingProject     DubbingProject?         @relation(fields: [dubbingProjectId], references: [id], onDelete: Cascade)
+  episodeId          String?
+  episode            Episode?                @relation(fields: [episodeId], references: [id], onDelete: SetNull)
+  castMemberId       String?
+  castMember         CastMember?             @relation(fields: [castMemberId], references: [id], onDelete: SetNull)
+  clientId           String?
+  client             Client?                 @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  sessionId          String?
+  session            RecordingSession?       @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  sentAt             DateTime?
+  error              String?
+  /// ID retornado pelo provider (Resend) quando o envio é aceite.
+  providerMessageId  String?
+  /// Marca de “claim” pelo worker para evitar envio duplicado.
+  sendLockedAt       DateTime?
+  sendAttemptCount   Int                   @default(0)
+  lastSendAttemptAt  DateTime?
+  /// Próxima janela de tentativa (retry simples, sem scheduler complexo).
+  nextRetryAt        DateTime?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  @@index([dubbingProjectId])
+  @@index([dubbingProjectId, createdAt])
+  @@index([status, channel])
+  @@index([status, channel, nextRetryAt])
 }
 
 /// Liga sessão de gravação a um ou mais episódios (N:N).
