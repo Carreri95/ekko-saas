@@ -385,6 +385,7 @@ id
 nome
 email
 whatsapp
+preferredCommunicationChannel (EMAIL | WHATSAPP)
 status
 bio curta
 cidade
@@ -521,6 +522,8 @@ No PR 26, o prefill de comunicação passou a usar templates básicos por tipo (
 No PR 27, a aba Comunicação ganhou seleção explícita de template básico no formulário e ação de aplicar template (regenera `subject`, `body` e `templateKey`). O conteúdo permanece totalmente editável após aplicação; não existe engine avançada nem administração de templates.
 
 No PR 28, houve polimento final de UX na aba Comunicação (frontend): copy mais direta, envio em lote (`Enviar todos` para OUTBOUND `PENDING`/`FAILED`), chips visuais consistentes para status/canal/direção e simplificação do formulário (sem edição manual de estado/erro). Não houve alteração no backend, worker ou fluxo de outbox/envio.
+
+No PR 29, `CastMember` ganhou preferência simples de canal (`EMAIL` ou `WHATSAPP`). O prefill e os fluxos de comunicação a partir da sessão passam a respeitar essa preferência e aplicam fallback mínimo: se o contacto preferido não existir, tenta o outro canal; se nenhum existir, mantém o comportamento normal de validação/campos vazios.
 
 Campos ver schema Prisma (inclui `templateKey` opcional, campos de outbox mínimos no próprio `CommunicationLog`).
 

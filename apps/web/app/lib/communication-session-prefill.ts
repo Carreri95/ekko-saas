@@ -6,10 +6,24 @@ import {
   type CommunicationTemplateType,
 } from "./communication-templates";
 
-function pickDefaultChannel(cast: CastMemberDto | null): CommunicationChannel {
-  if (cast?.whatsapp?.trim() && !cast?.email?.trim()) {
+export function pickChannelWithSimpleFallback(cast: CastMemberDto | null): CommunicationChannel {
+  const preferred = cast?.preferredCommunicationChannel;
+  const hasEmail = Boolean(cast?.email?.trim());
+  const hasWhatsapp = Boolean(cast?.whatsapp?.trim());
+
+  if (preferred === "WHATSAPP") {
+    if (hasWhatsapp) return "WHATSAPP";
+    if (hasEmail) return "EMAIL";
     return "WHATSAPP";
   }
+  if (preferred === "EMAIL") {
+    if (hasEmail) return "EMAIL";
+    if (hasWhatsapp) return "WHATSAPP";
+    return "EMAIL";
+  }
+
+  // Compatibilidade com membros antigos sem preferência.
+  if (hasWhatsapp && !hasEmail) return "WHATSAPP";
   return "EMAIL";
 }
 
@@ -51,7 +65,7 @@ export function buildCommunicationFormPrefillFromSession(
   });
 
   return {
-    channel: pickDefaultChannel(cast),
+    channel: pickChannelWithSimpleFallback(cast),
     direction: "OUTBOUND",
     status: "PENDING",
     subject: template.subject,

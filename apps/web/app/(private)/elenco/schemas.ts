@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const preferredCommunicationChannelSchema = z.enum(["EMAIL", "WHATSAPP"]);
+
 /** Disponível / Em projeto são automáticos; só "inativo" é escolha manual. */
 export const castMemberFormSchema = z.object({
   name: z
@@ -21,6 +23,8 @@ export const castMemberFormSchema = z.object({
     .string()
     .min(1, "E-mail é obrigatório")
     .email("E-mail inválido"),
+
+  preferredCommunicationChannel: preferredCommunicationChannelSchema,
 
   specialties: z
     .array(z.string().min(1))

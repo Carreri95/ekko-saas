@@ -2233,6 +2233,7 @@ export const CastMemberScalarFieldEnum = {
   role: 'role',
   whatsapp: 'whatsapp',
   email: 'email',
+  preferredCommunicationChannel: 'preferredCommunicationChannel',
   specialties: 'specialties',
   status: 'status',
   notes: 'notes',
@@ -2672,6 +2673,20 @@ export type EnumEpisodeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'EpisodeStatus[]'
  */
 export type ListEnumEpisodeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EpisodeStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'PreferredCommunicationChannel'
+ */
+export type EnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PreferredCommunicationChannel'>
+    
+
+
+/**
+ * Reference to a field of type 'PreferredCommunicationChannel[]'
+ */
+export type ListEnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PreferredCommunicationChannel[]'>
     
 
 

@@ -207,6 +207,14 @@ export const CommunicationChannel = {
 export type CommunicationChannel = (typeof CommunicationChannel)[keyof typeof CommunicationChannel]
 
 
+export const PreferredCommunicationChannel = {
+  EMAIL: 'EMAIL',
+  WHATSAPP: 'WHATSAPP'
+} as const
+
+export type PreferredCommunicationChannel = (typeof PreferredCommunicationChannel)[keyof typeof PreferredCommunicationChannel]
+
+
 export const CommunicationDirection = {
   OUTBOUND: 'OUTBOUND',
   INBOUND: 'INBOUND'
