@@ -3,6 +3,7 @@ import { TranscriptionJobStatus } from "../../api/src/generated/prisma/client.js
 
 import { prisma } from "./prisma-client.js";
 import { processOneCommunicationLogDispatch } from "./communication-log/run-communication-log-email-dispatch.js";
+import { processSessionReminders } from "./communication-log/process-session-reminders.js";
 import { processOneInviteEmailDispatch } from "./invite-email/run-invite-email-dispatch.js";
 import { MediaStorageService } from "./transcription/media-storage.service.js";
 import { runTranscriptionJob } from "./transcription/transcription-job-runner.js";
@@ -50,6 +51,11 @@ async function loop(): Promise<void> {
 
       const didCommDispatch = await processOneCommunicationLogDispatch(prisma);
       if (didCommDispatch) {
+        continue;
+      }
+
+      const didCreateSessionReminder = await processSessionReminders(prisma);
+      if (didCreateSessionReminder) {
         continue;
       }
 
