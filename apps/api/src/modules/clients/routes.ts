@@ -71,6 +71,9 @@ export async function registerClientRoutes(app: FastifyInstance): Promise<void> 
     if ("notFound" in result) {
       return reply.status(404).send({ error: "Nao encontrado" });
     }
+    if ("badRequest" in result) {
+      return reply.status(400).send(result.badRequest);
+    }
     if ("conflict" in result) {
       return reply.status(409).send(result.conflict);
     }

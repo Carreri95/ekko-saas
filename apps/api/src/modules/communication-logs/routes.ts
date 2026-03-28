@@ -7,6 +7,7 @@ import { CommunicationLogsService } from "./service.js";
 
 type ParamsProject = { id: string };
 type ParamsLog = { id: string; logId: string };
+type ParamsGroup = { id: string; groupId: string };
 
 export async function registerCommunicationLogRoutes(app: FastifyInstance) {
   const service = new CommunicationLogsService();
@@ -72,6 +73,53 @@ export async function registerCommunicationLogRoutes(app: FastifyInstance) {
       if ("conflict" in result) return reply.code(409).send(result.conflict);
       if ("queued" in result) return reply.code(202).send(result);
       return reply.send(result);
+    },
+  );
+
+  app.patch<{ Params: ParamsGroup }>(
+    "/api/dubbing-projects/:id/communication-groups/:groupId",
+    async (request, reply) => {
+      const parsed = communicationLogPatchSchema.safeParse(request.body ?? {});
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: "Dados inválidos",
+          details: parsed.error.flatten().fieldErrors,
+        });
+      }
+      const result = await service.patchGroup(request.params.id, request.params.groupId, parsed.data);
+      if ("notFound" in result) return reply.code(404).send({ error: "Não encontrado" });
+      if ("badRequest" in result) return reply.code(400).send(result.badRequest);
+      return reply.send(result);
+    },
+  );
+
+  app.delete<{ Params: ParamsGroup }>(
+    "/api/dubbing-projects/:id/communication-groups/:groupId",
+    async (request, reply) => {
+      const result = await service.removeGroup(request.params.id, request.params.groupId);
+      if ("notFound" in result) return reply.code(404).send({ error: "Não encontrado" });
+      return reply.code(204).send();
+    },
+  );
+
+  app.post<{ Params: ParamsGroup }>(
+    "/api/dubbing-projects/:id/communication-groups/:groupId/send",
+    async (request, reply) => {
+      const result = await service.enqueueSendGroup(request.params.id, request.params.groupId);
+      if ("notFound" in result) return reply.code(404).send({ error: "Não encontrado" });
+      if (result.acceptedCount === 0) {
+        return reply.code(400).send({
+          error: "Nenhum envio foi enfileirado",
+          results: result.results,
+          communicationGroup: result.communicationGroup,
+        });
+      }
+      return reply.code(202).send({
+        queued: true,
+        acceptedCount: result.acceptedCount,
+        results: result.results,
+        communicationGroup: result.communicationGroup,
+      });
     },
   );
 }

@@ -9,11 +9,13 @@ import {
   type CastMemberFormInput,
 } from "../schemas";
 import type { CastMemberDto } from "@/app/types/cast-member";
+import { CommunicationChannelChipRow } from "@/app/components/communication-channel-chip";
 import { useConfirm } from "@/app/components/confirm-provider";
 import {
   formatBrazilPhone,
   normalizePhoneForStorage,
 } from "@/src/lib/phone-format";
+import { formatCnpj, formatCpf } from "@/src/lib/document-format";
 
 const inputValidCls = `
   w-full min-h-[36px] rounded-[6px] border border-[#2e2e2e] bg-[#111]
@@ -41,20 +43,26 @@ function getDefaults(m: CastMemberDto | null): CastMemberFormInput {
   if (!m)
     return {
       name: "",
-      role: "",
+      cpf: "",
+      cnpj: "",
+      razaoSocial: "",
       whatsapp: "",
       email: "",
-      preferredCommunicationChannel: "EMAIL",
+      prefersEmail: true as const,
+      prefersWhatsapp: true as const,
       specialties: [],
       manualInactive: false,
       notes: "",
     };
   return {
     name: m.name,
-    role: m.role ?? "",
+    cpf: formatCpf(m.cpf ?? ""),
+    cnpj: formatCnpj(m.cnpj ?? ""),
+    razaoSocial: m.razaoSocial ?? "",
     whatsapp: formatBrazilPhone(m.whatsapp ?? ""),
     email: m.email ?? "",
-    preferredCommunicationChannel: m.preferredCommunicationChannel ?? "EMAIL",
+    prefersEmail: true as const,
+    prefersWhatsapp: true as const,
     specialties: m.specialties ?? [],
     manualInactive: m.status === "INACTIVE",
     notes: m.notes ?? "",
@@ -94,19 +102,25 @@ export function CastMemberDrawer({ member, onClose, onSaved }: Props) {
     const url = isNew ? "/api/cast-members" : `/api/cast-members/${member!.id}`;
     const method = isNew ? "POST" : "PATCH";
     try {
+      const basePayload = {
+        name: data.name.trim(),
+        cpf: data.cpf,
+        cnpj: data.cnpj,
+        razaoSocial: data.razaoSocial.trim(),
+        whatsapp: normalizePhoneForStorage(data.whatsapp) ?? "",
+        email: data.email.trim(),
+        specialties: data.specialties,
+        manualInactive: data.manualInactive,
+        notes: data.notes?.trim() ?? "",
+      };
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.name.trim(),
-          role: data.role.trim(),
-          whatsapp: normalizePhoneForStorage(data.whatsapp) ?? "",
-          email: data.email.trim(),
-          preferredCommunicationChannel: data.preferredCommunicationChannel,
-          specialties: data.specialties,
-          manualInactive: data.manualInactive,
-          notes: data.notes?.trim() ?? "",
-        }),
+        body: JSON.stringify(
+          isNew
+            ? { ...basePayload, prefersEmail: true, prefersWhatsapp: true }
+            : basePayload,
+        ),
       });
 
       if (res.status === 409) {
@@ -206,17 +220,83 @@ export function CastMemberDrawer({ member, onClose, onSaved }: Props) {
             </div>
 
             <div>
-              <label className={labelCls} htmlFor="cast-role">
-                Função / Cargo <span className="text-[#E24B4A]">*</span>
+              <label className={labelCls} htmlFor="cast-role-locked">
+                Função
               </label>
               <input
-                id="cast-role"
-                {...register("role")}
-                className={errors.role ? inputErrorCls : inputValidCls}
-                placeholder="Ex: Dubladora sênior"
+                id="cast-role-locked"
+                value="DUBLADOR"
+                disabled
+                className={`${inputValidCls} cursor-not-allowed opacity-70`}
               />
-              {errors.role ? (
-                <p className={errorCls}>{errors.role.message}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-[10px]">
+            <div className={sectionCls}>Dados fiscais</div>
+
+            <div className="grid grid-cols-2 gap-[10px]">
+              <div>
+                <label className={labelCls} htmlFor="cast-cpf">
+                  CPF
+                </label>
+                <Controller
+                  name="cpf"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      id="cast-cpf"
+                      inputMode="numeric"
+                      name={field.name}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(formatCpf(e.target.value))}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      className={errors.cpf ? inputErrorCls : inputValidCls}
+                      placeholder="000.000.000-00"
+                    />
+                  )}
+                />
+                {errors.cpf ? <p className={errorCls}>{errors.cpf.message}</p> : null}
+              </div>
+
+              <div>
+                <label className={labelCls} htmlFor="cast-cnpj">
+                  CNPJ
+                </label>
+                <Controller
+                  name="cnpj"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      id="cast-cnpj"
+                      inputMode="numeric"
+                      name={field.name}
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(formatCnpj(e.target.value))}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                      className={errors.cnpj ? inputErrorCls : inputValidCls}
+                      placeholder="00.000.000/0000-00"
+                    />
+                  )}
+                />
+                {errors.cnpj ? <p className={errorCls}>{errors.cnpj.message}</p> : null}
+              </div>
+            </div>
+
+            <div>
+              <label className={labelCls} htmlFor="cast-razao-social">
+                Razão social
+              </label>
+              <input
+                id="cast-razao-social"
+                {...register("razaoSocial")}
+                className={errors.razaoSocial ? inputErrorCls : inputValidCls}
+                placeholder="Ex: Estúdio XYZ Produções LTDA"
+              />
+              {errors.razaoSocial ? (
+                <p className={errorCls}>{errors.razaoSocial.message}</p>
               ) : null}
             </div>
           </div>
@@ -272,23 +352,26 @@ export function CastMemberDrawer({ member, onClose, onSaved }: Props) {
             </div>
 
             <div>
-              <label className={labelCls} htmlFor="cast-preferred-channel">
-                Canal preferido de comunicação
-              </label>
-              <select
-                id="cast-preferred-channel"
-                {...register("preferredCommunicationChannel")}
-                className={
-                  errors.preferredCommunicationChannel ? inputErrorCls : inputValidCls
-                }
-              >
-                <option value="EMAIL">E-mail</option>
-                <option value="WHATSAPP">WhatsApp</option>
-              </select>
-              {errors.preferredCommunicationChannel ? (
-                <p className={errorCls}>
-                  {errors.preferredCommunicationChannel.message}
-                </p>
+              <label className={labelCls}>Canais preferidos de comunicação</label>
+              <div className="rounded-[6px] border border-[#2e2e2e] bg-[#0c0c0c] px-[10px] py-[8px] opacity-90">
+                <CommunicationChannelChipRow channels={["WHATSAPP", "EMAIL"]} />
+              </div>
+              <p className="mt-[4px] text-[10px] text-[#505050]">
+                Política do elenco: contacto por e-mail e WhatsApp é obrigatório; preferências não podem
+                ser desativadas.
+              </p>
+              <input
+                type="hidden"
+                {...register("prefersEmail", { setValueAs: () => true })}
+                value="on"
+              />
+              <input
+                type="hidden"
+                {...register("prefersWhatsapp", { setValueAs: () => true })}
+                value="on"
+              />
+              {errors.prefersEmail ? (
+                <p className={errorCls}>{errors.prefersEmail.message}</p>
               ) : null}
             </div>
           </div>

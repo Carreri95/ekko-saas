@@ -21,6 +21,7 @@ export type RecordingSessionDto = {
   episodes?: RecordingSessionEpisodeRef[];
   characterId: string | null;
   castMemberId: string;
+  recordingTechnicianId: string | null;
   title: string;
   startAt: string;
   endAt: string;
@@ -33,6 +34,15 @@ export type RecordingSessionDto = {
     id: string;
     name: string;
     role: string | null;
+  } | null;
+  recordingTechnician: {
+    id: string;
+    name: string;
+    role:
+      | "RECORDING_TECHNICIAN"
+      | "POST_PRODUCTION"
+      | "MIXER"
+      | "PRE_PRODUCTION";
   } | null;
   episode?: {
     id: string;

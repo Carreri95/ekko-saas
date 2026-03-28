@@ -19,6 +19,11 @@ const STATUS_OPTIONS = [
   { value: "INACTIVE" as const, label: "Inativo", color: "#555" },
 ];
 
+const PAYMENT_METHOD_OPTIONS = [
+  { value: "WIRE_TRANSFER" as const, label: "Wire Transfer" },
+  { value: "WISE" as const, label: "Wise" },
+];
+
 const inputValidCls = `
   w-full min-h-[36px] rounded-[6px] border border-[#2e2e2e] bg-[#111]
   px-[10px] py-[8px] text-[13px] leading-snug text-[#e8e8e8] outline-none
@@ -50,6 +55,7 @@ function getDefaults(_c: ClientDto | null): ClientFormInput {
     country: "",
     notes: "",
     status: "ACTIVE",
+    paymentMethod: "WIRE_TRANSFER",
   };
 }
 
@@ -95,6 +101,7 @@ export function ClientDrawer({ onClose, onSaved }: Props) {
           country: data.country?.trim() ?? "",
           notes: data.notes?.trim() ?? "",
           status: data.status,
+          paymentMethod: data.paymentMethod,
         }),
       });
 
@@ -179,7 +186,7 @@ export function ClientDrawer({ onClose, onSaved }: Props) {
             </div>
             <div>
               <label className={labelCls} htmlFor="client-email">
-                E-mail
+                E-mail <span className="text-[#E24B4A]">*</span>
               </label>
               <input
                 id="client-email"
@@ -195,7 +202,7 @@ export function ClientDrawer({ onClose, onSaved }: Props) {
             </div>
             <div>
               <label className={labelCls} htmlFor="client-phone">
-                Telefone
+                Telefone <span className="text-[#E24B4A]">*</span>
               </label>
               <Controller
                 name="phone"
@@ -223,7 +230,7 @@ export function ClientDrawer({ onClose, onSaved }: Props) {
             </div>
             <div>
               <label className={labelCls} htmlFor="client-country">
-                País / origem
+                País / origem <span className="text-[#E24B4A]">*</span>
               </label>
               <input
                 id="client-country"
@@ -261,6 +268,29 @@ export function ClientDrawer({ onClose, onSaved }: Props) {
                 </div>
               )}
             />
+          </div>
+
+          <div className="flex flex-col gap-[10px]">
+            <div className={sectionCls}>Pagamento</div>
+            <div>
+              <label className={labelCls} htmlFor="client-payment-method">
+                Método de pagamento
+              </label>
+              <select
+                id="client-payment-method"
+                {...register("paymentMethod")}
+                className={errors.paymentMethod ? inputErrorCls : inputValidCls}
+              >
+                {PAYMENT_METHOD_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {errors.paymentMethod ? (
+                <p className={errorCls}>{errors.paymentMethod.message}</p>
+              ) : null}
+            </div>
           </div>
 
           <div className="flex flex-col gap-[10px]">

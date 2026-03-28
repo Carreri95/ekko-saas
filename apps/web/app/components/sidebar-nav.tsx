@@ -356,6 +356,17 @@ export function SidebarNav({ collapsed, onToggle }: Props) {
             <span className="app-sidebar-nav-item-label">Clientes</span>
           </Link>
           <Link
+            href="/colaboradores"
+            className={`app-sidebar-nav-item${isActivePath(pathname, "/colaboradores") ? " active" : ""}`}
+            aria-current={
+              isActivePath(pathname, "/colaboradores") ? "page" : undefined
+            }
+            title={collapsed ? "Colaboradores" : undefined}
+          >
+            <NavItemIcon id="briefcase" />
+            <span className="app-sidebar-nav-item-label">Colaboradores</span>
+          </Link>
+          <Link
             href="/agenda"
             className={`app-sidebar-nav-item${isActivePath(pathname, "/agenda") ? " active" : ""}`}
             aria-current={

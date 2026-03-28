@@ -25,6 +25,7 @@ type ClientLike = {
   name: string;
   email: string | null;
   phone: string | null;
+  paymentMethod: "WIRE_TRANSFER" | "WISE" | null;
   country: string | null;
   notes: string | null;
   status: "ACTIVE" | "INACTIVE";
@@ -39,6 +40,7 @@ export function serializeClient(c: ClientLike) {
     name: c.name,
     email: c.email,
     phone: c.phone ? formatBrazilPhone(c.phone) : null,
+    paymentMethod: c.paymentMethod,
     country: c.country,
     notes: c.notes,
     status: c.status,

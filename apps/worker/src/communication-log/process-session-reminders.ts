@@ -3,7 +3,6 @@ import {
   CommunicationChannel,
   CommunicationDirection,
   CommunicationStatus,
-  PreferredCommunicationChannel,
   RecordingSessionFormat,
   RecordingSessionStatus,
 } from "../../../api/src/generated/prisma/client.js";
@@ -29,20 +28,22 @@ function log(event: string, payload: Record<string, unknown> = {}) {
 }
 
 function pickChannelWithSimpleFallback(cast: {
-  preferredCommunicationChannel: PreferredCommunicationChannel | null;
+  prefersEmail: boolean;
+  prefersWhatsapp: boolean;
   email: string | null;
   whatsapp: string | null;
 }): CommunicationChannel {
-  const preferred = cast.preferredCommunicationChannel;
   const hasEmail = Boolean(cast.email?.trim());
   const hasWhatsapp = Boolean(cast.whatsapp?.trim());
+  const prefersEmail = Boolean(cast.prefersEmail);
+  const prefersWhatsapp = Boolean(cast.prefersWhatsapp);
 
-  if (preferred === PreferredCommunicationChannel.WHATSAPP) {
+  if (prefersWhatsapp) {
     if (hasWhatsapp) return CommunicationChannel.WHATSAPP;
     if (hasEmail) return CommunicationChannel.EMAIL;
     return CommunicationChannel.WHATSAPP;
   }
-  if (preferred === PreferredCommunicationChannel.EMAIL) {
+  if (prefersEmail) {
     if (hasEmail) return CommunicationChannel.EMAIL;
     if (hasWhatsapp) return CommunicationChannel.WHATSAPP;
     return CommunicationChannel.EMAIL;
@@ -50,6 +51,24 @@ function pickChannelWithSimpleFallback(cast: {
 
   if (hasWhatsapp && !hasEmail) return CommunicationChannel.WHATSAPP;
   return CommunicationChannel.EMAIL;
+}
+
+function resolveChannelsWithFallback(cast: {
+  prefersEmail: boolean;
+  prefersWhatsapp: boolean;
+  email: string | null;
+  whatsapp: string | null;
+}): CommunicationChannel[] {
+  const hasEmail = Boolean(cast.email?.trim());
+  const hasWhatsapp = Boolean(cast.whatsapp?.trim());
+  const out: CommunicationChannel[] = [];
+  if (cast.prefersEmail && hasEmail) out.push(CommunicationChannel.EMAIL);
+  if (cast.prefersWhatsapp && hasWhatsapp) out.push(CommunicationChannel.WHATSAPP);
+  if (out.length > 0) return out;
+  if (hasEmail) out.push(CommunicationChannel.EMAIL);
+  if (hasWhatsapp) out.push(CommunicationChannel.WHATSAPP);
+  if (out.length > 0) return out;
+  return [pickChannelWithSimpleFallback(cast)];
 }
 
 function resolveReminderTemplateKey(startAt: Date, now: Date): string | null {
@@ -145,7 +164,8 @@ export async function processSessionReminders(prisma: PrismaClient): Promise<boo
           name: true,
           email: true,
           whatsapp: true,
-          preferredCommunicationChannel: true,
+          prefersEmail: true,
+          prefersWhatsapp: true,
         },
       },
     },
@@ -179,37 +199,36 @@ export async function processSessionReminders(prisma: PrismaClient): Promise<boo
     select: {
       sessionId: true,
       templateKey: true,
+      channel: true,
     },
   });
   const existingKeys = new Set(
     existingLogs
       .filter((r) => Boolean(r.sessionId && r.templateKey))
-      .map((r) => `${r.sessionId}:${r.templateKey}`),
+      .map((r) => `${r.sessionId}:${r.templateKey}:${r.channel}`),
   );
 
   let createdCount = 0;
   for (const candidate of candidates) {
-    const dedupKey = `${candidate.session.id}:${candidate.reminderTemplateKey}`;
-    if (existingKeys.has(dedupKey)) {
-      continue;
-    }
-
     const cast = candidate.session.castMember;
     if (!cast) {
       log("skip_missing_cast_member", { sessionId: candidate.session.id });
       continue;
     }
 
-    const channel = pickChannelWithSimpleFallback(cast);
+    const channels = resolveChannelsWithFallback(cast);
     const recipientEmail = cast.email?.trim() ?? "";
     const recipientWhatsapp = cast.whatsapp?.trim() ?? "";
-    const hasRecipient =
-      channel === CommunicationChannel.EMAIL ? Boolean(recipientEmail) : Boolean(recipientWhatsapp);
-    if (!hasRecipient) {
+    const channelsWithRecipient = channels.filter((channel) =>
+      channel === CommunicationChannel.EMAIL
+        ? Boolean(recipientEmail)
+        : Boolean(recipientWhatsapp),
+    );
+    if (channelsWithRecipient.length === 0) {
       log("skip_missing_recipient", {
         sessionId: candidate.session.id,
         castMemberId: cast.id,
-        channel,
+        channels,
       });
       continue;
     }
@@ -221,39 +240,46 @@ export async function processSessionReminders(prisma: PrismaClient): Promise<boo
       castName,
     });
 
-    try {
-      await prisma.communicationLog.create({
-        data: {
-          channel,
-          direction: CommunicationDirection.OUTBOUND,
-          status: CommunicationStatus.PROCESSING,
-          subject: template.subject,
-          body: template.body,
-          templateKey: candidate.reminderTemplateKey,
-          recipientName: castName,
-          recipientEmail: recipientEmail || null,
-          recipientWhatsapp: recipientWhatsapp || null,
-          dubbingProjectId: candidate.session.projectId,
-          episodeId: candidate.session.episodeId ?? null,
-          castMemberId: candidate.session.castMemberId,
+    for (const channel of channelsWithRecipient) {
+      const dedupKey = `${candidate.session.id}:${candidate.reminderTemplateKey}:${channel}`;
+      if (existingKeys.has(dedupKey)) {
+        continue;
+      }
+      try {
+        await prisma.communicationLog.create({
+          data: {
+            channel,
+            direction: CommunicationDirection.OUTBOUND,
+            status: CommunicationStatus.PROCESSING,
+            subject: template.subject,
+            body: template.body,
+            templateKey: candidate.reminderTemplateKey,
+            recipientName: castName,
+            recipientEmail: recipientEmail || null,
+            recipientWhatsapp: recipientWhatsapp || null,
+            dubbingProjectId: candidate.session.projectId,
+            episodeId: candidate.session.episodeId ?? null,
+            castMemberId: candidate.session.castMemberId,
+            sessionId: candidate.session.id,
+            error: null,
+            providerMessageId: null,
+            sendLockedAt: null,
+            sendAttemptCount: 0,
+            lastSendAttemptAt: null,
+            nextRetryAt: null,
+            sentAt: null,
+          },
+        });
+        createdCount += 1;
+        existingKeys.add(dedupKey);
+      } catch (error) {
+        log("create_failed", {
           sessionId: candidate.session.id,
-          error: null,
-          providerMessageId: null,
-          sendLockedAt: null,
-          sendAttemptCount: 0,
-          lastSendAttemptAt: null,
-          nextRetryAt: null,
-          sentAt: null,
-        },
-      });
-      existingKeys.add(dedupKey);
-      createdCount += 1;
-    } catch (error) {
-      log("create_failed", {
-        sessionId: candidate.session.id,
-        templateKey: candidate.reminderTemplateKey,
-        error: error instanceof Error ? error.message : String(error),
-      });
+          templateKey: candidate.reminderTemplateKey,
+          channel,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
   }
 

@@ -10,6 +10,11 @@ import {
 import type { ClientDto } from "@/app/types/client";
 import { formatBrazilPhone } from "@/src/lib/phone-format";
 
+const PAYMENT_METHOD_OPTIONS = [
+  { value: "WIRE_TRANSFER" as const, label: "Wire Transfer" },
+  { value: "WISE" as const, label: "Wise" },
+];
+
 type Props = {
   onClose: () => void;
   onCreated: (client: ClientDto) => void;
@@ -32,6 +37,7 @@ export function ClientQuickModal({ onClose, onCreated }: Props) {
       country: "",
       notes: "",
       status: "ACTIVE",
+      paymentMethod: "WIRE_TRANSFER",
     },
   });
 
@@ -163,6 +169,24 @@ export function ClientQuickModal({ onClose, onCreated }: Props) {
               className={inputCls}
               placeholder="Ex: Brasil"
             />
+          </div>
+          <div>
+            <label className={labelCls}>
+              Pagamento <span className="text-[#E24B4A]">*</span>
+            </label>
+            <select
+              {...register("paymentMethod")}
+              className={errors.paymentMethod ? inputErrCls : inputCls}
+            >
+              {PAYMENT_METHOD_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {errors.paymentMethod ? (
+              <p className={errorCls}>{errors.paymentMethod.message}</p>
+            ) : null}
           </div>
           <div className="flex justify-end gap-[6px] border-t border-[#252525] pt-[10px]">
             <button

@@ -9,8 +9,19 @@ export type CommunicationStatus =
   | "RECEIVED"
   | "FAILED";
 
+/** Status consolidado de um grupo (vários canais). */
+export type CommunicationGroupConsolidatedStatus =
+  | "PENDENTE"
+  | "PROCESSANDO"
+  | "ENVIADO_PARCIALMENTE"
+  | "ENVIADO"
+  | "FALHA_PARCIAL"
+  | "FALHA";
+
 export type CommunicationLogDto = {
   id: string;
+  /** Mesmo valor em todos os registos de um envio multi-canal (sessão dual). */
+  communicationGroupId?: string | null;
   dubbingProjectId: string | null;
   channel: CommunicationChannel;
   direction: CommunicationDirection;
@@ -39,4 +50,24 @@ export type CommunicationLogDto = {
   castMember: { id: string; name: string } | null;
   client: { id: string; name: string } | null;
   session: { id: string; title: string; startAt: string } | null;
+};
+
+/** Item da listagem GET (uma comunicação lógica, N canais). */
+export type CommunicationGroupListItemDto = {
+  groupId: string;
+  consolidatedStatus: CommunicationGroupConsolidatedStatus;
+  createdAt: string;
+  direction: CommunicationDirection;
+  subject: string | null;
+  body: string;
+  templateKey: string | null;
+  recipientName: string | null;
+  recipientEmail: string | null;
+  recipientWhatsapp: string | null;
+  episodeId: string | null;
+  castMemberId: string | null;
+  clientId: string | null;
+  sessionId: string | null;
+  channels: CommunicationChannel[];
+  logs: CommunicationLogDto[];
 };

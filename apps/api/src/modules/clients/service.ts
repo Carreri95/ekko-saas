@@ -4,6 +4,8 @@ import { serializeClient } from "./mapper.js";
 
 const PROJECTS_PAGE_SIZE = 8;
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function normalizePhoneForStorage(input: string | null | undefined): string | null {
   const d = (input ?? "").replace(/\D/g, "").slice(0, 11);
   return d.length === 0 ? null : d;
@@ -102,24 +104,37 @@ export class ClientsService {
   }
 
   async create(input: ClientFormData) {
-    const emailNorm = input.email?.trim() ? input.email.trim().toLowerCase() : null;
+    const emailNorm = input.email;
     const phoneNorm = normalizePhoneForStorage(input.phone);
 
-    if (emailNorm) {
-      const taken = await this.repo.findByEmail(emailNorm);
-      if (taken) return { conflict: { error: "Este e-mail ja esta cadastrado", field: "email" as const } };
+    const takenEmail = await this.repo.findByEmail(emailNorm);
+    if (takenEmail) {
+      return {
+        conflict: {
+          error: "Este e-mail já está cadastrado",
+          field: "email" as const,
+        },
+      };
     }
 
     if (phoneNorm) {
       const taken = await this.repo.findByPhone(phoneNorm);
-      if (taken) return { conflict: { error: "Este telefone ja esta cadastrado", field: "phone" as const } };
+      if (taken) {
+        return {
+          conflict: {
+            error: "Este telefone já está cadastrado",
+            field: "phone" as const,
+          },
+        };
+      }
     }
 
     const created = await this.repo.create({
       name: input.name.trim(),
       email: emailNorm,
       phone: phoneNorm,
-      country: input.country?.trim() || null,
+      paymentMethod: input.paymentMethod,
+      country: input.country.trim(),
       notes: input.notes?.trim() || null,
       status: input.status,
     });
@@ -137,29 +152,75 @@ export class ClientsService {
     const existing = await this.repo.findById(id);
     if (!existing) return { notFound: true as const };
 
-    if (input.email !== undefined) {
-      const emailNorm = input.email.trim().toLowerCase();
-      if (emailNorm) {
-        const taken = await this.repo.findByEmail(emailNorm, id);
-        if (taken) return { conflict: { error: "Este e-mail ja esta cadastrado", field: "email" as const } };
+    const mergedPayment =
+      input.paymentMethod !== undefined ? input.paymentMethod : existing.paymentMethod;
+    if (mergedPayment == null) {
+      return {
+        badRequest: { error: "Forma de pagamento é obrigatória" } as const,
+      };
+    }
+
+    const nextEmail =
+      input.email !== undefined
+        ? input.email
+        : existing.email
+          ? existing.email.trim().toLowerCase()
+          : null;
+    const nextPhone =
+      input.phone !== undefined
+        ? normalizePhoneForStorage(input.phone)
+        : existing.phone;
+    const nextCountry =
+      input.country !== undefined ? input.country.trim() : (existing.country ?? "").trim();
+
+    const emailStr = (nextEmail ?? "").trim();
+    if (!emailStr || !EMAIL_RE.test(emailStr)) {
+      return {
+        badRequest: { error: "E-mail é obrigatório e deve ser válido" } as const,
+      };
+    }
+    const phoneDigits = (nextPhone ?? "").replace(/\D/g, "");
+    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      return {
+        badRequest: {
+          error: "Telefone é obrigatório (DDD + número, 10 ou 11 dígitos)",
+        } as const,
+      };
+    }
+    if (!nextCountry) {
+      return { badRequest: { error: "País é obrigatório" } as const };
+    }
+
+    if (input.email !== undefined && emailStr !== (existing.email ?? "").trim().toLowerCase()) {
+      const taken = await this.repo.findByEmail(emailStr, id);
+      if (taken) {
+        return {
+          conflict: {
+            error: "Este e-mail já está cadastrado",
+            field: "email" as const,
+          },
+        };
       }
     }
 
-    if (input.phone !== undefined) {
-      const phoneNorm = normalizePhoneForStorage(input.phone);
-      if (phoneNorm) {
-        const taken = await this.repo.findByPhone(phoneNorm, id);
-        if (taken) return { conflict: { error: "Este telefone ja esta cadastrado", field: "phone" as const } };
+    if (input.phone !== undefined && nextPhone && nextPhone !== existing.phone) {
+      const taken = await this.repo.findByPhone(nextPhone, id);
+      if (taken) {
+        return {
+          conflict: {
+            error: "Este telefone já está cadastrado",
+            field: "phone" as const,
+          },
+        };
       }
     }
 
     const updated = await this.repo.update(id, {
       ...(input.name !== undefined ? { name: input.name.trim() } : {}),
-      ...(input.email !== undefined
-        ? { email: input.email.trim() ? input.email.trim().toLowerCase() : null }
-        : {}),
-      ...(input.phone !== undefined ? { phone: normalizePhoneForStorage(input.phone) } : {}),
-      ...(input.country !== undefined ? { country: input.country?.trim() || null } : {}),
+      ...(input.email !== undefined ? { email: emailStr } : {}),
+      ...(input.phone !== undefined ? { phone: nextPhone } : {}),
+      ...(input.paymentMethod !== undefined ? { paymentMethod: input.paymentMethod } : {}),
+      ...(input.country !== undefined ? { country: nextCountry } : {}),
       ...(input.notes !== undefined ? { notes: input.notes?.trim() || null } : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
     });

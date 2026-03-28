@@ -17,9 +17,13 @@ type CastMemberLike = {
   id: string;
   name: string;
   role: string | null;
+  cpf: string | null;
+  cnpj: string | null;
+  razaoSocial: string | null;
   whatsapp: string | null;
   email: string | null;
-  preferredCommunicationChannel: "EMAIL" | "WHATSAPP" | null;
+  prefersEmail: boolean;
+  prefersWhatsapp: boolean;
   specialties: string[];
   status: "AVAILABLE" | "BUSY" | "INACTIVE";
   notes: string | null;
@@ -32,9 +36,13 @@ export function serializeCastMember(member: CastMemberLike, activeProjectCount =
     id: member.id,
     name: member.name,
     role: member.role,
+    cpf: member.cpf,
+    cnpj: member.cnpj,
+    razaoSocial: member.razaoSocial,
     whatsapp: member.whatsapp ? formatBrazilPhone(member.whatsapp) : null,
     email: member.email,
-    preferredCommunicationChannel: member.preferredCommunicationChannel,
+    prefersEmail: member.prefersEmail,
+    prefersWhatsapp: member.prefersWhatsapp,
     specialties: member.specialties,
     status: member.status,
     notes: member.notes,

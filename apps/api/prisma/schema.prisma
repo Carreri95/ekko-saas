@@ -241,6 +241,7 @@ model Client {
   name      String
   email     String?      @unique
   phone     String?      @unique
+  paymentMethod ClientPaymentMethod?
   country   String?
   notes     String?
   status    ClientStatus @default(ACTIVE)
@@ -254,6 +255,11 @@ model Client {
 enum ClientStatus {
   ACTIVE
   INACTIVE
+}
+
+enum ClientPaymentMethod {
+  WIRE_TRANSFER
+  WISE
 }
 
 model DubbingProject {
@@ -360,9 +366,13 @@ model CastMember {
   id          String           @id @default(cuid())
   name        String
   role        String?
+  cpf         String?
+  cnpj        String?
+  razaoSocial String?
   whatsapp    String?          @unique
   email       String?          @unique
-  preferredCommunicationChannel PreferredCommunicationChannel?
+  prefersEmail Boolean         @default(true)
+  prefersWhatsapp Boolean      @default(false)
   specialties String[]
   status      CastMemberStatus @default(AVAILABLE)
   notes       String?
@@ -475,6 +485,8 @@ model RecordingSession {
   character    ProjectCharacter?      @relation(fields: [characterId], references: [id], onDelete: SetNull)
   castMemberId String
   castMember   CastMember             @relation(fields: [castMemberId], references: [id], onDelete: Restrict)
+  recordingTechnicianId String?
+  recordingTechnician   Collaborator? @relation(fields: [recordingTechnicianId], references: [id], onDelete: SetNull)
   title        String
   startAt      DateTime
   endAt        DateTime
@@ -488,6 +500,7 @@ model RecordingSession {
 
   @@index([projectId])
   @@index([castMemberId])
+  @@index([recordingTechnicianId])
   @@index([episodeId])
   @@index([characterId])
   @@index([projectId, startAt])
@@ -499,9 +512,11 @@ enum CommunicationChannel {
   SYSTEM
 }
 
-enum PreferredCommunicationChannel {
-  EMAIL
-  WHATSAPP
+enum CollaboratorRole {
+  RECORDING_TECHNICIAN
+  POST_PRODUCTION
+  MIXER
+  PRE_PRODUCTION
 }
 
 enum CommunicationDirection {
@@ -550,6 +565,8 @@ model CommunicationLog {
   lastSendAttemptAt  DateTime?
   /// Próxima janela de tentativa (retry simples, sem scheduler complexo).
   nextRetryAt        DateTime?
+  /// Agrupa vários registos (ex.: e-mail + WhatsApp) como uma única comunicação lógica na UI/API.
+  communicationGroupId String?
   createdAt          DateTime                @default(now())
   updatedAt          DateTime                @updatedAt
 
@@ -557,6 +574,23 @@ model CommunicationLog {
   @@index([dubbingProjectId, createdAt])
   @@index([status, channel])
   @@index([status, channel, nextRetryAt])
+  @@index([communicationGroupId])
+}
+
+model Collaborator {
+  id          String           @id @default(cuid())
+  name        String
+  cpf         String?
+  cnpj        String?
+  razaoSocial String?
+  role        CollaboratorRole
+  email       String?          @unique
+  whatsapp    String?          @unique
+  prefersEmail    Boolean      @default(true)
+  prefersWhatsapp Boolean      @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  recordingSessions RecordingSession[]
 }
 
 /// Liga sessão de gravação a um ou mais episódios (N:N).

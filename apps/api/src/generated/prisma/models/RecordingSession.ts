@@ -30,6 +30,7 @@ export type RecordingSessionMinAggregateOutputType = {
   episodeId: string | null
   characterId: string | null
   castMemberId: string | null
+  recordingTechnicianId: string | null
   title: string | null
   startAt: Date | null
   endAt: Date | null
@@ -46,6 +47,7 @@ export type RecordingSessionMaxAggregateOutputType = {
   episodeId: string | null
   characterId: string | null
   castMemberId: string | null
+  recordingTechnicianId: string | null
   title: string | null
   startAt: Date | null
   endAt: Date | null
@@ -62,6 +64,7 @@ export type RecordingSessionCountAggregateOutputType = {
   episodeId: number
   characterId: number
   castMemberId: number
+  recordingTechnicianId: number
   title: number
   startAt: number
   endAt: number
@@ -80,6 +83,7 @@ export type RecordingSessionMinAggregateInputType = {
   episodeId?: true
   characterId?: true
   castMemberId?: true
+  recordingTechnicianId?: true
   title?: true
   startAt?: true
   endAt?: true
@@ -96,6 +100,7 @@ export type RecordingSessionMaxAggregateInputType = {
   episodeId?: true
   characterId?: true
   castMemberId?: true
+  recordingTechnicianId?: true
   title?: true
   startAt?: true
   endAt?: true
@@ -112,6 +117,7 @@ export type RecordingSessionCountAggregateInputType = {
   episodeId?: true
   characterId?: true
   castMemberId?: true
+  recordingTechnicianId?: true
   title?: true
   startAt?: true
   endAt?: true
@@ -201,6 +207,7 @@ export type RecordingSessionGroupByOutputType = {
   episodeId: string | null
   characterId: string | null
   castMemberId: string
+  recordingTechnicianId: string | null
   title: string
   startAt: Date
   endAt: Date
@@ -238,6 +245,7 @@ export type RecordingSessionWhereInput = {
   episodeId?: Prisma.StringNullableFilter<"RecordingSession"> | string | null
   characterId?: Prisma.StringNullableFilter<"RecordingSession"> | string | null
   castMemberId?: Prisma.StringFilter<"RecordingSession"> | string
+  recordingTechnicianId?: Prisma.StringNullableFilter<"RecordingSession"> | string | null
   title?: Prisma.StringFilter<"RecordingSession"> | string
   startAt?: Prisma.DateTimeFilter<"RecordingSession"> | Date | string
   endAt?: Prisma.DateTimeFilter<"RecordingSession"> | Date | string
@@ -250,6 +258,7 @@ export type RecordingSessionWhereInput = {
   episode?: Prisma.XOR<Prisma.EpisodeNullableScalarRelationFilter, Prisma.EpisodeWhereInput> | null
   character?: Prisma.XOR<Prisma.ProjectCharacterNullableScalarRelationFilter, Prisma.ProjectCharacterWhereInput> | null
   castMember?: Prisma.XOR<Prisma.CastMemberScalarRelationFilter, Prisma.CastMemberWhereInput>
+  recordingTechnician?: Prisma.XOR<Prisma.CollaboratorNullableScalarRelationFilter, Prisma.CollaboratorWhereInput> | null
   sessionEpisodes?: Prisma.RecordingSessionEpisodeListRelationFilter
   communicationLogs?: Prisma.CommunicationLogListRelationFilter
 }
@@ -260,6 +269,7 @@ export type RecordingSessionOrderByWithRelationInput = {
   episodeId?: Prisma.SortOrderInput | Prisma.SortOrder
   characterId?: Prisma.SortOrderInput | Prisma.SortOrder
   castMemberId?: Prisma.SortOrder
+  recordingTechnicianId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   startAt?: Prisma.SortOrder
   endAt?: Prisma.SortOrder
@@ -272,6 +282,7 @@ export type RecordingSessionOrderByWithRelationInput = {
   episode?: Prisma.EpisodeOrderByWithRelationInput
   character?: Prisma.ProjectCharacterOrderByWithRelationInput
   castMember?: Prisma.CastMemberOrderByWithRelationInput
+  recordingTechnician?: Prisma.CollaboratorOrderByWithRelationInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeOrderByRelationAggregateInput
   communicationLogs?: Prisma.CommunicationLogOrderByRelationAggregateInput
 }
@@ -285,6 +296,7 @@ export type RecordingSessionWhereUniqueInput = Prisma.AtLeast<{
   episodeId?: Prisma.StringNullableFilter<"RecordingSession"> | string | null
   characterId?: Prisma.StringNullableFilter<"RecordingSession"> | string | null
   castMemberId?: Prisma.StringFilter<"RecordingSession"> | string
+  recordingTechnicianId?: Prisma.StringNullableFilter<"RecordingSession"> | string | null
   title?: Prisma.StringFilter<"RecordingSession"> | string
   startAt?: Prisma.DateTimeFilter<"RecordingSession"> | Date | string
   endAt?: Prisma.DateTimeFilter<"RecordingSession"> | Date | string
@@ -297,6 +309,7 @@ export type RecordingSessionWhereUniqueInput = Prisma.AtLeast<{
   episode?: Prisma.XOR<Prisma.EpisodeNullableScalarRelationFilter, Prisma.EpisodeWhereInput> | null
   character?: Prisma.XOR<Prisma.ProjectCharacterNullableScalarRelationFilter, Prisma.ProjectCharacterWhereInput> | null
   castMember?: Prisma.XOR<Prisma.CastMemberScalarRelationFilter, Prisma.CastMemberWhereInput>
+  recordingTechnician?: Prisma.XOR<Prisma.CollaboratorNullableScalarRelationFilter, Prisma.CollaboratorWhereInput> | null
   sessionEpisodes?: Prisma.RecordingSessionEpisodeListRelationFilter
   communicationLogs?: Prisma.CommunicationLogListRelationFilter
 }, "id">
@@ -307,6 +320,7 @@ export type RecordingSessionOrderByWithAggregationInput = {
   episodeId?: Prisma.SortOrderInput | Prisma.SortOrder
   characterId?: Prisma.SortOrderInput | Prisma.SortOrder
   castMemberId?: Prisma.SortOrder
+  recordingTechnicianId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   startAt?: Prisma.SortOrder
   endAt?: Prisma.SortOrder
@@ -329,6 +343,7 @@ export type RecordingSessionScalarWhereWithAggregatesInput = {
   episodeId?: Prisma.StringNullableWithAggregatesFilter<"RecordingSession"> | string | null
   characterId?: Prisma.StringNullableWithAggregatesFilter<"RecordingSession"> | string | null
   castMemberId?: Prisma.StringWithAggregatesFilter<"RecordingSession"> | string
+  recordingTechnicianId?: Prisma.StringNullableWithAggregatesFilter<"RecordingSession"> | string | null
   title?: Prisma.StringWithAggregatesFilter<"RecordingSession"> | string
   startAt?: Prisma.DateTimeWithAggregatesFilter<"RecordingSession"> | Date | string
   endAt?: Prisma.DateTimeWithAggregatesFilter<"RecordingSession"> | Date | string
@@ -353,6 +368,7 @@ export type RecordingSessionCreateInput = {
   episode?: Prisma.EpisodeCreateNestedOneWithoutRecordingSessionsInput
   character?: Prisma.ProjectCharacterCreateNestedOneWithoutRecordingSessionsInput
   castMember: Prisma.CastMemberCreateNestedOneWithoutRecordingSessionsInput
+  recordingTechnician?: Prisma.CollaboratorCreateNestedOneWithoutRecordingSessionsInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutSessionInput
   communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutSessionInput
 }
@@ -363,6 +379,7 @@ export type RecordingSessionUncheckedCreateInput = {
   episodeId?: string | null
   characterId?: string | null
   castMemberId: string
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -389,6 +406,7 @@ export type RecordingSessionUpdateInput = {
   episode?: Prisma.EpisodeUpdateOneWithoutRecordingSessionsNestedInput
   character?: Prisma.ProjectCharacterUpdateOneWithoutRecordingSessionsNestedInput
   castMember?: Prisma.CastMemberUpdateOneRequiredWithoutRecordingSessionsNestedInput
+  recordingTechnician?: Prisma.CollaboratorUpdateOneWithoutRecordingSessionsNestedInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutSessionNestedInput
   communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutSessionNestedInput
 }
@@ -399,6 +417,7 @@ export type RecordingSessionUncheckedUpdateInput = {
   episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -417,6 +436,7 @@ export type RecordingSessionCreateManyInput = {
   episodeId?: string | null
   characterId?: string | null
   castMemberId: string
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -445,6 +465,7 @@ export type RecordingSessionUncheckedUpdateManyInput = {
   episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -471,6 +492,7 @@ export type RecordingSessionCountOrderByAggregateInput = {
   episodeId?: Prisma.SortOrder
   characterId?: Prisma.SortOrder
   castMemberId?: Prisma.SortOrder
+  recordingTechnicianId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   startAt?: Prisma.SortOrder
   endAt?: Prisma.SortOrder
@@ -487,6 +509,7 @@ export type RecordingSessionMaxOrderByAggregateInput = {
   episodeId?: Prisma.SortOrder
   characterId?: Prisma.SortOrder
   castMemberId?: Prisma.SortOrder
+  recordingTechnicianId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   startAt?: Prisma.SortOrder
   endAt?: Prisma.SortOrder
@@ -503,6 +526,7 @@ export type RecordingSessionMinOrderByAggregateInput = {
   episodeId?: Prisma.SortOrder
   characterId?: Prisma.SortOrder
   castMemberId?: Prisma.SortOrder
+  recordingTechnicianId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   startAt?: Prisma.SortOrder
   endAt?: Prisma.SortOrder
@@ -715,6 +739,48 @@ export type RecordingSessionUpdateOneWithoutCommunicationLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.RecordingSessionUpdateToOneWithWhereWithoutCommunicationLogsInput, Prisma.RecordingSessionUpdateWithoutCommunicationLogsInput>, Prisma.RecordingSessionUncheckedUpdateWithoutCommunicationLogsInput>
 }
 
+export type RecordingSessionCreateNestedManyWithoutRecordingTechnicianInput = {
+  create?: Prisma.XOR<Prisma.RecordingSessionCreateWithoutRecordingTechnicianInput, Prisma.RecordingSessionUncheckedCreateWithoutRecordingTechnicianInput> | Prisma.RecordingSessionCreateWithoutRecordingTechnicianInput[] | Prisma.RecordingSessionUncheckedCreateWithoutRecordingTechnicianInput[]
+  connectOrCreate?: Prisma.RecordingSessionCreateOrConnectWithoutRecordingTechnicianInput | Prisma.RecordingSessionCreateOrConnectWithoutRecordingTechnicianInput[]
+  createMany?: Prisma.RecordingSessionCreateManyRecordingTechnicianInputEnvelope
+  connect?: Prisma.RecordingSessionWhereUniqueInput | Prisma.RecordingSessionWhereUniqueInput[]
+}
+
+export type RecordingSessionUncheckedCreateNestedManyWithoutRecordingTechnicianInput = {
+  create?: Prisma.XOR<Prisma.RecordingSessionCreateWithoutRecordingTechnicianInput, Prisma.RecordingSessionUncheckedCreateWithoutRecordingTechnicianInput> | Prisma.RecordingSessionCreateWithoutRecordingTechnicianInput[] | Prisma.RecordingSessionUncheckedCreateWithoutRecordingTechnicianInput[]
+  connectOrCreate?: Prisma.RecordingSessionCreateOrConnectWithoutRecordingTechnicianInput | Prisma.RecordingSessionCreateOrConnectWithoutRecordingTechnicianInput[]
+  createMany?: Prisma.RecordingSessionCreateManyRecordingTechnicianInputEnvelope
+  connect?: Prisma.RecordingSessionWhereUniqueInput | Prisma.RecordingSessionWhereUniqueInput[]
+}
+
+export type RecordingSessionUpdateManyWithoutRecordingTechnicianNestedInput = {
+  create?: Prisma.XOR<Prisma.RecordingSessionCreateWithoutRecordingTechnicianInput, Prisma.RecordingSessionUncheckedCreateWithoutRecordingTechnicianInput> | Prisma.RecordingSessionCreateWithoutRecordingTechnicianInput[] | Prisma.RecordingSessionUncheckedCreateWithoutRecordingTechnicianInput[]
+  connectOrCreate?: Prisma.RecordingSessionCreateOrConnectWithoutRecordingTechnicianInput | Prisma.RecordingSessionCreateOrConnectWithoutRecordingTechnicianInput[]
+  upsert?: Prisma.RecordingSessionUpsertWithWhereUniqueWithoutRecordingTechnicianInput | Prisma.RecordingSessionUpsertWithWhereUniqueWithoutRecordingTechnicianInput[]
+  createMany?: Prisma.RecordingSessionCreateManyRecordingTechnicianInputEnvelope
+  set?: Prisma.RecordingSessionWhereUniqueInput | Prisma.RecordingSessionWhereUniqueInput[]
+  disconnect?: Prisma.RecordingSessionWhereUniqueInput | Prisma.RecordingSessionWhereUniqueInput[]
+  delete?: Prisma.RecordingSessionWhereUniqueInput | Prisma.RecordingSessionWhereUniqueInput[]
+  connect?: Prisma.RecordingSessionWhereUniqueInput | Prisma.RecordingSessionWhereUniqueInput[]
+  update?: Prisma.RecordingSessionUpdateWithWhereUniqueWithoutRecordingTechnicianInput | Prisma.RecordingSessionUpdateWithWhereUniqueWithoutRecordingTechnicianInput[]
+  updateMany?: Prisma.RecordingSessionUpdateManyWithWhereWithoutRecordingTechnicianInput | Prisma.RecordingSessionUpdateManyWithWhereWithoutRecordingTechnicianInput[]
+  deleteMany?: Prisma.RecordingSessionScalarWhereInput | Prisma.RecordingSessionScalarWhereInput[]
+}
+
+export type RecordingSessionUncheckedUpdateManyWithoutRecordingTechnicianNestedInput = {
+  create?: Prisma.XOR<Prisma.RecordingSessionCreateWithoutRecordingTechnicianInput, Prisma.RecordingSessionUncheckedCreateWithoutRecordingTechnicianInput> | Prisma.RecordingSessionCreateWithoutRecordingTechnicianInput[] | Prisma.RecordingSessionUncheckedCreateWithoutRecordingTechnicianInput[]
+  connectOrCreate?: Prisma.RecordingSessionCreateOrConnectWithoutRecordingTechnicianInput | Prisma.RecordingSessionCreateOrConnectWithoutRecordingTechnicianInput[]
+  upsert?: Prisma.RecordingSessionUpsertWithWhereUniqueWithoutRecordingTechnicianInput | Prisma.RecordingSessionUpsertWithWhereUniqueWithoutRecordingTechnicianInput[]
+  createMany?: Prisma.RecordingSessionCreateManyRecordingTechnicianInputEnvelope
+  set?: Prisma.RecordingSessionWhereUniqueInput | Prisma.RecordingSessionWhereUniqueInput[]
+  disconnect?: Prisma.RecordingSessionWhereUniqueInput | Prisma.RecordingSessionWhereUniqueInput[]
+  delete?: Prisma.RecordingSessionWhereUniqueInput | Prisma.RecordingSessionWhereUniqueInput[]
+  connect?: Prisma.RecordingSessionWhereUniqueInput | Prisma.RecordingSessionWhereUniqueInput[]
+  update?: Prisma.RecordingSessionUpdateWithWhereUniqueWithoutRecordingTechnicianInput | Prisma.RecordingSessionUpdateWithWhereUniqueWithoutRecordingTechnicianInput[]
+  updateMany?: Prisma.RecordingSessionUpdateManyWithWhereWithoutRecordingTechnicianInput | Prisma.RecordingSessionUpdateManyWithWhereWithoutRecordingTechnicianInput[]
+  deleteMany?: Prisma.RecordingSessionScalarWhereInput | Prisma.RecordingSessionScalarWhereInput[]
+}
+
 export type RecordingSessionCreateNestedOneWithoutSessionEpisodesInput = {
   create?: Prisma.XOR<Prisma.RecordingSessionCreateWithoutSessionEpisodesInput, Prisma.RecordingSessionUncheckedCreateWithoutSessionEpisodesInput>
   connectOrCreate?: Prisma.RecordingSessionCreateOrConnectWithoutSessionEpisodesInput
@@ -742,6 +808,7 @@ export type RecordingSessionCreateWithoutProjectInput = {
   episode?: Prisma.EpisodeCreateNestedOneWithoutRecordingSessionsInput
   character?: Prisma.ProjectCharacterCreateNestedOneWithoutRecordingSessionsInput
   castMember: Prisma.CastMemberCreateNestedOneWithoutRecordingSessionsInput
+  recordingTechnician?: Prisma.CollaboratorCreateNestedOneWithoutRecordingSessionsInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutSessionInput
   communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutSessionInput
 }
@@ -751,6 +818,7 @@ export type RecordingSessionUncheckedCreateWithoutProjectInput = {
   episodeId?: string | null
   characterId?: string | null
   castMemberId: string
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -798,6 +866,7 @@ export type RecordingSessionScalarWhereInput = {
   episodeId?: Prisma.StringNullableFilter<"RecordingSession"> | string | null
   characterId?: Prisma.StringNullableFilter<"RecordingSession"> | string | null
   castMemberId?: Prisma.StringFilter<"RecordingSession"> | string
+  recordingTechnicianId?: Prisma.StringNullableFilter<"RecordingSession"> | string | null
   title?: Prisma.StringFilter<"RecordingSession"> | string
   startAt?: Prisma.DateTimeFilter<"RecordingSession"> | Date | string
   endAt?: Prisma.DateTimeFilter<"RecordingSession"> | Date | string
@@ -821,6 +890,7 @@ export type RecordingSessionCreateWithoutEpisodeInput = {
   project: Prisma.DubbingProjectCreateNestedOneWithoutRecordingSessionsInput
   character?: Prisma.ProjectCharacterCreateNestedOneWithoutRecordingSessionsInput
   castMember: Prisma.CastMemberCreateNestedOneWithoutRecordingSessionsInput
+  recordingTechnician?: Prisma.CollaboratorCreateNestedOneWithoutRecordingSessionsInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutSessionInput
   communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutSessionInput
 }
@@ -830,6 +900,7 @@ export type RecordingSessionUncheckedCreateWithoutEpisodeInput = {
   projectId: string
   characterId?: string | null
   castMemberId: string
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -881,6 +952,7 @@ export type RecordingSessionCreateWithoutCastMemberInput = {
   project: Prisma.DubbingProjectCreateNestedOneWithoutRecordingSessionsInput
   episode?: Prisma.EpisodeCreateNestedOneWithoutRecordingSessionsInput
   character?: Prisma.ProjectCharacterCreateNestedOneWithoutRecordingSessionsInput
+  recordingTechnician?: Prisma.CollaboratorCreateNestedOneWithoutRecordingSessionsInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutSessionInput
   communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutSessionInput
 }
@@ -890,6 +962,7 @@ export type RecordingSessionUncheckedCreateWithoutCastMemberInput = {
   projectId: string
   episodeId?: string | null
   characterId?: string | null
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -941,6 +1014,7 @@ export type RecordingSessionCreateWithoutCharacterInput = {
   project: Prisma.DubbingProjectCreateNestedOneWithoutRecordingSessionsInput
   episode?: Prisma.EpisodeCreateNestedOneWithoutRecordingSessionsInput
   castMember: Prisma.CastMemberCreateNestedOneWithoutRecordingSessionsInput
+  recordingTechnician?: Prisma.CollaboratorCreateNestedOneWithoutRecordingSessionsInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutSessionInput
   communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutSessionInput
 }
@@ -950,6 +1024,7 @@ export type RecordingSessionUncheckedCreateWithoutCharacterInput = {
   projectId: string
   episodeId?: string | null
   castMemberId: string
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -1002,6 +1077,7 @@ export type RecordingSessionCreateWithoutCommunicationLogsInput = {
   episode?: Prisma.EpisodeCreateNestedOneWithoutRecordingSessionsInput
   character?: Prisma.ProjectCharacterCreateNestedOneWithoutRecordingSessionsInput
   castMember: Prisma.CastMemberCreateNestedOneWithoutRecordingSessionsInput
+  recordingTechnician?: Prisma.CollaboratorCreateNestedOneWithoutRecordingSessionsInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutSessionInput
 }
 
@@ -1011,6 +1087,7 @@ export type RecordingSessionUncheckedCreateWithoutCommunicationLogsInput = {
   episodeId?: string | null
   characterId?: string | null
   castMemberId: string
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -1052,6 +1129,7 @@ export type RecordingSessionUpdateWithoutCommunicationLogsInput = {
   episode?: Prisma.EpisodeUpdateOneWithoutRecordingSessionsNestedInput
   character?: Prisma.ProjectCharacterUpdateOneWithoutRecordingSessionsNestedInput
   castMember?: Prisma.CastMemberUpdateOneRequiredWithoutRecordingSessionsNestedInput
+  recordingTechnician?: Prisma.CollaboratorUpdateOneWithoutRecordingSessionsNestedInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutSessionNestedInput
 }
 
@@ -1061,6 +1139,7 @@ export type RecordingSessionUncheckedUpdateWithoutCommunicationLogsInput = {
   episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1070,6 +1149,68 @@ export type RecordingSessionUncheckedUpdateWithoutCommunicationLogsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedUpdateManyWithoutSessionNestedInput
+}
+
+export type RecordingSessionCreateWithoutRecordingTechnicianInput = {
+  id?: string
+  title: string
+  startAt: Date | string
+  endAt: Date | string
+  status?: $Enums.RecordingSessionStatus
+  format: $Enums.RecordingSessionFormat
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  project: Prisma.DubbingProjectCreateNestedOneWithoutRecordingSessionsInput
+  episode?: Prisma.EpisodeCreateNestedOneWithoutRecordingSessionsInput
+  character?: Prisma.ProjectCharacterCreateNestedOneWithoutRecordingSessionsInput
+  castMember: Prisma.CastMemberCreateNestedOneWithoutRecordingSessionsInput
+  sessionEpisodes?: Prisma.RecordingSessionEpisodeCreateNestedManyWithoutSessionInput
+  communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutSessionInput
+}
+
+export type RecordingSessionUncheckedCreateWithoutRecordingTechnicianInput = {
+  id?: string
+  projectId: string
+  episodeId?: string | null
+  characterId?: string | null
+  castMemberId: string
+  title: string
+  startAt: Date | string
+  endAt: Date | string
+  status?: $Enums.RecordingSessionStatus
+  format: $Enums.RecordingSessionFormat
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedCreateNestedManyWithoutSessionInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedCreateNestedManyWithoutSessionInput
+}
+
+export type RecordingSessionCreateOrConnectWithoutRecordingTechnicianInput = {
+  where: Prisma.RecordingSessionWhereUniqueInput
+  create: Prisma.XOR<Prisma.RecordingSessionCreateWithoutRecordingTechnicianInput, Prisma.RecordingSessionUncheckedCreateWithoutRecordingTechnicianInput>
+}
+
+export type RecordingSessionCreateManyRecordingTechnicianInputEnvelope = {
+  data: Prisma.RecordingSessionCreateManyRecordingTechnicianInput | Prisma.RecordingSessionCreateManyRecordingTechnicianInput[]
+  skipDuplicates?: boolean
+}
+
+export type RecordingSessionUpsertWithWhereUniqueWithoutRecordingTechnicianInput = {
+  where: Prisma.RecordingSessionWhereUniqueInput
+  update: Prisma.XOR<Prisma.RecordingSessionUpdateWithoutRecordingTechnicianInput, Prisma.RecordingSessionUncheckedUpdateWithoutRecordingTechnicianInput>
+  create: Prisma.XOR<Prisma.RecordingSessionCreateWithoutRecordingTechnicianInput, Prisma.RecordingSessionUncheckedCreateWithoutRecordingTechnicianInput>
+}
+
+export type RecordingSessionUpdateWithWhereUniqueWithoutRecordingTechnicianInput = {
+  where: Prisma.RecordingSessionWhereUniqueInput
+  data: Prisma.XOR<Prisma.RecordingSessionUpdateWithoutRecordingTechnicianInput, Prisma.RecordingSessionUncheckedUpdateWithoutRecordingTechnicianInput>
+}
+
+export type RecordingSessionUpdateManyWithWhereWithoutRecordingTechnicianInput = {
+  where: Prisma.RecordingSessionScalarWhereInput
+  data: Prisma.XOR<Prisma.RecordingSessionUpdateManyMutationInput, Prisma.RecordingSessionUncheckedUpdateManyWithoutRecordingTechnicianInput>
 }
 
 export type RecordingSessionCreateWithoutSessionEpisodesInput = {
@@ -1086,6 +1227,7 @@ export type RecordingSessionCreateWithoutSessionEpisodesInput = {
   episode?: Prisma.EpisodeCreateNestedOneWithoutRecordingSessionsInput
   character?: Prisma.ProjectCharacterCreateNestedOneWithoutRecordingSessionsInput
   castMember: Prisma.CastMemberCreateNestedOneWithoutRecordingSessionsInput
+  recordingTechnician?: Prisma.CollaboratorCreateNestedOneWithoutRecordingSessionsInput
   communicationLogs?: Prisma.CommunicationLogCreateNestedManyWithoutSessionInput
 }
 
@@ -1095,6 +1237,7 @@ export type RecordingSessionUncheckedCreateWithoutSessionEpisodesInput = {
   episodeId?: string | null
   characterId?: string | null
   castMemberId: string
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -1136,6 +1279,7 @@ export type RecordingSessionUpdateWithoutSessionEpisodesInput = {
   episode?: Prisma.EpisodeUpdateOneWithoutRecordingSessionsNestedInput
   character?: Prisma.ProjectCharacterUpdateOneWithoutRecordingSessionsNestedInput
   castMember?: Prisma.CastMemberUpdateOneRequiredWithoutRecordingSessionsNestedInput
+  recordingTechnician?: Prisma.CollaboratorUpdateOneWithoutRecordingSessionsNestedInput
   communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutSessionNestedInput
 }
 
@@ -1145,6 +1289,7 @@ export type RecordingSessionUncheckedUpdateWithoutSessionEpisodesInput = {
   episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1161,6 +1306,7 @@ export type RecordingSessionCreateManyProjectInput = {
   episodeId?: string | null
   characterId?: string | null
   castMemberId: string
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -1184,6 +1330,7 @@ export type RecordingSessionUpdateWithoutProjectInput = {
   episode?: Prisma.EpisodeUpdateOneWithoutRecordingSessionsNestedInput
   character?: Prisma.ProjectCharacterUpdateOneWithoutRecordingSessionsNestedInput
   castMember?: Prisma.CastMemberUpdateOneRequiredWithoutRecordingSessionsNestedInput
+  recordingTechnician?: Prisma.CollaboratorUpdateOneWithoutRecordingSessionsNestedInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutSessionNestedInput
   communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutSessionNestedInput
 }
@@ -1193,6 +1340,7 @@ export type RecordingSessionUncheckedUpdateWithoutProjectInput = {
   episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1210,6 +1358,7 @@ export type RecordingSessionUncheckedUpdateManyWithoutProjectInput = {
   episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1225,6 +1374,7 @@ export type RecordingSessionCreateManyEpisodeInput = {
   projectId: string
   characterId?: string | null
   castMemberId: string
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -1248,6 +1398,7 @@ export type RecordingSessionUpdateWithoutEpisodeInput = {
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutRecordingSessionsNestedInput
   character?: Prisma.ProjectCharacterUpdateOneWithoutRecordingSessionsNestedInput
   castMember?: Prisma.CastMemberUpdateOneRequiredWithoutRecordingSessionsNestedInput
+  recordingTechnician?: Prisma.CollaboratorUpdateOneWithoutRecordingSessionsNestedInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutSessionNestedInput
   communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutSessionNestedInput
 }
@@ -1257,6 +1408,7 @@ export type RecordingSessionUncheckedUpdateWithoutEpisodeInput = {
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1274,6 +1426,7 @@ export type RecordingSessionUncheckedUpdateManyWithoutEpisodeInput = {
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1289,6 +1442,7 @@ export type RecordingSessionCreateManyCastMemberInput = {
   projectId: string
   episodeId?: string | null
   characterId?: string | null
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -1312,6 +1466,7 @@ export type RecordingSessionUpdateWithoutCastMemberInput = {
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutRecordingSessionsNestedInput
   episode?: Prisma.EpisodeUpdateOneWithoutRecordingSessionsNestedInput
   character?: Prisma.ProjectCharacterUpdateOneWithoutRecordingSessionsNestedInput
+  recordingTechnician?: Prisma.CollaboratorUpdateOneWithoutRecordingSessionsNestedInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutSessionNestedInput
   communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutSessionNestedInput
 }
@@ -1321,6 +1476,7 @@ export type RecordingSessionUncheckedUpdateWithoutCastMemberInput = {
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1338,6 +1494,7 @@ export type RecordingSessionUncheckedUpdateManyWithoutCastMemberInput = {
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1353,6 +1510,7 @@ export type RecordingSessionCreateManyCharacterInput = {
   projectId: string
   episodeId?: string | null
   castMemberId: string
+  recordingTechnicianId?: string | null
   title: string
   startAt: Date | string
   endAt: Date | string
@@ -1376,6 +1534,7 @@ export type RecordingSessionUpdateWithoutCharacterInput = {
   project?: Prisma.DubbingProjectUpdateOneRequiredWithoutRecordingSessionsNestedInput
   episode?: Prisma.EpisodeUpdateOneWithoutRecordingSessionsNestedInput
   castMember?: Prisma.CastMemberUpdateOneRequiredWithoutRecordingSessionsNestedInput
+  recordingTechnician?: Prisma.CollaboratorUpdateOneWithoutRecordingSessionsNestedInput
   sessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutSessionNestedInput
   communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutSessionNestedInput
 }
@@ -1385,6 +1544,7 @@ export type RecordingSessionUncheckedUpdateWithoutCharacterInput = {
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1401,6 +1561,75 @@ export type RecordingSessionUncheckedUpdateManyWithoutCharacterInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   projectId?: Prisma.StringFieldUpdateOperationsInput | string
   episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
+  recordingTechnicianId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  status?: Prisma.EnumRecordingSessionStatusFieldUpdateOperationsInput | $Enums.RecordingSessionStatus
+  format?: Prisma.EnumRecordingSessionFormatFieldUpdateOperationsInput | $Enums.RecordingSessionFormat
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type RecordingSessionCreateManyRecordingTechnicianInput = {
+  id?: string
+  projectId: string
+  episodeId?: string | null
+  characterId?: string | null
+  castMemberId: string
+  title: string
+  startAt: Date | string
+  endAt: Date | string
+  status?: $Enums.RecordingSessionStatus
+  format: $Enums.RecordingSessionFormat
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type RecordingSessionUpdateWithoutRecordingTechnicianInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  status?: Prisma.EnumRecordingSessionStatusFieldUpdateOperationsInput | $Enums.RecordingSessionStatus
+  format?: Prisma.EnumRecordingSessionFormatFieldUpdateOperationsInput | $Enums.RecordingSessionFormat
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  project?: Prisma.DubbingProjectUpdateOneRequiredWithoutRecordingSessionsNestedInput
+  episode?: Prisma.EpisodeUpdateOneWithoutRecordingSessionsNestedInput
+  character?: Prisma.ProjectCharacterUpdateOneWithoutRecordingSessionsNestedInput
+  castMember?: Prisma.CastMemberUpdateOneRequiredWithoutRecordingSessionsNestedInput
+  sessionEpisodes?: Prisma.RecordingSessionEpisodeUpdateManyWithoutSessionNestedInput
+  communicationLogs?: Prisma.CommunicationLogUpdateManyWithoutSessionNestedInput
+}
+
+export type RecordingSessionUncheckedUpdateWithoutRecordingTechnicianInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  status?: Prisma.EnumRecordingSessionStatusFieldUpdateOperationsInput | $Enums.RecordingSessionStatus
+  format?: Prisma.EnumRecordingSessionFormatFieldUpdateOperationsInput | $Enums.RecordingSessionFormat
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessionEpisodes?: Prisma.RecordingSessionEpisodeUncheckedUpdateManyWithoutSessionNestedInput
+  communicationLogs?: Prisma.CommunicationLogUncheckedUpdateManyWithoutSessionNestedInput
+}
+
+export type RecordingSessionUncheckedUpdateManyWithoutRecordingTechnicianInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  episodeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  characterId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   castMemberId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   startAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1458,6 +1687,7 @@ export type RecordingSessionSelect<ExtArgs extends runtime.Types.Extensions.Inte
   episodeId?: boolean
   characterId?: boolean
   castMemberId?: boolean
+  recordingTechnicianId?: boolean
   title?: boolean
   startAt?: boolean
   endAt?: boolean
@@ -1470,6 +1700,7 @@ export type RecordingSessionSelect<ExtArgs extends runtime.Types.Extensions.Inte
   episode?: boolean | Prisma.RecordingSession$episodeArgs<ExtArgs>
   character?: boolean | Prisma.RecordingSession$characterArgs<ExtArgs>
   castMember?: boolean | Prisma.CastMemberDefaultArgs<ExtArgs>
+  recordingTechnician?: boolean | Prisma.RecordingSession$recordingTechnicianArgs<ExtArgs>
   sessionEpisodes?: boolean | Prisma.RecordingSession$sessionEpisodesArgs<ExtArgs>
   communicationLogs?: boolean | Prisma.RecordingSession$communicationLogsArgs<ExtArgs>
   _count?: boolean | Prisma.RecordingSessionCountOutputTypeDefaultArgs<ExtArgs>
@@ -1481,6 +1712,7 @@ export type RecordingSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   episodeId?: boolean
   characterId?: boolean
   castMemberId?: boolean
+  recordingTechnicianId?: boolean
   title?: boolean
   startAt?: boolean
   endAt?: boolean
@@ -1493,6 +1725,7 @@ export type RecordingSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   episode?: boolean | Prisma.RecordingSession$episodeArgs<ExtArgs>
   character?: boolean | Prisma.RecordingSession$characterArgs<ExtArgs>
   castMember?: boolean | Prisma.CastMemberDefaultArgs<ExtArgs>
+  recordingTechnician?: boolean | Prisma.RecordingSession$recordingTechnicianArgs<ExtArgs>
 }, ExtArgs["result"]["recordingSession"]>
 
 export type RecordingSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1501,6 +1734,7 @@ export type RecordingSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   episodeId?: boolean
   characterId?: boolean
   castMemberId?: boolean
+  recordingTechnicianId?: boolean
   title?: boolean
   startAt?: boolean
   endAt?: boolean
@@ -1513,6 +1747,7 @@ export type RecordingSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   episode?: boolean | Prisma.RecordingSession$episodeArgs<ExtArgs>
   character?: boolean | Prisma.RecordingSession$characterArgs<ExtArgs>
   castMember?: boolean | Prisma.CastMemberDefaultArgs<ExtArgs>
+  recordingTechnician?: boolean | Prisma.RecordingSession$recordingTechnicianArgs<ExtArgs>
 }, ExtArgs["result"]["recordingSession"]>
 
 export type RecordingSessionSelectScalar = {
@@ -1521,6 +1756,7 @@ export type RecordingSessionSelectScalar = {
   episodeId?: boolean
   characterId?: boolean
   castMemberId?: boolean
+  recordingTechnicianId?: boolean
   title?: boolean
   startAt?: boolean
   endAt?: boolean
@@ -1531,12 +1767,13 @@ export type RecordingSessionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type RecordingSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "projectId" | "episodeId" | "characterId" | "castMemberId" | "title" | "startAt" | "endAt" | "status" | "format" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["recordingSession"]>
+export type RecordingSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "projectId" | "episodeId" | "characterId" | "castMemberId" | "recordingTechnicianId" | "title" | "startAt" | "endAt" | "status" | "format" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["recordingSession"]>
 export type RecordingSessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.DubbingProjectDefaultArgs<ExtArgs>
   episode?: boolean | Prisma.RecordingSession$episodeArgs<ExtArgs>
   character?: boolean | Prisma.RecordingSession$characterArgs<ExtArgs>
   castMember?: boolean | Prisma.CastMemberDefaultArgs<ExtArgs>
+  recordingTechnician?: boolean | Prisma.RecordingSession$recordingTechnicianArgs<ExtArgs>
   sessionEpisodes?: boolean | Prisma.RecordingSession$sessionEpisodesArgs<ExtArgs>
   communicationLogs?: boolean | Prisma.RecordingSession$communicationLogsArgs<ExtArgs>
   _count?: boolean | Prisma.RecordingSessionCountOutputTypeDefaultArgs<ExtArgs>
@@ -1546,12 +1783,14 @@ export type RecordingSessionIncludeCreateManyAndReturn<ExtArgs extends runtime.T
   episode?: boolean | Prisma.RecordingSession$episodeArgs<ExtArgs>
   character?: boolean | Prisma.RecordingSession$characterArgs<ExtArgs>
   castMember?: boolean | Prisma.CastMemberDefaultArgs<ExtArgs>
+  recordingTechnician?: boolean | Prisma.RecordingSession$recordingTechnicianArgs<ExtArgs>
 }
 export type RecordingSessionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.DubbingProjectDefaultArgs<ExtArgs>
   episode?: boolean | Prisma.RecordingSession$episodeArgs<ExtArgs>
   character?: boolean | Prisma.RecordingSession$characterArgs<ExtArgs>
   castMember?: boolean | Prisma.CastMemberDefaultArgs<ExtArgs>
+  recordingTechnician?: boolean | Prisma.RecordingSession$recordingTechnicianArgs<ExtArgs>
 }
 
 export type $RecordingSessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1561,6 +1800,7 @@ export type $RecordingSessionPayload<ExtArgs extends runtime.Types.Extensions.In
     episode: Prisma.$EpisodePayload<ExtArgs> | null
     character: Prisma.$ProjectCharacterPayload<ExtArgs> | null
     castMember: Prisma.$CastMemberPayload<ExtArgs>
+    recordingTechnician: Prisma.$CollaboratorPayload<ExtArgs> | null
     sessionEpisodes: Prisma.$RecordingSessionEpisodePayload<ExtArgs>[]
     communicationLogs: Prisma.$CommunicationLogPayload<ExtArgs>[]
   }
@@ -1570,6 +1810,7 @@ export type $RecordingSessionPayload<ExtArgs extends runtime.Types.Extensions.In
     episodeId: string | null
     characterId: string | null
     castMemberId: string
+    recordingTechnicianId: string | null
     title: string
     startAt: Date
     endAt: Date
@@ -1976,6 +2217,7 @@ export interface Prisma__RecordingSessionClient<T, Null = never, ExtArgs extends
   episode<T extends Prisma.RecordingSession$episodeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RecordingSession$episodeArgs<ExtArgs>>): Prisma.Prisma__EpisodeClient<runtime.Types.Result.GetResult<Prisma.$EpisodePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   character<T extends Prisma.RecordingSession$characterArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RecordingSession$characterArgs<ExtArgs>>): Prisma.Prisma__ProjectCharacterClient<runtime.Types.Result.GetResult<Prisma.$ProjectCharacterPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   castMember<T extends Prisma.CastMemberDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CastMemberDefaultArgs<ExtArgs>>): Prisma.Prisma__CastMemberClient<runtime.Types.Result.GetResult<Prisma.$CastMemberPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  recordingTechnician<T extends Prisma.RecordingSession$recordingTechnicianArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RecordingSession$recordingTechnicianArgs<ExtArgs>>): Prisma.Prisma__CollaboratorClient<runtime.Types.Result.GetResult<Prisma.$CollaboratorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   sessionEpisodes<T extends Prisma.RecordingSession$sessionEpisodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RecordingSession$sessionEpisodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecordingSessionEpisodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   communicationLogs<T extends Prisma.RecordingSession$communicationLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RecordingSession$communicationLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommunicationLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -2012,6 +2254,7 @@ export interface RecordingSessionFieldRefs {
   readonly episodeId: Prisma.FieldRef<"RecordingSession", 'String'>
   readonly characterId: Prisma.FieldRef<"RecordingSession", 'String'>
   readonly castMemberId: Prisma.FieldRef<"RecordingSession", 'String'>
+  readonly recordingTechnicianId: Prisma.FieldRef<"RecordingSession", 'String'>
   readonly title: Prisma.FieldRef<"RecordingSession", 'String'>
   readonly startAt: Prisma.FieldRef<"RecordingSession", 'DateTime'>
   readonly endAt: Prisma.FieldRef<"RecordingSession", 'DateTime'>
@@ -2456,6 +2699,25 @@ export type RecordingSession$characterArgs<ExtArgs extends runtime.Types.Extensi
    */
   include?: Prisma.ProjectCharacterInclude<ExtArgs> | null
   where?: Prisma.ProjectCharacterWhereInput
+}
+
+/**
+ * RecordingSession.recordingTechnician
+ */
+export type RecordingSession$recordingTechnicianArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Collaborator
+   */
+  select?: Prisma.CollaboratorSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Collaborator
+   */
+  omit?: Prisma.CollaboratorOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CollaboratorInclude<ExtArgs> | null
+  where?: Prisma.CollaboratorWhereInput
 }
 
 /**

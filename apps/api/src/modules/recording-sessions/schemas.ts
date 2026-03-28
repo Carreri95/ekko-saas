@@ -20,6 +20,7 @@ const episodeIdsArray = z.array(z.string().min(1)).max(100);
 export const recordingSessionCreateSchema = z
   .object({
     castMemberId: z.string().min(1),
+    recordingTechnicianId: optionalNullableId,
     /// Legado: um episódio. Preferir `episodeIds`.
     episodeId: optionalNullableId,
     episodeIds: episodeIdsArray.optional(),
@@ -36,6 +37,7 @@ export const recordingSessionCreateSchema = z
 export const recordingSessionPatchSchema = z
   .object({
     castMemberId: z.string().min(1).optional(),
+    recordingTechnicianId: optionalNullableId,
     episodeId: optionalNullableId,
     episodeIds: episodeIdsArray.optional(),
     characterId: optionalNullableId,

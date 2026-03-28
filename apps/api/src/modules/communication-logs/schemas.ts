@@ -46,8 +46,19 @@ export const communicationLogCreateSchema = z
     sessionId: optionalNullableId,
     sentAt: optionalNullableSentAt,
     error: optionalNullableString,
+    /** Quando true, a API cria um registo por canal (e-mail e/ou WhatsApp) a partir dos dados do dublador da sessão; ignora canal/direção/recipientes do pedido para esse efeito. */
+    sessionDualOutbound: z.boolean().optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.sessionDualOutbound === true && !data.sessionId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Sessão obrigatória para registo a partir da agenda.",
+        path: ["sessionId"],
+      });
+    }
+  });
 
 export const communicationLogPatchSchema = z
   .object({

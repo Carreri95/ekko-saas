@@ -6,11 +6,18 @@ import { PageShell } from "@/app/components/page-shell";
 import { useConfirm } from "@/app/components/confirm-provider";
 import { DateInput } from "@/app/components/date-input";
 import { SessionDatetimeField } from "@/app/components/session-datetime-field";
+import { HOUR_OPTIONS_24H } from "@/app/components/session-time-option-select";
 import {
   composeDateAndTimeToIso,
   isoToDateInput,
   partsFromIso,
 } from "@/app/lib/session-datetime";
+import {
+  clampSessionEndToBounds,
+  formatYmdToPt,
+  validEndHourOptions,
+  validEndMinuteOptions,
+} from "@/app/lib/session-form-datetime-rules";
 import { computeSessionTimeSuggestions } from "@/app/lib/session-time-suggestions";
 import { buildCommunicationFormPrefillFromSession } from "@/app/lib/communication-session-prefill";
 import {
@@ -33,6 +40,7 @@ import type { DubbingProjectDto } from "../types";
 import type { DubbingProjectStatus } from "../domain";
 import type { ProjectCharacterDto } from "@/app/types/project-character";
 import type { CastMemberDto } from "@/app/types/cast-member";
+import type { CollaboratorDto } from "@/app/types/collaborator";
 import type { DubbingEpisodeDto } from "@/app/types/dubbing-episode";
 import type {
   RecordingSessionDto,
@@ -58,6 +66,10 @@ import {
   ProjectCommunicationTab,
   type CommunicationTabDraft,
 } from "./components/project-communication-tab";
+import {
+  parseSessionFormForSave,
+  sessionFormToApiPayload,
+} from "../session-form-schema";
 
 const TABS = [
   { id: "info", label: "Informações", enabled: true },
@@ -138,6 +150,7 @@ function isoToInput(iso?: string | null) {
 type SessionFormState = {
   title: string;
   castMemberId: string;
+  recordingTechnicianId: string;
   startDate: string;
   startHour24: string;
   startMinute: string;
@@ -173,6 +186,7 @@ const SESSION_FORMAT_OPTIONS: Array<{
 const EMPTY_SESSION_FORM: SessionFormState = {
   title: "",
   castMemberId: "",
+  recordingTechnicianId: "",
   startDate: "",
   startHour24: "00",
   startMinute: "00",
@@ -352,8 +366,7 @@ function computeSessionOverlapConflicts(
   for (const group of buckets.values()) {
     if (group.length < 2) continue;
     const sorted = [...group].sort(
-      (x, y) =>
-        new Date(x.startAt).getTime() - new Date(y.startAt).getTime(),
+      (x, y) => new Date(x.startAt).getTime() - new Date(y.startAt).getTime(),
     );
     for (let i = 0; i < sorted.length; i++) {
       const a = sorted[i];
@@ -573,7 +586,9 @@ function agendaConflictBadgePresentation(severity: AgendaConflictSeverity): {
   }
 }
 
-function agendaConflictListBadgePresentation(severity: AgendaConflictSeverity): {
+function agendaConflictListBadgePresentation(
+  severity: AgendaConflictSeverity,
+): {
   label: string;
   className: string;
 } {
@@ -643,6 +658,9 @@ export default function ProjectEditPage() {
   const [clientListRefresh, setClientListRefresh] = useState(0);
   const [characters, setCharacters] = useState<ProjectCharacterDto[]>([]);
   const [castMembers, setCastMembers] = useState<CastMemberDto[]>([]);
+  const [recordingTechnicians, setRecordingTechnicians] = useState<
+    CollaboratorDto[]
+  >([]);
   const [charModalOpen, setCharModalOpen] = useState(false);
   const [editingChar, setEditingChar] = useState<ProjectCharacterDto | null>(
     null,
@@ -674,6 +692,9 @@ export default function ProjectEditPage() {
   >("success");
   const [sessionSuggestionAppliedHint, setSessionSuggestionAppliedHint] =
     useState<string | null>(null);
+  const [sessionEndAdjustHint, setSessionEndAdjustHint] = useState<
+    string | null
+  >(null);
   const [sessionTitleTouched, setSessionTitleTouched] = useState(false);
   const [sessionStatusFilter, setSessionStatusFilter] = useState<
     "ALL" | RecordingSessionStatus
@@ -750,6 +771,16 @@ export default function ProjectEditPage() {
     setCastMembers(data.members ?? []);
   }, []);
 
+  const loadRecordingTechnicians = useCallback(async () => {
+    const res = await fetch("/api/collaborators?role=RECORDING_TECHNICIAN");
+    if (!res.ok) {
+      setRecordingTechnicians([]);
+      return;
+    }
+    const data = (await res.json()) as { collaborators: CollaboratorDto[] };
+    setRecordingTechnicians(data.collaborators ?? []);
+  }, []);
+
   const loadEpisodes = useCallback(async () => {
     if (!id) return;
     setEpisodesLoading(true);
@@ -819,8 +850,16 @@ export default function ProjectEditPage() {
       void loadEpisodes();
       void loadCharacters();
       void loadCastMembers();
+      void loadRecordingTechnicians();
     }
-  }, [activeTab, loadSessions, loadEpisodes, loadCharacters, loadCastMembers]);
+  }, [
+    activeTab,
+    loadSessions,
+    loadEpisodes,
+    loadCharacters,
+    loadCastMembers,
+    loadRecordingTechnicians,
+  ]);
 
   useEffect(() => {
     if (activeTab === "comunicacao") {
@@ -1089,6 +1128,7 @@ export default function ProjectEditPage() {
     setSessionForm(EMPTY_SESSION_FORM);
     setSessionTitleTouched(false);
     setSessionSuggestionAppliedHint(null);
+    setSessionEndAdjustHint(null);
   }, []);
 
   const onEditSession = useCallback((session: RecordingSessionDto) => {
@@ -1098,10 +1138,11 @@ export default function ProjectEditPage() {
     setSessionForm({
       title: session.title,
       castMemberId: session.castMemberId,
+      recordingTechnicianId: session.recordingTechnicianId ?? "",
       startDate: startParts.dateYmd,
       startHour24: startParts.hour24,
       startMinute: startParts.minute,
-      endDate: endParts.dateYmd,
+      endDate: startParts.dateYmd,
       endHour24: endParts.hour24,
       endMinute: endParts.minute,
       status: session.status,
@@ -1118,6 +1159,7 @@ export default function ProjectEditPage() {
     setSessionFeedback(null);
     setSessionsError(null);
     setSessionTitleTouched(true);
+    setSessionEndAdjustHint(null);
   }, []);
 
   const openCommunicationFromSession = useCallback(
@@ -1182,23 +1224,27 @@ export default function ProjectEditPage() {
     setSessionFeedback(null);
     setSessionSuggestionAppliedHint(null);
     setSessionsError(null);
-    if (!sessionForm.title.trim()) {
+    const sessionParsed = parseSessionFormForSave(sessionForm);
+    if (!sessionParsed.success) {
+      const fe = sessionParsed.error.flatten().fieldErrors;
+      const msg =
+        fe.title?.[0] ??
+        fe.castMemberId?.[0] ??
+        fe.startDate?.[0] ??
+        fe.endDate?.[0] ??
+        "Verifique os dados da sessão.";
       setSessionFeedbackTone("error");
-      setSessionFeedback("Informe o título da sessão.");
+      setSessionFeedback(msg);
       return;
     }
-    if (!sessionForm.castMemberId) {
-      setSessionFeedbackTone("error");
-      setSessionFeedback("Selecione o dublador.");
-      return;
-    }
+
     const startIso = composeDateAndTimeToIso(
       sessionForm.startDate,
       sessionForm.startHour24,
       sessionForm.startMinute,
     );
     const endIso = composeDateAndTimeToIso(
-      sessionForm.endDate,
+      sessionForm.startDate,
       sessionForm.endHour24,
       sessionForm.endMinute,
     );
@@ -1247,16 +1293,7 @@ export default function ProjectEditPage() {
       if (!ok) return;
     }
 
-    const basePayload = {
-      title: sessionForm.title.trim(),
-      castMemberId: sessionForm.castMemberId,
-      startAt: startIso,
-      endAt: endIso,
-      status: sessionForm.status,
-      format: sessionForm.format,
-      notes: sessionForm.notes.trim() ? sessionForm.notes.trim() : null,
-      characterId: sessionForm.characterId || null,
-    };
+    const basePayload = sessionFormToApiPayload(sessionForm, startIso, endIso);
     setSessionSaving(true);
     try {
       const isEdit = Boolean(editingSessionId);
@@ -1264,14 +1301,10 @@ export default function ProjectEditPage() {
         ? `/api/dubbing-projects/${id}/sessions/${encodeURIComponent(editingSessionId!)}`
         : `/api/dubbing-projects/${id}/sessions`;
       const method = isEdit ? "PATCH" : "POST";
-      const payload = {
-        ...basePayload,
-        episodeIds: sessionForm.episodeIds,
-      };
       const res = await fetch(url, {
         method,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(basePayload),
       });
       const raw = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1479,12 +1512,7 @@ export default function ProjectEditPage() {
       const bCreated = new Date(b.createdAt).getTime();
       return aCreated - bCreated;
     });
-  }, [
-    sessionCastFilter,
-    sessionPeriodFilter,
-    sessionStatusFilter,
-    sessions,
-  ]);
+  }, [sessionCastFilter, sessionPeriodFilter, sessionStatusFilter, sessions]);
 
   const groupedSessions = useMemo(() => {
     const now = new Date();
@@ -1511,9 +1539,9 @@ export default function ProjectEditPage() {
 
   const agendaCastMemberIds = useMemo(
     () =>
-      [
-        ...new Set(filteredSortedSessions.map((s) => s.castMemberId)),
-      ].filter((x): x is string => Boolean(x)),
+      [...new Set(filteredSortedSessions.map((s) => s.castMemberId))].filter(
+        (x): x is string => Boolean(x),
+      ),
     [filteredSortedSessions],
   );
 
@@ -1534,10 +1562,9 @@ export default function ProjectEditPage() {
     for (const mid of agendaAvailabilityMemberIds) {
       if (agendaAvailabilityFetchedRef.current.has(mid)) continue;
       agendaAvailabilityFetchedRef.current.add(mid);
-      void fetch(
-        `/api/cast-members/${encodeURIComponent(mid)}/availability`,
-        { cache: "no-store" },
-      )
+      void fetch(`/api/cast-members/${encodeURIComponent(mid)}/availability`, {
+        cache: "no-store",
+      })
         .then(async (res) => {
           if (!res.ok) {
             agendaAvailabilityFetchedRef.current.delete(mid);
@@ -1574,7 +1601,7 @@ export default function ProjectEditPage() {
       sessionForm.startMinute,
     );
     const endIso = composeDateAndTimeToIso(
-      sessionForm.endDate,
+      sessionForm.startDate,
       sessionForm.endHour24,
       sessionForm.endMinute,
     );
@@ -1586,9 +1613,81 @@ export default function ProjectEditPage() {
     sessionForm.startDate,
     sessionForm.startHour24,
     sessionForm.startMinute,
-    sessionForm.endDate,
     sessionForm.endHour24,
     sessionForm.endMinute,
+  ]);
+
+  const sessionEndHourOptions = useMemo(
+    () =>
+      validEndHourOptions(
+        sessionForm.startDate,
+        sessionForm.startHour24,
+        sessionForm.startMinute,
+      ),
+    [sessionForm.startDate, sessionForm.startHour24, sessionForm.startMinute],
+  );
+
+  const sessionEndMinuteOptions = useMemo(
+    () =>
+      validEndMinuteOptions(
+        sessionForm.startDate,
+        sessionForm.startHour24,
+        sessionForm.startMinute,
+        sessionForm.endHour24,
+      ),
+    [
+      sessionForm.startDate,
+      sessionForm.startHour24,
+      sessionForm.startMinute,
+      sessionForm.endHour24,
+    ],
+  );
+
+  useEffect(() => {
+    setSessionForm((prev) => {
+      if (!prev.startDate || !/^\d{4}-\d{2}-\d{2}$/.test(prev.startDate)) {
+        return prev;
+      }
+      const c = clampSessionEndToBounds({
+        startDate: prev.startDate,
+        startHour24: prev.startHour24,
+        startMinute: prev.startMinute,
+        endHour24: prev.endHour24,
+        endMinute: prev.endMinute,
+      });
+      const changed =
+        prev.endDate !== c.endDate ||
+        prev.endHour24 !== c.endHour24 ||
+        prev.endMinute !== c.endMinute;
+      if (!changed) return prev;
+      if (c.adjusted) {
+      }
+      return { ...prev, ...c };
+    });
+  }, [sessionForm.startDate, sessionForm.startHour24, sessionForm.startMinute]);
+
+  useEffect(() => {
+    setSessionForm((prev) => {
+      if (!prev.startDate || !/^\d{4}-\d{2}-\d{2}$/.test(prev.startDate)) {
+        return prev;
+      }
+      const mins = validEndMinuteOptions(
+        prev.startDate,
+        prev.startHour24,
+        prev.startMinute,
+        prev.endHour24,
+      );
+      if (mins.length === 0) return prev;
+      if (!mins.includes(prev.endMinute)) {
+        return { ...prev, endMinute: mins[0]! };
+      }
+      return prev;
+    });
+  }, [
+    sessionForm.endHour24,
+    sessionForm.startDate,
+    sessionForm.startHour24,
+    sessionForm.startMinute,
   ]);
 
   const sessionMinStartMsForSuggestions = useMemo(() => {
@@ -2665,7 +2764,9 @@ export default function ProjectEditPage() {
                     <div className="mx-auto flex max-w-[980px] flex-col gap-[12px]">
                       <ProjectCommunicationTab
                         projectId={id}
-                        projectName={project?.name?.trim() ? project.name : "Projeto"}
+                        projectName={
+                          project?.name?.trim() ? project.name : "Projeto"
+                        }
                         castMembers={castMembers}
                         sessions={sessions}
                         communicationDraft={communicationTabDraft}
@@ -2684,8 +2785,8 @@ export default function ProjectEditPage() {
                           Sessões de gravação
                         </h2>
                         <p className="mt-[2px] text-[11px] text-[#505050]">
-                          Cadastro de sessões: use a lista ou a visão por dia com
-                          blocos de horário (sem calendário externo).
+                          Cadastro de sessões: use a lista ou a visão por dia
+                          com blocos de horário (sem calendário externo).
                         </p>
                       </div>
 
@@ -2741,42 +2842,95 @@ export default function ProjectEditPage() {
                               ))}
                             </select>
                           </div>
-                          <SessionDatetimeField
-                            label="Início"
-                            labelClassName={labelCls}
-                            inputClassName={inputCls}
-                            value={{
-                              dateYmd: sessionForm.startDate,
-                              hour24: sessionForm.startHour24,
-                              minute: sessionForm.startMinute,
-                            }}
-                            onChange={(v) =>
-                              setSessionForm((prev) => ({
-                                ...prev,
-                                startDate: v.dateYmd,
-                                startHour24: v.hour24,
-                                startMinute: v.minute,
-                              }))
-                            }
-                          />
-                          <SessionDatetimeField
-                            label="Fim"
-                            labelClassName={labelCls}
-                            inputClassName={inputCls}
-                            value={{
-                              dateYmd: sessionForm.endDate,
-                              hour24: sessionForm.endHour24,
-                              minute: sessionForm.endMinute,
-                            }}
-                            onChange={(v) =>
-                              setSessionForm((prev) => ({
-                                ...prev,
-                                endDate: v.dateYmd,
-                                endHour24: v.hour24,
-                                endMinute: v.minute,
-                              }))
-                            }
-                          />
+                          <div className="md:col-span-2">
+                            <label className={labelCls}>
+                              Técnico de gravação (opcional)
+                            </label>
+                            <select
+                              className={inputCls}
+                              value={sessionForm.recordingTechnicianId}
+                              onChange={(e) =>
+                                setSessionForm((prev) => ({
+                                  ...prev,
+                                  recordingTechnicianId: e.target.value,
+                                }))
+                              }
+                            >
+                              <option value="">Nenhum</option>
+                              {recordingTechnicians.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="grid grid-cols-1 gap-[10px] md:col-span-2 md:grid-cols-2 md:gap-x-[12px] md:gap-y-[10px]">
+                            <SessionDatetimeField
+                              label="Início"
+                              labelClassName={labelCls}
+                              inputClassName={inputCls}
+                              value={{
+                                dateYmd: sessionForm.startDate,
+                                hour24: sessionForm.startHour24,
+                                minute: sessionForm.startMinute,
+                              }}
+                              onChange={(v) => {
+                                setSessionEndAdjustHint(null);
+                                setSessionForm((prev) => ({
+                                  ...prev,
+                                  startDate: v.dateYmd,
+                                  startHour24: v.hour24,
+                                  startMinute: v.minute,
+                                }));
+                              }}
+                            />
+                            <div
+                              className={
+                                sessionForm.startDate &&
+                                /^\d{4}-\d{2}-\d{2}$/.test(
+                                  sessionForm.startDate,
+                                )
+                                  ? ""
+                                  : "pointer-events-none opacity-45"
+                              }
+                            >
+                              <SessionDatetimeField
+                                label="Fim"
+                                labelClassName={labelCls}
+                                inputClassName={inputCls}
+                                showDatePicker={false}
+                                hourOptions={
+                                  sessionEndHourOptions.length > 0
+                                    ? sessionEndHourOptions
+                                    : HOUR_OPTIONS_24H
+                                }
+                                minuteOptions={
+                                  sessionEndMinuteOptions.length > 0
+                                    ? sessionEndMinuteOptions
+                                    : undefined
+                                }
+                                value={{
+                                  dateYmd: sessionForm.startDate,
+                                  hour24: sessionForm.endHour24,
+                                  minute: sessionForm.endMinute,
+                                }}
+                                onChange={(v) => {
+                                  setSessionEndAdjustHint(null);
+                                  setSessionForm((prev) => ({
+                                    ...prev,
+                                    endDate: prev.startDate,
+                                    endHour24: v.hour24,
+                                    endMinute: v.minute,
+                                  }));
+                                }}
+                              />
+                            </div>
+                          </div>
+                          {sessionEndAdjustHint ? (
+                            <div className="md:col-span-2 rounded-[6px] border border-[#3d3d1a] bg-[#252518] px-[10px] py-[8px] text-[11px] text-[#d4d4a8]">
+                              {sessionEndAdjustHint}
+                            </div>
+                          ) : null}
                           <div className="md:col-span-2">
                             <p className={`${labelCls} mb-[6px]`}>
                               Sugestões de horário
@@ -2801,7 +2955,7 @@ export default function ProjectEditPage() {
                                           startDate: sp.dateYmd,
                                           startHour24: sp.hour24,
                                           startMinute: sp.minute,
-                                          endDate: ep.dateYmd,
+                                          endDate: sp.dateYmd,
                                           endHour24: ep.hour24,
                                           endMinute: ep.minute,
                                         }));
@@ -2825,7 +2979,8 @@ export default function ProjectEditPage() {
                               <p className="text-[11px] text-[#505050]">
                                 Nenhum intervalo livre neste dia com a duração
                                 atual. Ajuste data, horários ou cadastre
-                                disponibilidade do dublador em Elenco (opcional).
+                                disponibilidade do dublador em Elenco
+                                (opcional).
                               </p>
                             )}
                           </div>
@@ -3029,10 +3184,7 @@ export default function ProjectEditPage() {
                                   {groupedSessions.filteredCount})
                                 </>
                               ) : (
-                                <>
-                                  {" "}
-                                  ({groupedSessions.filteredCount})
-                                </>
+                                <> ({groupedSessions.filteredCount})</>
                               )}
                             </h3>
                             <div
@@ -3204,7 +3356,10 @@ export default function ProjectEditPage() {
                                               : "cursor-pointer"
                                           }`}
                                           onKeyDown={(e) => {
-                                            if (e.key === "Enter" || e.key === " ") {
+                                            if (
+                                              e.key === "Enter" ||
+                                              e.key === " "
+                                            ) {
                                               e.preventDefault();
                                               if (!cardDisabled)
                                                 onEditSession(session);
@@ -3235,8 +3390,7 @@ export default function ProjectEditPage() {
                                               <span
                                                 className={badge.className}
                                                 title={
-                                                  conflictTooltip ||
-                                                  badge.label
+                                                  conflictTooltip || badge.label
                                                 }
                                               >
                                                 <span aria-hidden>⚠</span>
@@ -3317,220 +3471,223 @@ export default function ProjectEditPage() {
                                     ) : null}
                                   </p>
                                   {group.items.map((session) => {
-                                  const epSummaries =
-                                    session.episodes &&
-                                    session.episodes.length > 0
-                                      ? session.episodes.map((e) => ({
-                                          key: e.id,
-                                          number: e.number,
-                                          title: e.title,
-                                        }))
-                                      : session.episodeId
-                                        ? (() => {
-                                            const local = episodes.find(
-                                              (x) => x.id === session.episodeId,
-                                            );
-                                            if (local) {
-                                              return [
-                                                {
-                                                  key: local.id,
-                                                  number: local.number,
-                                                  title: local.title,
-                                                },
-                                              ];
-                                            }
-                                            if (session.episode) {
-                                              return [
-                                                {
-                                                  key: session.episode.id,
-                                                  number: session.episode.number,
-                                                  title: session.episode.title,
-                                                },
-                                              ];
-                                            }
-                                            return [];
-                                          })()
-                                        : [];
-                                  const ch = characters.find(
-                                    (item) => item.id === session.characterId,
-                                  );
-                                  const listEditing =
-                                    editingSessionId === session.id;
-                                  const listConflict =
-                                    sessionConflictSummaryForId(
-                                      sessionConflictSummaryById,
-                                      session.id,
+                                    const epSummaries =
+                                      session.episodes &&
+                                      session.episodes.length > 0
+                                        ? session.episodes.map((e) => ({
+                                            key: e.id,
+                                            number: e.number,
+                                            title: e.title,
+                                          }))
+                                        : session.episodeId
+                                          ? (() => {
+                                              const local = episodes.find(
+                                                (x) =>
+                                                  x.id === session.episodeId,
+                                              );
+                                              if (local) {
+                                                return [
+                                                  {
+                                                    key: local.id,
+                                                    number: local.number,
+                                                    title: local.title,
+                                                  },
+                                                ];
+                                              }
+                                              if (session.episode) {
+                                                return [
+                                                  {
+                                                    key: session.episode.id,
+                                                    number:
+                                                      session.episode.number,
+                                                    title:
+                                                      session.episode.title,
+                                                  },
+                                                ];
+                                              }
+                                              return [];
+                                            })()
+                                          : [];
+                                    const ch = characters.find(
+                                      (item) => item.id === session.characterId,
                                     );
-                                  const listBadge =
-                                    listConflict.hasConflict &&
-                                    listConflict.severity
-                                      ? agendaConflictListBadgePresentation(
+                                    const listEditing =
+                                      editingSessionId === session.id;
+                                    const listConflict =
+                                      sessionConflictSummaryForId(
+                                        sessionConflictSummaryById,
+                                        session.id,
+                                      );
+                                    const listBadge =
+                                      listConflict.hasConflict &&
+                                      listConflict.severity
+                                        ? agendaConflictListBadgePresentation(
+                                            listConflict.severity,
+                                          )
+                                        : null;
+                                    const listConflictTooltip =
+                                      listConflict.detailLines.join(" · ");
+                                    return (
+                                      <div
+                                        key={session.id}
+                                        className={`rounded-[8px] border p-[10px] ${agendaConflictCardClassNames(
                                           listConflict.severity,
-                                        )
-                                      : null;
-                                  const listConflictTooltip =
-                                    listConflict.detailLines.join(" · ");
-                                  return (
-                                    <div
-                                      key={session.id}
-                                      className={`rounded-[8px] border p-[10px] ${agendaConflictCardClassNames(
-                                        listConflict.severity,
-                                        listEditing,
-                                      )}`}
-                                    >
-                                      <div className="flex flex-wrap items-start justify-between gap-[8px]">
-                                        <div className="min-w-0">
-                                          <p className="truncate text-[13px] font-[600] text-[#e8e8e8]">
-                                            {session.title}
-                                          </p>
-                                          <p className="mt-[2px] text-[11px] text-[#909090]">
-                                            {session.castMember?.name ??
-                                              "Dublador não informado"}
-                                          </p>
+                                          listEditing,
+                                        )}`}
+                                      >
+                                        <div className="flex flex-wrap items-start justify-between gap-[8px]">
+                                          <div className="min-w-0">
+                                            <p className="truncate text-[13px] font-[600] text-[#e8e8e8]">
+                                              {session.title}
+                                            </p>
+                                            <p className="mt-[2px] text-[11px] text-[#909090]">
+                                              {session.castMember?.name ??
+                                                "Dublador não informado"}
+                                            </p>
+                                          </div>
+                                          <div className="flex flex-wrap items-center gap-[6px]">
+                                            <button
+                                              type="button"
+                                              disabled={
+                                                sessionSaving ||
+                                                Boolean(sessionDeletingId)
+                                              }
+                                              onClick={() =>
+                                                onEditSession(session)
+                                              }
+                                              className="rounded-[5px] border border-[#2e2e2e] px-[8px] py-[4px] text-[10px] text-[#909090] hover:bg-[#252525] disabled:opacity-40"
+                                            >
+                                              Editar
+                                            </button>
+                                            <button
+                                              type="button"
+                                              disabled={
+                                                sessionSaving ||
+                                                Boolean(sessionDeletingId)
+                                              }
+                                              onClick={() =>
+                                                openCommunicationFromSession(
+                                                  session,
+                                                )
+                                              }
+                                              className="rounded-[5px] border border-[#0d3d2a] px-[8px] py-[4px] text-[10px] text-[#5DCAA5] hover:bg-[#0a2018] disabled:opacity-40"
+                                            >
+                                              Registrar comunicação
+                                            </button>
+                                            <button
+                                              type="button"
+                                              disabled={
+                                                sessionSaving ||
+                                                Boolean(sessionDeletingId)
+                                              }
+                                              onClick={() =>
+                                                void onDeleteSession(session)
+                                              }
+                                              className="rounded-[5px] border border-[#5a1515] px-[8px] py-[4px] text-[10px] text-[#F09595] hover:bg-[#2a0a0a] disabled:opacity-40"
+                                            >
+                                              {sessionDeletingId === session.id
+                                                ? "Removendo sessão..."
+                                                : "Remover"}
+                                            </button>
+                                          </div>
                                         </div>
-                                        <div className="flex flex-wrap items-center gap-[6px]">
-                                          <button
-                                            type="button"
-                                            disabled={
-                                              sessionSaving ||
-                                              Boolean(sessionDeletingId)
-                                            }
-                                            onClick={() =>
-                                              onEditSession(session)
-                                            }
-                                            className="rounded-[5px] border border-[#2e2e2e] px-[8px] py-[4px] text-[10px] text-[#909090] hover:bg-[#252525] disabled:opacity-40"
-                                          >
-                                            Editar
-                                          </button>
-                                          <button
-                                            type="button"
-                                            disabled={
-                                              sessionSaving ||
-                                              Boolean(sessionDeletingId)
-                                            }
-                                            onClick={() =>
-                                              openCommunicationFromSession(
-                                                session,
-                                              )
-                                            }
-                                            className="rounded-[5px] border border-[#0d3d2a] px-[8px] py-[4px] text-[10px] text-[#5DCAA5] hover:bg-[#0a2018] disabled:opacity-40"
-                                          >
-                                            Registrar comunicação
-                                          </button>
-                                          <button
-                                            type="button"
-                                            disabled={
-                                              sessionSaving ||
-                                              Boolean(sessionDeletingId)
-                                            }
-                                            onClick={() =>
-                                              void onDeleteSession(session)
-                                            }
-                                            className="rounded-[5px] border border-[#5a1515] px-[8px] py-[4px] text-[10px] text-[#F09595] hover:bg-[#2a0a0a] disabled:opacity-40"
-                                          >
-                                            {sessionDeletingId === session.id
-                                              ? "Removendo sessão..."
-                                              : "Remover"}
-                                          </button>
-                                        </div>
-                                      </div>
-                                      <div className="mt-[8px] flex flex-wrap gap-[6px] text-[10px] text-[#606060]">
-                                        <span>
-                                          Início:{" "}
-                                          {formatEpisodeTimestamp(
-                                            session.startAt,
-                                          ) ?? "-"}
-                                        </span>
-                                        <span>
-                                          Fim:{" "}
-                                          {formatEpisodeTimestamp(
-                                            session.endAt,
-                                          ) ?? "-"}
-                                        </span>
-                                        <span
-                                          className={`rounded-[10px] border px-[6px] py-[1px] ${getSessionStatusBadgeClass(
-                                            session.status,
-                                          )}`}
-                                        >
-                                          Status:{" "}
-                                          {getSessionStatusLabel(
-                                            session.status,
-                                          )}
-                                        </span>
-                                        <span
-                                          className={`rounded-[10px] border px-[6px] py-[1px] ${getSessionFormatBadgeClass(
-                                            session.format,
-                                          )}`}
-                                        >
-                                          Formato:{" "}
-                                          {getSessionFormatLabel(
-                                            session.format,
-                                          )}
-                                        </span>
-                                        {listBadge ? (
+                                        <div className="mt-[8px] flex flex-wrap gap-[6px] text-[10px] text-[#606060]">
+                                          <span>
+                                            Início:{" "}
+                                            {formatEpisodeTimestamp(
+                                              session.startAt,
+                                            ) ?? "-"}
+                                          </span>
+                                          <span>
+                                            Fim:{" "}
+                                            {formatEpisodeTimestamp(
+                                              session.endAt,
+                                            ) ?? "-"}
+                                          </span>
                                           <span
-                                            className={listBadge.className}
-                                            title={
-                                              listConflictTooltip ||
-                                              listBadge.label
-                                            }
+                                            className={`rounded-[10px] border px-[6px] py-[1px] ${getSessionStatusBadgeClass(
+                                              session.status,
+                                            )}`}
                                           >
-                                            <span aria-hidden>⚠</span>
-                                            {listBadge.label}
+                                            Status:{" "}
+                                            {getSessionStatusLabel(
+                                              session.status,
+                                            )}
                                           </span>
-                                        ) : null}
-                                        {epSummaries.length === 1 ? (
-                                          <span>
-                                            Episódio: EP{" "}
-                                            {epSummaries[0].number ?? "—"}
-                                            {epSummaries[0].title?.trim()
-                                              ? ` - ${epSummaries[0].title}`
-                                              : ""}
+                                          <span
+                                            className={`rounded-[10px] border px-[6px] py-[1px] ${getSessionFormatBadgeClass(
+                                              session.format,
+                                            )}`}
+                                          >
+                                            Formato:{" "}
+                                            {getSessionFormatLabel(
+                                              session.format,
+                                            )}
                                           </span>
-                                        ) : epSummaries.length > 1 ? (
-                                          <span>
-                                            Episódios:{" "}
-                                            {epSummaries.map((e, idx) => (
-                                              <span key={e.key}>
-                                                {idx > 0 ? ", " : ""}
-                                                EP {e.number ?? "—"}
-                                                {e.title?.trim()
-                                                  ? ` (${e.title})`
-                                                  : ""}
-                                              </span>
-                                            ))}
-                                          </span>
-                                        ) : null}
-                                        {ch ? (
-                                          <span>Personagem: {ch.name}</span>
+                                          {listBadge ? (
+                                            <span
+                                              className={listBadge.className}
+                                              title={
+                                                listConflictTooltip ||
+                                                listBadge.label
+                                              }
+                                            >
+                                              <span aria-hidden>⚠</span>
+                                              {listBadge.label}
+                                            </span>
+                                          ) : null}
+                                          {epSummaries.length === 1 ? (
+                                            <span>
+                                              Episódio: EP{" "}
+                                              {epSummaries[0].number ?? "—"}
+                                              {epSummaries[0].title?.trim()
+                                                ? ` - ${epSummaries[0].title}`
+                                                : ""}
+                                            </span>
+                                          ) : epSummaries.length > 1 ? (
+                                            <span>
+                                              Episódios:{" "}
+                                              {epSummaries.map((e, idx) => (
+                                                <span key={e.key}>
+                                                  {idx > 0 ? ", " : ""}
+                                                  EP {e.number ?? "—"}
+                                                  {e.title?.trim()
+                                                    ? ` (${e.title})`
+                                                    : ""}
+                                                </span>
+                                              ))}
+                                            </span>
+                                          ) : null}
+                                          {ch ? (
+                                            <span>Personagem: {ch.name}</span>
+                                          ) : null}
+                                        </div>
+                                        {session.notes?.trim() ? (
+                                          <p className="mt-[6px] text-[11px] text-[#909090]">
+                                            {session.notes}
+                                          </p>
                                         ) : null}
                                       </div>
-                                      {session.notes?.trim() ? (
-                                        <p className="mt-[6px] text-[11px] text-[#909090]">
-                                          {session.notes}
-                                        </p>
-                                      ) : null}
-                                    </div>
-                                  );
-                                })}
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })}
+                            {groupedSessions.hasMore ? (
+                              <div className="pt-[4px]">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSessionVisibleCount(
+                                      (prev) => prev + AGENDA_PAGE_SIZE,
+                                    )
+                                  }
+                                  className="rounded-[5px] border border-[#2e2e2e] px-[12px] py-[6px] text-[11px] text-[#909090] hover:bg-[#252525]"
+                                >
+                                  Carregar mais
+                                </button>
                               </div>
-                            );
-                          })}
-                          {groupedSessions.hasMore ? (
-                            <div className="pt-[4px]">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setSessionVisibleCount(
-                                    (prev) => prev + AGENDA_PAGE_SIZE,
-                                  )
-                                }
-                                className="rounded-[5px] border border-[#2e2e2e] px-[12px] py-[6px] text-[11px] text-[#909090] hover:bg-[#252525]"
-                              >
-                                Carregar mais
-                              </button>
-                            </div>
-                          ) : null}
+                            ) : null}
                           </div>
                         )}
                       </div>

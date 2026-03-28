@@ -19,6 +19,7 @@ import { registerInviteAcceptRoutes } from "./modules/invite-accept/routes.js";
 import { registerUserRoutes } from "./modules/users/routes.js";
 import { registerRecordingSessionRoutes } from "./modules/recording-sessions/routes.js";
 import { registerCommunicationLogRoutes } from "./modules/communication-logs/routes.js";
+import { registerCollaboratorRoutes } from "./modules/collaborators/routes.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -44,6 +45,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   void registerDubbingProjectRoutes(app);
   void registerRecordingSessionRoutes(app);
   void registerCommunicationLogRoutes(app);
+  void registerCollaboratorRoutes(app);
   await registerProjectRoutes(app);
   await registerSubtitleFileRoutes(app);
   await registerTranscriptionJobRoutes(app);

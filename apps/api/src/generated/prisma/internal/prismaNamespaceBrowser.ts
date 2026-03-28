@@ -70,6 +70,7 @@ export const ModelName = {
   ProjectCharacterAssignment: 'ProjectCharacterAssignment',
   RecordingSession: 'RecordingSession',
   CommunicationLog: 'CommunicationLog',
+  Collaborator: 'Collaborator',
   RecordingSessionEpisode: 'RecordingSessionEpisode',
   MediaAsset: 'MediaAsset'
 } as const
@@ -250,6 +251,7 @@ export const ClientScalarFieldEnum = {
   name: 'name',
   email: 'email',
   phone: 'phone',
+  paymentMethod: 'paymentMethod',
   country: 'country',
   notes: 'notes',
   status: 'status',
@@ -304,9 +306,13 @@ export const CastMemberScalarFieldEnum = {
   id: 'id',
   name: 'name',
   role: 'role',
+  cpf: 'cpf',
+  cnpj: 'cnpj',
+  razaoSocial: 'razaoSocial',
   whatsapp: 'whatsapp',
   email: 'email',
-  preferredCommunicationChannel: 'preferredCommunicationChannel',
+  prefersEmail: 'prefersEmail',
+  prefersWhatsapp: 'prefersWhatsapp',
   specialties: 'specialties',
   status: 'status',
   notes: 'notes',
@@ -370,6 +376,7 @@ export const RecordingSessionScalarFieldEnum = {
   episodeId: 'episodeId',
   characterId: 'characterId',
   castMemberId: 'castMemberId',
+  recordingTechnicianId: 'recordingTechnicianId',
   title: 'title',
   startAt: 'startAt',
   endAt: 'endAt',
@@ -406,11 +413,30 @@ export const CommunicationLogScalarFieldEnum = {
   sendAttemptCount: 'sendAttemptCount',
   lastSendAttemptAt: 'lastSendAttemptAt',
   nextRetryAt: 'nextRetryAt',
+  communicationGroupId: 'communicationGroupId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type CommunicationLogScalarFieldEnum = (typeof CommunicationLogScalarFieldEnum)[keyof typeof CommunicationLogScalarFieldEnum]
+
+
+export const CollaboratorScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  cpf: 'cpf',
+  cnpj: 'cnpj',
+  razaoSocial: 'razaoSocial',
+  role: 'role',
+  email: 'email',
+  whatsapp: 'whatsapp',
+  prefersEmail: 'prefersEmail',
+  prefersWhatsapp: 'prefersWhatsapp',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CollaboratorScalarFieldEnum = (typeof CollaboratorScalarFieldEnum)[keyof typeof CollaboratorScalarFieldEnum]
 
 
 export const RecordingSessionEpisodeScalarFieldEnum = {

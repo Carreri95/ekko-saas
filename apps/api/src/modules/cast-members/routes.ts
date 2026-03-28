@@ -60,6 +60,7 @@ export async function registerCastMemberRoutes(app: FastifyInstance): Promise<vo
     }
     const result = await service.patch(params.data.id, parsed.data);
     if ("notFound" in result) return reply.status(404).send({ error: "Não encontrado" });
+    if ("badRequest" in result) return reply.status(400).send(result.badRequest);
     if ("conflict" in result) return reply.status(409).send(result.conflict);
     return reply.send(result);
   });

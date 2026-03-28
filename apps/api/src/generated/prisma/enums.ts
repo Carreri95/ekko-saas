@@ -89,6 +89,14 @@ export const ClientStatus = {
 export type ClientStatus = (typeof ClientStatus)[keyof typeof ClientStatus]
 
 
+export const ClientPaymentMethod = {
+  WIRE_TRANSFER: 'WIRE_TRANSFER',
+  WISE: 'WISE'
+} as const
+
+export type ClientPaymentMethod = (typeof ClientPaymentMethod)[keyof typeof ClientPaymentMethod]
+
+
 export const EpisodeStatus = {
   PENDING: 'PENDING',
   TRANSCRIBING: 'TRANSCRIBING',
@@ -207,12 +215,14 @@ export const CommunicationChannel = {
 export type CommunicationChannel = (typeof CommunicationChannel)[keyof typeof CommunicationChannel]
 
 
-export const PreferredCommunicationChannel = {
-  EMAIL: 'EMAIL',
-  WHATSAPP: 'WHATSAPP'
+export const CollaboratorRole = {
+  RECORDING_TECHNICIAN: 'RECORDING_TECHNICIAN',
+  POST_PRODUCTION: 'POST_PRODUCTION',
+  MIXER: 'MIXER',
+  PRE_PRODUCTION: 'PRE_PRODUCTION'
 } as const
 
-export type PreferredCommunicationChannel = (typeof PreferredCommunicationChannel)[keyof typeof PreferredCommunicationChannel]
+export type CollaboratorRole = (typeof CollaboratorRole)[keyof typeof CollaboratorRole]
 
 
 export const CommunicationDirection = {
