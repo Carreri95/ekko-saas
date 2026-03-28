@@ -57,6 +57,7 @@ export type CommunicationLogMinAggregateOutputType = {
   sendAttemptCount: number | null
   lastSendAttemptAt: Date | null
   nextRetryAt: Date | null
+  communicationGroupId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -84,6 +85,7 @@ export type CommunicationLogMaxAggregateOutputType = {
   sendAttemptCount: number | null
   lastSendAttemptAt: Date | null
   nextRetryAt: Date | null
+  communicationGroupId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -111,6 +113,7 @@ export type CommunicationLogCountAggregateOutputType = {
   sendAttemptCount: number
   lastSendAttemptAt: number
   nextRetryAt: number
+  communicationGroupId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -148,6 +151,7 @@ export type CommunicationLogMinAggregateInputType = {
   sendAttemptCount?: true
   lastSendAttemptAt?: true
   nextRetryAt?: true
+  communicationGroupId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -175,6 +179,7 @@ export type CommunicationLogMaxAggregateInputType = {
   sendAttemptCount?: true
   lastSendAttemptAt?: true
   nextRetryAt?: true
+  communicationGroupId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -202,6 +207,7 @@ export type CommunicationLogCountAggregateInputType = {
   sendAttemptCount?: true
   lastSendAttemptAt?: true
   nextRetryAt?: true
+  communicationGroupId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -316,6 +322,7 @@ export type CommunicationLogGroupByOutputType = {
   sendAttemptCount: number
   lastSendAttemptAt: Date | null
   nextRetryAt: Date | null
+  communicationGroupId: string | null
   createdAt: Date
   updatedAt: Date
   _count: CommunicationLogCountAggregateOutputType | null
@@ -366,6 +373,7 @@ export type CommunicationLogWhereInput = {
   sendAttemptCount?: Prisma.IntFilter<"CommunicationLog"> | number
   lastSendAttemptAt?: Prisma.DateTimeNullableFilter<"CommunicationLog"> | Date | string | null
   nextRetryAt?: Prisma.DateTimeNullableFilter<"CommunicationLog"> | Date | string | null
+  communicationGroupId?: Prisma.StringNullableFilter<"CommunicationLog"> | string | null
   createdAt?: Prisma.DateTimeFilter<"CommunicationLog"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CommunicationLog"> | Date | string
   dubbingProject?: Prisma.XOR<Prisma.DubbingProjectNullableScalarRelationFilter, Prisma.DubbingProjectWhereInput> | null
@@ -398,6 +406,7 @@ export type CommunicationLogOrderByWithRelationInput = {
   sendAttemptCount?: Prisma.SortOrder
   lastSendAttemptAt?: Prisma.SortOrderInput | Prisma.SortOrder
   nextRetryAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  communicationGroupId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   dubbingProject?: Prisma.DubbingProjectOrderByWithRelationInput
@@ -433,6 +442,7 @@ export type CommunicationLogWhereUniqueInput = Prisma.AtLeast<{
   sendAttemptCount?: Prisma.IntFilter<"CommunicationLog"> | number
   lastSendAttemptAt?: Prisma.DateTimeNullableFilter<"CommunicationLog"> | Date | string | null
   nextRetryAt?: Prisma.DateTimeNullableFilter<"CommunicationLog"> | Date | string | null
+  communicationGroupId?: Prisma.StringNullableFilter<"CommunicationLog"> | string | null
   createdAt?: Prisma.DateTimeFilter<"CommunicationLog"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CommunicationLog"> | Date | string
   dubbingProject?: Prisma.XOR<Prisma.DubbingProjectNullableScalarRelationFilter, Prisma.DubbingProjectWhereInput> | null
@@ -465,6 +475,7 @@ export type CommunicationLogOrderByWithAggregationInput = {
   sendAttemptCount?: Prisma.SortOrder
   lastSendAttemptAt?: Prisma.SortOrderInput | Prisma.SortOrder
   nextRetryAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  communicationGroupId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.CommunicationLogCountOrderByAggregateInput
@@ -500,6 +511,7 @@ export type CommunicationLogScalarWhereWithAggregatesInput = {
   sendAttemptCount?: Prisma.IntWithAggregatesFilter<"CommunicationLog"> | number
   lastSendAttemptAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CommunicationLog"> | Date | string | null
   nextRetryAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CommunicationLog"> | Date | string | null
+  communicationGroupId?: Prisma.StringNullableWithAggregatesFilter<"CommunicationLog"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CommunicationLog"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"CommunicationLog"> | Date | string
 }
@@ -522,6 +534,7 @@ export type CommunicationLogCreateInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   dubbingProject?: Prisma.DubbingProjectCreateNestedOneWithoutCommunicationLogsInput
@@ -554,6 +567,7 @@ export type CommunicationLogUncheckedCreateInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -576,6 +590,7 @@ export type CommunicationLogUpdateInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dubbingProject?: Prisma.DubbingProjectUpdateOneWithoutCommunicationLogsNestedInput
@@ -608,6 +623,7 @@ export type CommunicationLogUncheckedUpdateInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -635,6 +651,7 @@ export type CommunicationLogCreateManyInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -657,6 +674,7 @@ export type CommunicationLogUpdateManyMutationInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -684,6 +702,7 @@ export type CommunicationLogUncheckedUpdateManyInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -721,6 +740,7 @@ export type CommunicationLogCountOrderByAggregateInput = {
   sendAttemptCount?: Prisma.SortOrder
   lastSendAttemptAt?: Prisma.SortOrder
   nextRetryAt?: Prisma.SortOrder
+  communicationGroupId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -752,6 +772,7 @@ export type CommunicationLogMaxOrderByAggregateInput = {
   sendAttemptCount?: Prisma.SortOrder
   lastSendAttemptAt?: Prisma.SortOrder
   nextRetryAt?: Prisma.SortOrder
+  communicationGroupId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -779,6 +800,7 @@ export type CommunicationLogMinOrderByAggregateInput = {
   sendAttemptCount?: Prisma.SortOrder
   lastSendAttemptAt?: Prisma.SortOrder
   nextRetryAt?: Prisma.SortOrder
+  communicationGroupId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1027,6 +1049,7 @@ export type CommunicationLogCreateWithoutClientInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   dubbingProject?: Prisma.DubbingProjectCreateNestedOneWithoutCommunicationLogsInput
@@ -1057,6 +1080,7 @@ export type CommunicationLogUncheckedCreateWithoutClientInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1113,6 +1137,7 @@ export type CommunicationLogScalarWhereInput = {
   sendAttemptCount?: Prisma.IntFilter<"CommunicationLog"> | number
   lastSendAttemptAt?: Prisma.DateTimeNullableFilter<"CommunicationLog"> | Date | string | null
   nextRetryAt?: Prisma.DateTimeNullableFilter<"CommunicationLog"> | Date | string | null
+  communicationGroupId?: Prisma.StringNullableFilter<"CommunicationLog"> | string | null
   createdAt?: Prisma.DateTimeFilter<"CommunicationLog"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CommunicationLog"> | Date | string
 }
@@ -1135,6 +1160,7 @@ export type CommunicationLogCreateWithoutDubbingProjectInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   episode?: Prisma.EpisodeCreateNestedOneWithoutCommunicationLogsInput
@@ -1165,6 +1191,7 @@ export type CommunicationLogUncheckedCreateWithoutDubbingProjectInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1213,6 +1240,7 @@ export type CommunicationLogCreateWithoutEpisodeInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   dubbingProject?: Prisma.DubbingProjectCreateNestedOneWithoutCommunicationLogsInput
@@ -1243,6 +1271,7 @@ export type CommunicationLogUncheckedCreateWithoutEpisodeInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1291,6 +1320,7 @@ export type CommunicationLogCreateWithoutCastMemberInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   dubbingProject?: Prisma.DubbingProjectCreateNestedOneWithoutCommunicationLogsInput
@@ -1321,6 +1351,7 @@ export type CommunicationLogUncheckedCreateWithoutCastMemberInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1369,6 +1400,7 @@ export type CommunicationLogCreateWithoutSessionInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   dubbingProject?: Prisma.DubbingProjectCreateNestedOneWithoutCommunicationLogsInput
@@ -1399,6 +1431,7 @@ export type CommunicationLogUncheckedCreateWithoutSessionInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1451,6 +1484,7 @@ export type CommunicationLogCreateManyClientInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1473,6 +1507,7 @@ export type CommunicationLogUpdateWithoutClientInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dubbingProject?: Prisma.DubbingProjectUpdateOneWithoutCommunicationLogsNestedInput
@@ -1503,6 +1538,7 @@ export type CommunicationLogUncheckedUpdateWithoutClientInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1529,6 +1565,7 @@ export type CommunicationLogUncheckedUpdateManyWithoutClientInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1555,6 +1592,7 @@ export type CommunicationLogCreateManyDubbingProjectInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1577,6 +1615,7 @@ export type CommunicationLogUpdateWithoutDubbingProjectInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   episode?: Prisma.EpisodeUpdateOneWithoutCommunicationLogsNestedInput
@@ -1607,6 +1646,7 @@ export type CommunicationLogUncheckedUpdateWithoutDubbingProjectInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1633,6 +1673,7 @@ export type CommunicationLogUncheckedUpdateManyWithoutDubbingProjectInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1659,6 +1700,7 @@ export type CommunicationLogCreateManyEpisodeInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1681,6 +1723,7 @@ export type CommunicationLogUpdateWithoutEpisodeInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dubbingProject?: Prisma.DubbingProjectUpdateOneWithoutCommunicationLogsNestedInput
@@ -1711,6 +1754,7 @@ export type CommunicationLogUncheckedUpdateWithoutEpisodeInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1737,6 +1781,7 @@ export type CommunicationLogUncheckedUpdateManyWithoutEpisodeInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1763,6 +1808,7 @@ export type CommunicationLogCreateManyCastMemberInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1785,6 +1831,7 @@ export type CommunicationLogUpdateWithoutCastMemberInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dubbingProject?: Prisma.DubbingProjectUpdateOneWithoutCommunicationLogsNestedInput
@@ -1815,6 +1862,7 @@ export type CommunicationLogUncheckedUpdateWithoutCastMemberInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1841,6 +1889,7 @@ export type CommunicationLogUncheckedUpdateManyWithoutCastMemberInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1867,6 +1916,7 @@ export type CommunicationLogCreateManySessionInput = {
   sendAttemptCount?: number
   lastSendAttemptAt?: Date | string | null
   nextRetryAt?: Date | string | null
+  communicationGroupId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -1889,6 +1939,7 @@ export type CommunicationLogUpdateWithoutSessionInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   dubbingProject?: Prisma.DubbingProjectUpdateOneWithoutCommunicationLogsNestedInput
@@ -1919,6 +1970,7 @@ export type CommunicationLogUncheckedUpdateWithoutSessionInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1945,6 +1997,7 @@ export type CommunicationLogUncheckedUpdateManyWithoutSessionInput = {
   sendAttemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastSendAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  communicationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1974,6 +2027,7 @@ export type CommunicationLogSelect<ExtArgs extends runtime.Types.Extensions.Inte
   sendAttemptCount?: boolean
   lastSendAttemptAt?: boolean
   nextRetryAt?: boolean
+  communicationGroupId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   dubbingProject?: boolean | Prisma.CommunicationLog$dubbingProjectArgs<ExtArgs>
@@ -2006,6 +2060,7 @@ export type CommunicationLogSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   sendAttemptCount?: boolean
   lastSendAttemptAt?: boolean
   nextRetryAt?: boolean
+  communicationGroupId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   dubbingProject?: boolean | Prisma.CommunicationLog$dubbingProjectArgs<ExtArgs>
@@ -2038,6 +2093,7 @@ export type CommunicationLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   sendAttemptCount?: boolean
   lastSendAttemptAt?: boolean
   nextRetryAt?: boolean
+  communicationGroupId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   dubbingProject?: boolean | Prisma.CommunicationLog$dubbingProjectArgs<ExtArgs>
@@ -2070,11 +2126,12 @@ export type CommunicationLogSelectScalar = {
   sendAttemptCount?: boolean
   lastSendAttemptAt?: boolean
   nextRetryAt?: boolean
+  communicationGroupId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type CommunicationLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "channel" | "direction" | "status" | "subject" | "body" | "templateKey" | "recipientName" | "recipientEmail" | "recipientWhatsapp" | "dubbingProjectId" | "episodeId" | "castMemberId" | "clientId" | "sessionId" | "sentAt" | "error" | "providerMessageId" | "sendLockedAt" | "sendAttemptCount" | "lastSendAttemptAt" | "nextRetryAt" | "createdAt" | "updatedAt", ExtArgs["result"]["communicationLog"]>
+export type CommunicationLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "channel" | "direction" | "status" | "subject" | "body" | "templateKey" | "recipientName" | "recipientEmail" | "recipientWhatsapp" | "dubbingProjectId" | "episodeId" | "castMemberId" | "clientId" | "sessionId" | "sentAt" | "error" | "providerMessageId" | "sendLockedAt" | "sendAttemptCount" | "lastSendAttemptAt" | "nextRetryAt" | "communicationGroupId" | "createdAt" | "updatedAt", ExtArgs["result"]["communicationLog"]>
 export type CommunicationLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   dubbingProject?: boolean | Prisma.CommunicationLog$dubbingProjectArgs<ExtArgs>
   episode?: boolean | Prisma.CommunicationLog$episodeArgs<ExtArgs>
@@ -2138,6 +2195,10 @@ export type $CommunicationLogPayload<ExtArgs extends runtime.Types.Extensions.In
      * Próxima janela de tentativa (retry simples, sem scheduler complexo).
      */
     nextRetryAt: Date | null
+    /**
+     * Agrupa vários registos (ex.: e-mail + WhatsApp) como uma única comunicação lógica na UI/API.
+     */
+    communicationGroupId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["communicationLog"]>
@@ -2590,6 +2651,7 @@ export interface CommunicationLogFieldRefs {
   readonly sendAttemptCount: Prisma.FieldRef<"CommunicationLog", 'Int'>
   readonly lastSendAttemptAt: Prisma.FieldRef<"CommunicationLog", 'DateTime'>
   readonly nextRetryAt: Prisma.FieldRef<"CommunicationLog", 'DateTime'>
+  readonly communicationGroupId: Prisma.FieldRef<"CommunicationLog", 'String'>
   readonly createdAt: Prisma.FieldRef<"CommunicationLog", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"CommunicationLog", 'DateTime'>
 }

@@ -29,6 +29,7 @@ export type ClientMinAggregateOutputType = {
   name: string | null
   email: string | null
   phone: string | null
+  paymentMethod: $Enums.ClientPaymentMethod | null
   country: string | null
   notes: string | null
   status: $Enums.ClientStatus | null
@@ -41,6 +42,7 @@ export type ClientMaxAggregateOutputType = {
   name: string | null
   email: string | null
   phone: string | null
+  paymentMethod: $Enums.ClientPaymentMethod | null
   country: string | null
   notes: string | null
   status: $Enums.ClientStatus | null
@@ -53,6 +55,7 @@ export type ClientCountAggregateOutputType = {
   name: number
   email: number
   phone: number
+  paymentMethod: number
   country: number
   notes: number
   status: number
@@ -67,6 +70,7 @@ export type ClientMinAggregateInputType = {
   name?: true
   email?: true
   phone?: true
+  paymentMethod?: true
   country?: true
   notes?: true
   status?: true
@@ -79,6 +83,7 @@ export type ClientMaxAggregateInputType = {
   name?: true
   email?: true
   phone?: true
+  paymentMethod?: true
   country?: true
   notes?: true
   status?: true
@@ -91,6 +96,7 @@ export type ClientCountAggregateInputType = {
   name?: true
   email?: true
   phone?: true
+  paymentMethod?: true
   country?: true
   notes?: true
   status?: true
@@ -176,6 +182,7 @@ export type ClientGroupByOutputType = {
   name: string
   email: string | null
   phone: string | null
+  paymentMethod: $Enums.ClientPaymentMethod | null
   country: string | null
   notes: string | null
   status: $Enums.ClientStatus
@@ -209,6 +216,7 @@ export type ClientWhereInput = {
   name?: Prisma.StringFilter<"Client"> | string
   email?: Prisma.StringNullableFilter<"Client"> | string | null
   phone?: Prisma.StringNullableFilter<"Client"> | string | null
+  paymentMethod?: Prisma.EnumClientPaymentMethodNullableFilter<"Client"> | $Enums.ClientPaymentMethod | null
   country?: Prisma.StringNullableFilter<"Client"> | string | null
   notes?: Prisma.StringNullableFilter<"Client"> | string | null
   status?: Prisma.EnumClientStatusFilter<"Client"> | $Enums.ClientStatus
@@ -223,6 +231,7 @@ export type ClientOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   country?: Prisma.SortOrderInput | Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -240,6 +249,7 @@ export type ClientWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ClientWhereInput[]
   NOT?: Prisma.ClientWhereInput | Prisma.ClientWhereInput[]
   name?: Prisma.StringFilter<"Client"> | string
+  paymentMethod?: Prisma.EnumClientPaymentMethodNullableFilter<"Client"> | $Enums.ClientPaymentMethod | null
   country?: Prisma.StringNullableFilter<"Client"> | string | null
   notes?: Prisma.StringNullableFilter<"Client"> | string | null
   status?: Prisma.EnumClientStatusFilter<"Client"> | $Enums.ClientStatus
@@ -254,6 +264,7 @@ export type ClientOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrderInput | Prisma.SortOrder
   country?: Prisma.SortOrderInput | Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -272,6 +283,7 @@ export type ClientScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Client"> | string
   email?: Prisma.StringNullableWithAggregatesFilter<"Client"> | string | null
   phone?: Prisma.StringNullableWithAggregatesFilter<"Client"> | string | null
+  paymentMethod?: Prisma.EnumClientPaymentMethodNullableWithAggregatesFilter<"Client"> | $Enums.ClientPaymentMethod | null
   country?: Prisma.StringNullableWithAggregatesFilter<"Client"> | string | null
   notes?: Prisma.StringNullableWithAggregatesFilter<"Client"> | string | null
   status?: Prisma.EnumClientStatusWithAggregatesFilter<"Client"> | $Enums.ClientStatus
@@ -284,6 +296,7 @@ export type ClientCreateInput = {
   name: string
   email?: string | null
   phone?: string | null
+  paymentMethod?: $Enums.ClientPaymentMethod | null
   country?: string | null
   notes?: string | null
   status?: $Enums.ClientStatus
@@ -298,6 +311,7 @@ export type ClientUncheckedCreateInput = {
   name: string
   email?: string | null
   phone?: string | null
+  paymentMethod?: $Enums.ClientPaymentMethod | null
   country?: string | null
   notes?: string | null
   status?: $Enums.ClientStatus
@@ -312,6 +326,7 @@ export type ClientUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentMethod?: Prisma.NullableEnumClientPaymentMethodFieldUpdateOperationsInput | $Enums.ClientPaymentMethod | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
@@ -326,6 +341,7 @@ export type ClientUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentMethod?: Prisma.NullableEnumClientPaymentMethodFieldUpdateOperationsInput | $Enums.ClientPaymentMethod | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
@@ -340,6 +356,7 @@ export type ClientCreateManyInput = {
   name: string
   email?: string | null
   phone?: string | null
+  paymentMethod?: $Enums.ClientPaymentMethod | null
   country?: string | null
   notes?: string | null
   status?: $Enums.ClientStatus
@@ -352,6 +369,7 @@ export type ClientUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentMethod?: Prisma.NullableEnumClientPaymentMethodFieldUpdateOperationsInput | $Enums.ClientPaymentMethod | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
@@ -364,6 +382,7 @@ export type ClientUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentMethod?: Prisma.NullableEnumClientPaymentMethodFieldUpdateOperationsInput | $Enums.ClientPaymentMethod | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
@@ -376,6 +395,7 @@ export type ClientCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phone?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrder
   country?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -388,6 +408,7 @@ export type ClientMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phone?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrder
   country?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -400,6 +421,7 @@ export type ClientMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   phone?: Prisma.SortOrder
+  paymentMethod?: Prisma.SortOrder
   country?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -410,6 +432,10 @@ export type ClientMinOrderByAggregateInput = {
 export type ClientNullableScalarRelationFilter = {
   is?: Prisma.ClientWhereInput | null
   isNot?: Prisma.ClientWhereInput | null
+}
+
+export type NullableEnumClientPaymentMethodFieldUpdateOperationsInput = {
+  set?: $Enums.ClientPaymentMethod | null
 }
 
 export type EnumClientStatusFieldUpdateOperationsInput = {
@@ -453,6 +479,7 @@ export type ClientCreateWithoutProjectsInput = {
   name: string
   email?: string | null
   phone?: string | null
+  paymentMethod?: $Enums.ClientPaymentMethod | null
   country?: string | null
   notes?: string | null
   status?: $Enums.ClientStatus
@@ -466,6 +493,7 @@ export type ClientUncheckedCreateWithoutProjectsInput = {
   name: string
   email?: string | null
   phone?: string | null
+  paymentMethod?: $Enums.ClientPaymentMethod | null
   country?: string | null
   notes?: string | null
   status?: $Enums.ClientStatus
@@ -495,6 +523,7 @@ export type ClientUpdateWithoutProjectsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentMethod?: Prisma.NullableEnumClientPaymentMethodFieldUpdateOperationsInput | $Enums.ClientPaymentMethod | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
@@ -508,6 +537,7 @@ export type ClientUncheckedUpdateWithoutProjectsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentMethod?: Prisma.NullableEnumClientPaymentMethodFieldUpdateOperationsInput | $Enums.ClientPaymentMethod | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
@@ -521,6 +551,7 @@ export type ClientCreateWithoutCommunicationLogsInput = {
   name: string
   email?: string | null
   phone?: string | null
+  paymentMethod?: $Enums.ClientPaymentMethod | null
   country?: string | null
   notes?: string | null
   status?: $Enums.ClientStatus
@@ -534,6 +565,7 @@ export type ClientUncheckedCreateWithoutCommunicationLogsInput = {
   name: string
   email?: string | null
   phone?: string | null
+  paymentMethod?: $Enums.ClientPaymentMethod | null
   country?: string | null
   notes?: string | null
   status?: $Enums.ClientStatus
@@ -563,6 +595,7 @@ export type ClientUpdateWithoutCommunicationLogsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentMethod?: Prisma.NullableEnumClientPaymentMethodFieldUpdateOperationsInput | $Enums.ClientPaymentMethod | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
@@ -576,6 +609,7 @@ export type ClientUncheckedUpdateWithoutCommunicationLogsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  paymentMethod?: Prisma.NullableEnumClientPaymentMethodFieldUpdateOperationsInput | $Enums.ClientPaymentMethod | null
   country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumClientStatusFieldUpdateOperationsInput | $Enums.ClientStatus
@@ -629,6 +663,7 @@ export type ClientSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name?: boolean
   email?: boolean
   phone?: boolean
+  paymentMethod?: boolean
   country?: boolean
   notes?: boolean
   status?: boolean
@@ -644,6 +679,7 @@ export type ClientSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   name?: boolean
   email?: boolean
   phone?: boolean
+  paymentMethod?: boolean
   country?: boolean
   notes?: boolean
   status?: boolean
@@ -656,6 +692,7 @@ export type ClientSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   name?: boolean
   email?: boolean
   phone?: boolean
+  paymentMethod?: boolean
   country?: boolean
   notes?: boolean
   status?: boolean
@@ -668,6 +705,7 @@ export type ClientSelectScalar = {
   name?: boolean
   email?: boolean
   phone?: boolean
+  paymentMethod?: boolean
   country?: boolean
   notes?: boolean
   status?: boolean
@@ -675,7 +713,7 @@ export type ClientSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ClientOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "country" | "notes" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["client"]>
+export type ClientOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "phone" | "paymentMethod" | "country" | "notes" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["client"]>
 export type ClientInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   projects?: boolean | Prisma.Client$projectsArgs<ExtArgs>
   communicationLogs?: boolean | Prisma.Client$communicationLogsArgs<ExtArgs>
@@ -695,6 +733,7 @@ export type $ClientPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     name: string
     email: string | null
     phone: string | null
+    paymentMethod: $Enums.ClientPaymentMethod | null
     country: string | null
     notes: string | null
     status: $Enums.ClientStatus
@@ -1129,6 +1168,7 @@ export interface ClientFieldRefs {
   readonly name: Prisma.FieldRef<"Client", 'String'>
   readonly email: Prisma.FieldRef<"Client", 'String'>
   readonly phone: Prisma.FieldRef<"Client", 'String'>
+  readonly paymentMethod: Prisma.FieldRef<"Client", 'ClientPaymentMethod'>
   readonly country: Prisma.FieldRef<"Client", 'String'>
   readonly notes: Prisma.FieldRef<"Client", 'String'>
   readonly status: Prisma.FieldRef<"Client", 'ClientStatus'>

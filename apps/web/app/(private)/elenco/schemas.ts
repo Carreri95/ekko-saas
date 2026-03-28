@@ -1,6 +1,29 @@
 import { z } from "zod";
+import { digitsOnly } from "@/src/lib/document-format";
 
-const preferredCommunicationChannelSchema = z.enum(["EMAIL", "WHATSAPP"]);
+const zodCpfDigits = z
+  .string()
+  .transform((s) => digitsOnly(s))
+  .refine((d) => d.length === 11, "CPF deve ter 11 dígitos");
+
+const zodCnpjDigits = z
+  .string()
+  .transform((s) => digitsOnly(s))
+  .refine((d) => d.length === 14, "CNPJ deve ter 14 dígitos");
+
+const zodCastMemberWhatsappDigits = z
+  .string()
+  .transform((s) => digitsOnly(s))
+  .refine((d) => d.length >= 10 && d.length <= 11, {
+    message: "WhatsApp é obrigatório (DDD + número, 10 ou 11 dígitos)",
+  });
+
+const zodCastMemberEmail = z
+  .string()
+  .trim()
+  .min(1, "E-mail é obrigatório")
+  .email("E-mail inválido")
+  .transform((s) => s.toLowerCase());
 
 /** Disponível / Em projeto são automáticos; só "inativo" é escolha manual. */
 export const castMemberFormSchema = z.object({
@@ -9,22 +32,21 @@ export const castMemberFormSchema = z.object({
     .min(1, "Nome completo é obrigatório")
     .max(120, "Nome muito longo"),
 
-  role: z
-    .string()
-    .min(1, "Função / cargo é obrigatório")
-    .max(80, "Função muito longa"),
+  cpf: zodCpfDigits,
+  cnpj: zodCnpjDigits,
 
-  whatsapp: z
+  razaoSocial: z
     .string()
-    .min(8, "WhatsApp é obrigatório")
-    .max(20, "WhatsApp inválido"),
+    .trim()
+    .min(1, "Razão social é obrigatória")
+    .max(160, "Razão social muito longa"),
 
-  email: z
-    .string()
-    .min(1, "E-mail é obrigatório")
-    .email("E-mail inválido"),
+  whatsapp: zodCastMemberWhatsappDigits,
+  email: zodCastMemberEmail,
 
-  preferredCommunicationChannel: preferredCommunicationChannelSchema,
+  /** Política fixa para dublador: ambos ativos (UI travada). */
+  prefersEmail: z.literal(true),
+  prefersWhatsapp: z.literal(true),
 
   specialties: z
     .array(z.string().min(1))
@@ -36,5 +58,5 @@ export const castMemberFormSchema = z.object({
   notes: z.string(),
 });
 
-export type CastMemberFormInput = z.infer<typeof castMemberFormSchema>;
-export type CastMemberFormData = z.infer<typeof castMemberFormSchema>;
+export type CastMemberFormInput = z.input<typeof castMemberFormSchema>;
+export type CastMemberFormData = z.output<typeof castMemberFormSchema>;

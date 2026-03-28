@@ -403,6 +403,7 @@ export const ModelName = {
   ProjectCharacterAssignment: 'ProjectCharacterAssignment',
   RecordingSession: 'RecordingSession',
   CommunicationLog: 'CommunicationLog',
+  Collaborator: 'Collaborator',
   RecordingSessionEpisode: 'RecordingSessionEpisode',
   MediaAsset: 'MediaAsset'
 } as const
@@ -420,7 +421,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "invite" | "inviteEmailDispatch" | "session" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "episode" | "castMember" | "castMemberAvailability" | "projectCharacter" | "projectCharacterAssignment" | "recordingSession" | "communicationLog" | "recordingSessionEpisode" | "mediaAsset"
+    modelProps: "user" | "invite" | "inviteEmailDispatch" | "session" | "project" | "subtitleFile" | "subtitleCue" | "batchJob" | "transcriptionJob" | "subtitleVersion" | "client" | "dubbingProject" | "episode" | "castMember" | "castMemberAvailability" | "projectCharacter" | "projectCharacterAssignment" | "recordingSession" | "communicationLog" | "collaborator" | "recordingSessionEpisode" | "mediaAsset"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1830,6 +1831,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Collaborator: {
+      payload: Prisma.$CollaboratorPayload<ExtArgs>
+      fields: Prisma.CollaboratorFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CollaboratorFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollaboratorPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CollaboratorFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollaboratorPayload>
+        }
+        findFirst: {
+          args: Prisma.CollaboratorFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollaboratorPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CollaboratorFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollaboratorPayload>
+        }
+        findMany: {
+          args: Prisma.CollaboratorFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollaboratorPayload>[]
+        }
+        create: {
+          args: Prisma.CollaboratorCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollaboratorPayload>
+        }
+        createMany: {
+          args: Prisma.CollaboratorCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CollaboratorCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollaboratorPayload>[]
+        }
+        delete: {
+          args: Prisma.CollaboratorDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollaboratorPayload>
+        }
+        update: {
+          args: Prisma.CollaboratorUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollaboratorPayload>
+        }
+        deleteMany: {
+          args: Prisma.CollaboratorDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CollaboratorUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CollaboratorUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollaboratorPayload>[]
+        }
+        upsert: {
+          args: Prisma.CollaboratorUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CollaboratorPayload>
+        }
+        aggregate: {
+          args: Prisma.CollaboratorAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCollaborator>
+        }
+        groupBy: {
+          args: Prisma.CollaboratorGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CollaboratorGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CollaboratorCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CollaboratorCountAggregateOutputType> | number
+        }
+      }
+    }
     RecordingSessionEpisode: {
       payload: Prisma.$RecordingSessionEpisodePayload<ExtArgs>
       fields: Prisma.RecordingSessionEpisodeFieldRefs
@@ -2177,6 +2252,7 @@ export const ClientScalarFieldEnum = {
   name: 'name',
   email: 'email',
   phone: 'phone',
+  paymentMethod: 'paymentMethod',
   country: 'country',
   notes: 'notes',
   status: 'status',
@@ -2231,9 +2307,13 @@ export const CastMemberScalarFieldEnum = {
   id: 'id',
   name: 'name',
   role: 'role',
+  cpf: 'cpf',
+  cnpj: 'cnpj',
+  razaoSocial: 'razaoSocial',
   whatsapp: 'whatsapp',
   email: 'email',
-  preferredCommunicationChannel: 'preferredCommunicationChannel',
+  prefersEmail: 'prefersEmail',
+  prefersWhatsapp: 'prefersWhatsapp',
   specialties: 'specialties',
   status: 'status',
   notes: 'notes',
@@ -2297,6 +2377,7 @@ export const RecordingSessionScalarFieldEnum = {
   episodeId: 'episodeId',
   characterId: 'characterId',
   castMemberId: 'castMemberId',
+  recordingTechnicianId: 'recordingTechnicianId',
   title: 'title',
   startAt: 'startAt',
   endAt: 'endAt',
@@ -2333,11 +2414,30 @@ export const CommunicationLogScalarFieldEnum = {
   sendAttemptCount: 'sendAttemptCount',
   lastSendAttemptAt: 'lastSendAttemptAt',
   nextRetryAt: 'nextRetryAt',
+  communicationGroupId: 'communicationGroupId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type CommunicationLogScalarFieldEnum = (typeof CommunicationLogScalarFieldEnum)[keyof typeof CommunicationLogScalarFieldEnum]
+
+
+export const CollaboratorScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  cpf: 'cpf',
+  cnpj: 'cnpj',
+  razaoSocial: 'razaoSocial',
+  role: 'role',
+  email: 'email',
+  whatsapp: 'whatsapp',
+  prefersEmail: 'prefersEmail',
+  prefersWhatsapp: 'prefersWhatsapp',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CollaboratorScalarFieldEnum = (typeof CollaboratorScalarFieldEnum)[keyof typeof CollaboratorScalarFieldEnum]
 
 
 export const RecordingSessionEpisodeScalarFieldEnum = {
@@ -2593,6 +2693,20 @@ export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
 
 
 /**
+ * Reference to a field of type 'ClientPaymentMethod'
+ */
+export type EnumClientPaymentMethodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ClientPaymentMethod'>
+    
+
+
+/**
+ * Reference to a field of type 'ClientPaymentMethod[]'
+ */
+export type ListEnumClientPaymentMethodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ClientPaymentMethod[]'>
+    
+
+
+/**
  * Reference to a field of type 'ClientStatus'
  */
 export type EnumClientStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ClientStatus'>
@@ -2673,20 +2787,6 @@ export type EnumEpisodeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'EpisodeStatus[]'
  */
 export type ListEnumEpisodeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EpisodeStatus[]'>
-    
-
-
-/**
- * Reference to a field of type 'PreferredCommunicationChannel'
- */
-export type EnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PreferredCommunicationChannel'>
-    
-
-
-/**
- * Reference to a field of type 'PreferredCommunicationChannel[]'
- */
-export type ListEnumPreferredCommunicationChannelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PreferredCommunicationChannel[]'>
     
 
 
@@ -2827,6 +2927,20 @@ export type EnumCommunicationStatusFieldRefInput<$PrismaModel> = FieldRefInputTy
  * Reference to a field of type 'CommunicationStatus[]'
  */
 export type ListEnumCommunicationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunicationStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'CollaboratorRole'
+ */
+export type EnumCollaboratorRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CollaboratorRole'>
+    
+
+
+/**
+ * Reference to a field of type 'CollaboratorRole[]'
+ */
+export type ListEnumCollaboratorRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CollaboratorRole[]'>
     
 
 
@@ -3013,6 +3127,7 @@ export type GlobalOmitConfig = {
   projectCharacterAssignment?: Prisma.ProjectCharacterAssignmentOmit
   recordingSession?: Prisma.RecordingSessionOmit
   communicationLog?: Prisma.CommunicationLogOmit
+  collaborator?: Prisma.CollaboratorOmit
   recordingSessionEpisode?: Prisma.RecordingSessionEpisodeOmit
   mediaAsset?: Prisma.MediaAssetOmit
 }

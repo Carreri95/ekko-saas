@@ -383,9 +383,13 @@ Campos base:
 
 id
 nome
+cpf (apenas dígitos na BD)
+cnpj (apenas dígitos na BD)
+razaoSocial
 email
 whatsapp
-preferredCommunicationChannel (EMAIL | WHATSAPP)
+prefersEmail (boolean) — canal e-mail ativo para comunicação automática e pré-preenchimento
+prefersWhatsapp (boolean) — canal WhatsApp ativo
 status
 bio curta
 cidade
@@ -453,17 +457,16 @@ Hoje o personagem guarda castMemberId direto. Isso é útil como estado temporá
 
 4.13 RecordingSession
 
-Sessão real de gravação.
-
-Essa entidade ainda não existe e é a próxima grande lacuna operacional.
+Sessão real de gravação (implementada no código actual; este bloco descreve o modelo já persistido).
 
 Campos base:
 
 id
 dubbingProjectId
-episodeId opcional
+episodeId opcional (legado; preferir ligação N:N a episódios quando usada)
 blockId opcional
 castMemberId
+recordingTechnicianId — técnico de gravação (`Collaborator` com papel adequado); **opcional** (PR seguinte à 29E)
 título
 início
 fim
@@ -515,7 +518,7 @@ No PR 25, o mesmo pipeline passou a suportar dois canais de envio real:
 
 Sem arquitectura paralela: `CommunicationLog` continua fonte de verdade/outbox, API só faz enqueue e worker faz dispatch por canal. Ainda fora de escopo: inbound/webhook, confirmação de leitura/entrega, mídia/anexos, chat/inbox e automações novas por evento.
 
-Envio automático opcional (PR 22 + 23): no formulário de sessão na agenda, checkbox explícito ao guardar — cria o `CommunicationLog` (`POST`) e chama `send` (fila); não bloqueia a gravação da sessão à espera do Resend.
+Envio automático ao guardar sessão (PR 22 + 23): estava previsto como checkbox explícito no formulário da agenda; **no código actual o fluxo real é** «Registrar comunicação» / aba Comunicação (pré-preenchimento a partir da sessão). O helper `runSessionSaveEmailAutomation` existiu sem ligação ao `onSaveSession` e foi **removido no PR 29E** como código morto; não bloqueia evoluções futuras de um checkbox ligado à API.
 
 No PR 26, o prefill de comunicação passou a usar templates básicos por tipo (`SESSION_CREATED`, `SESSION_UPDATED`, `SESSION_REMINDER`, `SESSION_CANCELED`) com `templateKey` coerente (`session_created`, `session_updated`, etc.). Não há engine avançada: subject/body continuam editáveis pelo utilizador antes de guardar/enviar.
 
@@ -523,7 +526,15 @@ No PR 27, a aba Comunicação ganhou seleção explícita de template básico no
 
 No PR 28, houve polimento final de UX na aba Comunicação (frontend): copy mais direta, envio em lote (`Enviar todos` para OUTBOUND `PENDING`/`FAILED`), chips visuais consistentes para status/canal/direção e simplificação do formulário (sem edição manual de estado/erro). Não houve alteração no backend, worker ou fluxo de outbox/envio.
 
-No PR 29, `CastMember` ganhou preferência simples de canal (`EMAIL` ou `WHATSAPP`). O prefill e os fluxos de comunicação a partir da sessão passam a respeitar essa preferência e aplicam fallback mínimo: se o contacto preferido não existir, tenta o outro canal; se nenhum existir, mantém o comportamento normal de validação/campos vazios.
+No PR 29, `CastMember` passou a usar dois booleanos (`prefersEmail`, `prefersWhatsapp`) em vez de um único enum de canal. **PR 29E** alinhou validação: é obrigatório ter **pelo menos um** canal ativo; se `prefersEmail` é verdadeiro, o e-mail é obrigatório e válido; se `prefersWhatsapp` é verdadeiro, o WhatsApp é obrigatório (mínimo de dígitos). Ambos os canais podem estar ativos em simultâneo — o prefill e o worker de lembretes enviam para **todos** os canais activos para os quais exista contacto (com fallback mínimo para um canal quando nenhum está explícito na preferência legada).
+
+**Colaborador** (`Collaborator`) segue a mesma regra de canais activos e contactos obrigatórios (paridade com dublador), incluindo `prefersEmail` / `prefersWhatsapp` no schema.
+
+**Validação obrigatória (produto, PR 29E):** dublador — nome, CPF (11 dígitos), CNPJ (14 dígitos), razão social, pelo menos um canal activo com contacto correspondente, especialidades; colaborador — nome, função (`role`), CPF, CNPJ, razão social, canais e contactos; cliente — nome e `paymentMethod`; sessão de gravação — título, `startAt`, `endAt`, `castMemberId`; `recordingTechnicianId` opcional. **Agenda (PR sessão):** início e fim no **mesmo dia**; `endAt` > `startAt`; duração máxima **5 horas**; UI limita o fim ao mesmo dia e ao intervalo válido. Frontend (Zod) e API (Zod + serviço) alinhados; a API é fonte de verdade.
+
+**CPF/CNPJ:** máscara na UI; persistência só com dígitos completos; valores parciais ou só com máscara são rejeitados pelo Zod.
+
+**Worker (lembretes de sessão):** deduplicação de criação de `CommunicationLog` por `sessionId` + `templateKey` + `channel`, para permitir lembrete em e-mail e WhatsApp sem um canal bloquear o outro.
 
 Campos ver schema Prisma (inclui `templateKey` opcional, campos de outbox mínimos no próprio `CommunicationLog`).
 

@@ -26,6 +26,21 @@ export class CommunicationLogsRepository {
     return prisma.recordingSession.findFirst({ where: { id: sessionId, projectId }, select: { id: true } });
   }
 
+  findSessionInProjectWithCast(projectId: string, sessionId: string) {
+    return prisma.recordingSession.findFirst({
+      where: { id: sessionId, projectId },
+      select: {
+        id: true,
+        title: true,
+        castMemberId: true,
+        episodeId: true,
+        castMember: {
+          select: { id: true, name: true, email: true, whatsapp: true },
+        },
+      },
+    });
+  }
+
   findCastMemberById(castMemberId: string) {
     return prisma.castMember.findUnique({ where: { id: castMemberId }, select: { id: true } });
   }
@@ -42,6 +57,27 @@ export class CommunicationLogsRepository {
     });
   }
 
+  findByCommunicationGroupId(projectId: string, communicationGroupId: string) {
+    return prisma.communicationLog.findMany({
+      where: { dubbingProjectId: projectId, communicationGroupId },
+      include: communicationLogInclude,
+      orderBy: [{ channel: "asc" }],
+    });
+  }
+
+  findManyByIds(projectId: string, ids: string[]) {
+    if (ids.length === 0) return Promise.resolve([] as CommunicationLogFull[]);
+    return prisma.communicationLog.findMany({
+      where: { dubbingProjectId: projectId, id: { in: ids } },
+      include: communicationLogInclude,
+    });
+  }
+
+  deleteMany(logIds: string[]) {
+    if (logIds.length === 0) return Promise.resolve(0);
+    return prisma.communicationLog.deleteMany({ where: { id: { in: logIds } } }).then((r) => r.count);
+  }
+
   findInProject(projectId: string, logId: string) {
     return prisma.communicationLog.findFirst({
       where: { id: logId, dubbingProjectId: projectId },
@@ -53,6 +89,23 @@ export class CommunicationLogsRepository {
     return prisma.communicationLog.create({
       data,
       include: communicationLogInclude,
+    });
+  }
+
+  createMany(dataList: Prisma.CommunicationLogUncheckedCreateInput[]) {
+    if (dataList.length === 0) {
+      return Promise.resolve([] as CommunicationLogFull[]);
+    }
+    return prisma.$transaction(async (tx) => {
+      const out: CommunicationLogFull[] = [];
+      for (const data of dataList) {
+        const row = await tx.communicationLog.create({
+          data,
+          include: communicationLogInclude,
+        });
+        out.push(row);
+      }
+      return out;
     });
   }
 

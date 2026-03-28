@@ -36,6 +36,7 @@ export function serializeRecordingSession(row: RecordingSessionFull) {
     episodes,
     characterId: row.characterId,
     castMemberId: row.castMemberId,
+    recordingTechnicianId: row.recordingTechnicianId,
     title: row.title,
     startAt: row.startAt.toISOString(),
     endAt: row.endAt.toISOString(),
@@ -49,6 +50,13 @@ export function serializeRecordingSession(row: RecordingSessionFull) {
           id: row.castMember.id,
           name: row.castMember.name,
           role: row.castMember.role,
+        }
+      : null,
+    recordingTechnician: row.recordingTechnician
+      ? {
+          id: row.recordingTechnician.id,
+          name: row.recordingTechnician.name,
+          role: row.recordingTechnician.role,
         }
       : null,
     episode:

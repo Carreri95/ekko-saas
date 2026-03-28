@@ -1,7 +1,14 @@
+import { randomUUID } from "node:crypto";
 import type { Prisma } from "../../generated/prisma/client.js";
 import { env } from "../../infrastructure/config/env.js";
+import {
+  buildCommunicationGroupBuckets,
+  parseInferredPairGroupId,
+  serializeCommunicationGroupListItem,
+} from "./grouping.js";
 import { serializeCommunicationLog } from "./mapper.js";
 import type { CommunicationLogCreateData, CommunicationLogPatchData } from "./schemas.js";
+import type { CommunicationLogFull } from "./repository.js";
 import { CommunicationLogsRepository } from "./repository.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,7 +30,29 @@ export class CommunicationLogsService {
     const project = await this.repo.findProjectById(projectId);
     if (!project) return { notFound: true as const };
     const rows = await this.repo.listByProject(projectId);
-    return { logs: rows.map(serializeCommunicationLog) };
+    const buckets = buildCommunicationGroupBuckets(rows);
+    const communicationGroups = buckets.map((b) =>
+      serializeCommunicationGroupListItem(b.groupId, b.rows),
+    );
+    return { communicationGroups };
+  }
+
+  private sortGroupMembers(members: CommunicationLogFull[]): CommunicationLogFull[] {
+    const order = (ch: string) => (ch === "WHATSAPP" ? 0 : ch === "EMAIL" ? 1 : 2);
+    return [...members].sort((a, b) => order(a.channel) - order(b.channel));
+  }
+
+  private async resolveGroupMembers(projectId: string, groupId: string): Promise<CommunicationLogFull[]> {
+    const pair = parseInferredPairGroupId(groupId);
+    if (pair) {
+      const rows = await this.repo.findManyByIds(projectId, pair);
+      if (rows.length !== 2) return [];
+      return this.sortGroupMembers(rows);
+    }
+    const byGid = await this.repo.findByCommunicationGroupId(projectId, groupId);
+    if (byGid.length > 0) return this.sortGroupMembers(byGid);
+    const one = await this.repo.findInProject(projectId, groupId);
+    return one ? [one] : [];
   }
 
   private async validateOptionalLinks(
@@ -54,7 +83,121 @@ export class CommunicationLogsService {
     return { ok: true };
   }
 
+  private async createSessionDualOutbound(projectId: string, input: CommunicationLogCreateData) {
+    const project = await this.repo.findProjectById(projectId);
+    if (!project) return { notFound: true as const };
+
+    if (input.status !== "PENDING") {
+      return {
+        badRequest: {
+          error: "O registo a partir da sessão só pode ser criado como pendente (PENDING).",
+        } as const,
+      };
+    }
+
+    const sessionId = input.sessionId as string;
+    const session = await this.repo.findSessionInProjectWithCast(projectId, sessionId);
+    if (!session) {
+      return { badRequest: { error: "Sessão não encontrada neste projeto." } as const };
+    }
+
+    const cast = session.castMember;
+    if (!cast) {
+      return { badRequest: { error: "Sessão sem dublador associado." } as const };
+    }
+
+    if (input.castMemberId && input.castMemberId !== session.castMemberId) {
+      return {
+        badRequest: { error: "O dublador indicado não corresponde à sessão." } as const,
+      };
+    }
+
+    const links = await this.validateOptionalLinks(projectId, {
+      episodeId: session.episodeId ?? undefined,
+      sessionId: session.id,
+      castMemberId: session.castMemberId,
+      clientId: input.clientId ?? null,
+    });
+    if ("badRequest" in links) return links;
+
+    const recipientName = normalizeOptionalString(cast.name) ?? cast.name;
+
+    let recipientEmail: string | null = null;
+    const rawEmail = cast.email?.trim().toLowerCase() ?? "";
+    if (rawEmail && EMAIL_RE.test(rawEmail)) {
+      recipientEmail = rawEmail;
+    }
+
+    let recipientWhatsapp: string | null = null;
+    const whatsappRaw = cast.whatsapp?.trim() ?? "";
+    if (whatsappRaw) {
+      const normalized = whatsappRaw.replace(/[^\d+]/g, "");
+      if (WHATSAPP_RE.test(normalized)) {
+        recipientWhatsapp = normalized;
+      }
+    }
+
+    if (!recipientEmail && !recipientWhatsapp) {
+      return {
+        badRequest: {
+          error:
+            "O dublador desta sessão não tem e-mail nem WhatsApp válidos cadastrados para criar envio.",
+        } as const,
+      };
+    }
+
+    const templateKey =
+      normalizeOptionalString(input.templateKey) ?? "session_agenda_dual";
+
+    const communicationGroupId = randomUUID();
+
+    const base: Omit<
+      Prisma.CommunicationLogUncheckedCreateInput,
+      "channel" | "recipientEmail" | "recipientWhatsapp"
+    > = {
+      dubbingProjectId: projectId,
+      direction: "OUTBOUND",
+      status: "PENDING",
+      body: input.body,
+      subject: normalizeOptionalString(input.subject) ?? null,
+      templateKey,
+      recipientName,
+      episodeId: session.episodeId ?? null,
+      castMemberId: session.castMemberId,
+      clientId: input.clientId ?? null,
+      sessionId: session.id,
+      sentAt: null,
+      error: null,
+      communicationGroupId,
+    };
+
+    const rows: Prisma.CommunicationLogUncheckedCreateInput[] = [];
+    if (recipientEmail) {
+      rows.push({
+        ...base,
+        channel: "EMAIL",
+        recipientEmail,
+        recipientWhatsapp: null,
+      });
+    }
+    if (recipientWhatsapp) {
+      rows.push({
+        ...base,
+        channel: "WHATSAPP",
+        recipientEmail: null,
+        recipientWhatsapp,
+      });
+    }
+
+    const created = await this.repo.createMany(rows);
+    return { logs: created.map(serializeCommunicationLog) };
+  }
+
   async create(projectId: string, input: CommunicationLogCreateData) {
+    if (input.sessionDualOutbound === true) {
+      return this.createSessionDualOutbound(projectId, input);
+    }
+
     const project = await this.repo.findProjectById(projectId);
     if (!project) return { notFound: true as const };
 
@@ -102,6 +245,7 @@ export class CommunicationLogsService {
       sessionId: input.sessionId ?? null,
       sentAt: sentAt ?? null,
       error: normalizeOptionalString(input.error) ?? null,
+      communicationGroupId: null,
     };
 
     const created = await this.repo.create(data);
@@ -288,6 +432,125 @@ export class CommunicationLogsService {
       queued: true as const,
       accepted: true as const,
       log: serializeCommunicationLog(updated),
+    };
+  }
+
+  async patchGroup(projectId: string, groupId: string, input: CommunicationLogPatchData) {
+    const members = await this.resolveGroupMembers(projectId, groupId);
+    if (members.length === 0) return { notFound: true as const };
+
+    if (input.status === "PROCESSING") {
+      return {
+        badRequest: {
+          error: "O estado PROCESSING só é definido pelo pedido de envio (POST .../send).",
+        } as const,
+      };
+    }
+
+    const head = members[0]!;
+    const nextEpisodeId = input.episodeId !== undefined ? input.episodeId : head.episodeId;
+    const nextSessionId = input.sessionId !== undefined ? input.sessionId : head.sessionId;
+    const nextCastMemberId =
+      input.castMemberId !== undefined ? input.castMemberId : head.castMemberId;
+    const nextClientId = input.clientId !== undefined ? input.clientId : head.clientId;
+
+    const links = await this.validateOptionalLinks(projectId, {
+      episodeId: nextEpisodeId,
+      sessionId: nextSessionId,
+      castMemberId: nextCastMemberId,
+      clientId: nextClientId,
+    });
+    if ("badRequest" in links) return links;
+
+    const multi = members.length > 1;
+
+    for (const m of members) {
+      const data: Prisma.CommunicationLogUncheckedUpdateInput = {};
+
+      if (input.body !== undefined) data.body = input.body;
+      if (input.subject !== undefined) data.subject = normalizeOptionalString(input.subject) ?? null;
+      if (input.templateKey !== undefined)
+        data.templateKey = normalizeOptionalString(input.templateKey) ?? null;
+      if (input.direction !== undefined) data.direction = input.direction;
+      if (input.status !== undefined) data.status = input.status;
+      if (input.recipientName !== undefined)
+        data.recipientName = normalizeOptionalString(input.recipientName) ?? null;
+      if (input.recipientEmail !== undefined && m.channel === "EMAIL") {
+        data.recipientEmail = normalizeOptionalString(input.recipientEmail) ?? null;
+      }
+      if (input.recipientWhatsapp !== undefined && m.channel === "WHATSAPP") {
+        data.recipientWhatsapp = normalizeOptionalString(input.recipientWhatsapp) ?? null;
+      }
+      if (input.episodeId !== undefined) data.episodeId = input.episodeId;
+      if (input.castMemberId !== undefined) data.castMemberId = input.castMemberId;
+      if (input.clientId !== undefined) data.clientId = input.clientId;
+      if (input.sessionId !== undefined) data.sessionId = input.sessionId;
+
+      if (input.sentAt !== undefined) {
+        if (input.sentAt === null) {
+          data.sentAt = null;
+        } else {
+          const d = new Date(input.sentAt);
+          if (Number.isNaN(d.getTime())) {
+            return { badRequest: { error: "sentAt inválido" } as const };
+          }
+          data.sentAt = d;
+        }
+      }
+
+      if (input.error !== undefined) data.error = normalizeOptionalString(input.error) ?? null;
+      if (input.channel !== undefined && !multi) data.channel = input.channel;
+
+      if (Object.keys(data).length > 0) {
+        await this.repo.update(m.id, data);
+      }
+    }
+
+    const refreshed = await this.resolveGroupMembers(projectId, groupId);
+    return {
+      communicationGroup: serializeCommunicationGroupListItem(groupId, refreshed),
+    };
+  }
+
+  async removeGroup(projectId: string, groupId: string) {
+    const members = await this.resolveGroupMembers(projectId, groupId);
+    if (members.length === 0) return { notFound: true as const };
+    await this.repo.deleteMany(members.map((m) => m.id));
+    return { ok: true as const };
+  }
+
+  async enqueueSendGroup(projectId: string, groupId: string) {
+    const members = await this.resolveGroupMembers(projectId, groupId);
+    if (members.length === 0) return { notFound: true as const };
+
+    const results: {
+      logId: string;
+      channel: string;
+      accepted?: boolean;
+      error?: string;
+    }[] = [];
+
+    for (const m of members) {
+      const r = await this.enqueueSend(projectId, m.id);
+      if ("queued" in r && r.queued) {
+        results.push({ logId: m.id, channel: m.channel, accepted: true });
+      } else if ("notFound" in r) {
+        results.push({ logId: m.id, channel: m.channel, error: "Registo não encontrado" });
+      } else if ("badRequest" in r && r.badRequest) {
+        results.push({ logId: m.id, channel: m.channel, error: r.badRequest.error });
+      } else if ("conflict" in r && r.conflict) {
+        results.push({ logId: m.id, channel: m.channel, error: r.conflict.error });
+      } else {
+        results.push({ logId: m.id, channel: m.channel, error: "Resposta inesperada" });
+      }
+    }
+
+    const acceptedCount = results.filter((x) => x.accepted).length;
+    const refreshed = await this.resolveGroupMembers(projectId, groupId);
+    return {
+      acceptedCount,
+      results,
+      communicationGroup: serializeCommunicationGroupListItem(groupId, refreshed),
     };
   }
 }

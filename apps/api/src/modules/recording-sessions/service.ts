@@ -10,12 +10,33 @@ function normalizeNotes(notes: string | null | undefined): string | null | undef
   return trimmed ? trimmed : null;
 }
 
+const MAX_SESSION_DURATION_MS = 5 * 60 * 60 * 1000;
+
 function parseIsoDate(value: string, fieldName: "startAt" | "endAt") {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return { badRequest: { error: `${fieldName} inválido` } as const };
   }
   return { date };
+}
+
+/** Mesmo dia (componentes locais do instante ISO) e duração ≤ 5h. */
+function validateSessionTimeWindow(start: Date, end: Date): { error: string } | null {
+  if (!(end.getTime() > start.getTime())) {
+    return { error: "endAt deve ser posterior a startAt" };
+  }
+  const duration = end.getTime() - start.getTime();
+  if (duration > MAX_SESSION_DURATION_MS) {
+    return { error: "Duração máxima da sessão é de 5 horas" };
+  }
+  if (
+    start.getFullYear() !== end.getFullYear() ||
+    start.getMonth() !== end.getMonth() ||
+    start.getDate() !== end.getDate()
+  ) {
+    return { error: "Início e fim devem ser no mesmo dia" };
+  }
+  return null;
 }
 
 function normalizedEpisodeIdsCreate(input: RecordingSessionCreateData): string[] {
@@ -53,6 +74,15 @@ export class RecordingSessionsService {
     const castMember = await this.repo.findCastMemberById(input.castMemberId);
     if (!castMember) return { badRequest: { error: "Dublador não encontrado" } as const };
 
+    if (input.recordingTechnicianId) {
+      const technician = await this.repo.findRecordingTechnicianById(input.recordingTechnicianId);
+      if (!technician) {
+        return {
+          badRequest: { error: "Técnico de gravação não encontrado ou inválido" } as const,
+        };
+      }
+    }
+
     const episodeIds = normalizedEpisodeIdsCreate(input);
     for (const eid of episodeIds) {
       const episode = await this.repo.findEpisodeInProject(projectId, eid);
@@ -68,14 +98,14 @@ export class RecordingSessionsService {
     if ("badRequest" in parsedStart) return parsedStart;
     const parsedEnd = parseIsoDate(input.endAt, "endAt");
     if ("badRequest" in parsedEnd) return parsedEnd;
-    if (parsedStart.date >= parsedEnd.date) {
-      return { badRequest: { error: "startAt deve ser menor que endAt" } as const };
-    }
+    const windowErr = validateSessionTimeWindow(parsedStart.date, parsedEnd.date);
+    if (windowErr) return { badRequest: { error: windowErr.error } as const };
 
     const created = await this.repo.createWithEpisodes(
       {
         projectId,
         castMemberId: input.castMemberId,
+        recordingTechnicianId: input.recordingTechnicianId ?? null,
         characterId: input.characterId ?? null,
         title: input.title.trim(),
         startAt: parsedStart.date,
@@ -97,6 +127,14 @@ export class RecordingSessionsService {
       const castMember = await this.repo.findCastMemberById(input.castMemberId);
       if (!castMember) return { badRequest: { error: "Dublador não encontrado" } as const };
     }
+    if (input.recordingTechnicianId !== undefined && input.recordingTechnicianId !== null) {
+      const technician = await this.repo.findRecordingTechnicianById(input.recordingTechnicianId);
+      if (!technician) {
+        return {
+          badRequest: { error: "Técnico de gravação não encontrado ou inválido" } as const,
+        };
+      }
+    }
 
     const replaceEpisodeIds = normalizedEpisodeIdsPatch(input);
     if (replaceEpisodeIds !== undefined) {
@@ -117,12 +155,16 @@ export class RecordingSessionsService {
     if ("badRequest" in parsedStart) return parsedStart;
     const parsedEnd = parseIsoDate(nextEndRaw, "endAt");
     if ("badRequest" in parsedEnd) return parsedEnd;
-    if (parsedStart.date >= parsedEnd.date) {
-      return { badRequest: { error: "startAt deve ser menor que endAt" } as const };
+    if (input.startAt !== undefined || input.endAt !== undefined) {
+      const windowErr = validateSessionTimeWindow(parsedStart.date, parsedEnd.date);
+      if (windowErr) return { badRequest: { error: windowErr.error } as const };
     }
 
     const data: Prisma.RecordingSessionUncheckedUpdateInput = {};
     if (input.castMemberId !== undefined) data.castMemberId = input.castMemberId;
+    if (input.recordingTechnicianId !== undefined) {
+      data.recordingTechnicianId = input.recordingTechnicianId;
+    }
     if (input.characterId !== undefined) data.characterId = input.characterId;
     if (input.title !== undefined) data.title = input.title.trim();
     if (input.startAt !== undefined) data.startAt = parsedStart.date;

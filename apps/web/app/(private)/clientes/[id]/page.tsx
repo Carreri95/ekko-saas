@@ -30,6 +30,11 @@ const STATUS_OPTIONS = [
   { value: "INACTIVE" as const, label: "Inativo", color: "#555" },
 ] as const;
 
+const PAYMENT_METHOD_OPTIONS = [
+  { value: "WIRE_TRANSFER" as const, label: "Wire Transfer" },
+  { value: "WISE" as const, label: "Wise" },
+] as const;
+
 const inputCls =
   "w-full min-h-[36px] rounded-[6px] border border-[#2e2e2e] bg-[#111] px-[10px] py-[7px] text-[13px] text-[#e8e8e8] outline-none placeholder:text-[#505050] focus:border-[#1D9E75] transition-colors";
 const inputErrCls =
@@ -46,6 +51,7 @@ function getDefaults(c: ClientDto): ClientFormInput {
     country: c.country ?? "",
     notes: c.notes ?? "",
     status: c.status,
+    paymentMethod: c.paymentMethod ?? "WIRE_TRANSFER",
   };
 }
 
@@ -126,6 +132,7 @@ export default function ClientEditPage() {
         country: data.country?.trim() ?? "",
         notes: data.notes?.trim() ?? "",
         status: data.status,
+        paymentMethod: data.paymentMethod,
       }),
     });
 
@@ -338,7 +345,7 @@ export default function ClientEditPage() {
                               className={labelCls}
                               htmlFor="edit-email"
                             >
-                              E-mail
+                              E-mail <span className="text-[#E24B4A]">*</span>
                             </label>
                             <input
                               id="edit-email"
@@ -357,7 +364,7 @@ export default function ClientEditPage() {
                               className={labelCls}
                               htmlFor="edit-phone"
                             >
-                              Telefone
+                              Telefone <span className="text-[#E24B4A]">*</span>
                             </label>
                             <Controller
                               name="phone"
@@ -465,7 +472,7 @@ export default function ClientEditPage() {
                       <div className="overflow-hidden rounded-[10px] border border-[#252525] bg-[#1a1a1a]">
                         <div className="border-b border-[#252525] px-[14px] py-[10px]">
                           <span className="text-[12px] font-[600] text-[#e8e8e8]">
-                            País / origem
+                            País / origem <span className="text-[#E24B4A]">*</span>
                           </span>
                         </div>
                         <div className="p-[14px]">
@@ -476,6 +483,33 @@ export default function ClientEditPage() {
                           />
                           {errors.country ? (
                             <p className={errorCls}>{errors.country.message}</p>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="overflow-hidden rounded-[10px] border border-[#252525] bg-[#1a1a1a]">
+                        <div className="border-b border-[#252525] px-[14px] py-[10px]">
+                          <span className="text-[12px] font-[600] text-[#e8e8e8]">
+                            Pagamento
+                          </span>
+                        </div>
+                        <div className="p-[14px]">
+                          <label className={labelCls} htmlFor="edit-payment-method">
+                            Método de pagamento
+                          </label>
+                          <select
+                            id="edit-payment-method"
+                            {...register("paymentMethod")}
+                            className={errors.paymentMethod ? inputErrCls : inputCls}
+                          >
+                            {PAYMENT_METHOD_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          {errors.paymentMethod ? (
+                            <p className={errorCls}>{errors.paymentMethod.message}</p>
                           ) : null}
                         </div>
                       </div>

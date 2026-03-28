@@ -4,9 +4,20 @@ import type { CastMemberFormData, CastMemberPatchData } from "./schemas.js";
 
 const PROJECTS_PAGE_SIZE = 8;
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function normalizePhoneForStorage(input: string | null | undefined): string | null {
   const d = (input ?? "").replace(/\D/g, "").slice(0, 11);
   return d.length === 0 ? null : d;
+}
+
+function normalizeDocumentForStorage(
+  input: string | null | undefined,
+  expectedLength: 11 | 14,
+): string | null {
+  const d = (input ?? "").replace(/\D/g, "");
+  if (d.length !== expectedLength) return null;
+  return d;
 }
 
 export class CastMembersService {
@@ -48,6 +59,9 @@ export class CastMembersService {
           OR: [
             { name: { contains: q, mode: "insensitive" as const } },
             { role: { contains: q, mode: "insensitive" as const } },
+            { cpf: { contains: q } },
+            { cnpj: { contains: q } },
+            { razaoSocial: { contains: q, mode: "insensitive" as const } },
             { specialties: { hasSome: [q] } },
           ],
         }
@@ -102,19 +116,17 @@ export class CastMembersService {
   }
 
   async create(input: CastMemberFormData) {
-    const email = input.email.trim().toLowerCase();
+    const email = input.email;
     const whatsapp = normalizePhoneForStorage(input.whatsapp);
 
-    if (email) {
-      const taken = await this.repo.findByEmail(email);
-      if (taken) {
-        return {
-          conflict: {
-            error: "Este e-mail já está cadastrado para outro dublador",
-            field: "email" as const,
-          },
-        };
-      }
+    const takenEmail = await this.repo.findByEmail(email);
+    if (takenEmail) {
+      return {
+        conflict: {
+          error: "Este e-mail já está cadastrado para outro dublador",
+          field: "email" as const,
+        },
+      };
     }
     if (whatsapp) {
       const taken = await this.repo.findByWhatsapp(whatsapp);
@@ -130,10 +142,14 @@ export class CastMembersService {
 
     const member = await this.repo.create({
       name: input.name.trim(),
-      role: input.role?.trim() || null,
+      role: "DUBLADOR",
+      cpf: normalizeDocumentForStorage(input.cpf, 11)!,
+      cnpj: normalizeDocumentForStorage(input.cnpj, 14)!,
+      razaoSocial: input.razaoSocial.trim(),
       whatsapp,
-      email: email || null,
-      preferredCommunicationChannel: input.preferredCommunicationChannel,
+      email,
+      prefersEmail: true,
+      prefersWhatsapp: true,
       specialties: input.specialties ?? [],
       status: input.manualInactive ? "INACTIVE" : "AVAILABLE",
       notes: input.notes?.trim() || null,
@@ -155,45 +171,79 @@ export class CastMembersService {
     const existing = await this.repo.findById(id);
     if (!existing) return { notFound: true as const };
 
-    if (input.email !== undefined) {
-      const email = input.email.trim().toLowerCase();
-      if (email) {
-        const taken = await this.repo.findByEmail(email, id);
-        if (taken) {
-          return {
-            conflict: {
-              error: "Este e-mail já está cadastrado para outro dublador",
-              field: "email" as const,
-            },
-          };
-        }
+    const nextEmail =
+      input.email !== undefined
+        ? input.email
+        : existing.email
+          ? existing.email.trim().toLowerCase()
+          : null;
+    const nextWhatsapp =
+      input.whatsapp !== undefined
+        ? normalizePhoneForStorage(input.whatsapp)
+        : existing.whatsapp;
+
+    const emailTrim = (nextEmail ?? "").trim();
+    if (!emailTrim || !EMAIL_RE.test(emailTrim)) {
+      return {
+        badRequest: { error: "E-mail é obrigatório e deve ser válido" } as const,
+      };
+    }
+    const waDigits = (nextWhatsapp ?? "").replace(/\D/g, "");
+    if (waDigits.length < 10 || waDigits.length > 11) {
+      return {
+        badRequest: {
+          error: "WhatsApp é obrigatório (DDD + número, 10 ou 11 dígitos)",
+        } as const,
+      };
+    }
+
+    const nextCpf = input.cpf !== undefined ? input.cpf : existing.cpf;
+    const nextCnpj = input.cnpj !== undefined ? input.cnpj : existing.cnpj;
+    const nextRazao =
+      input.razaoSocial !== undefined
+        ? input.razaoSocial.trim()
+        : (existing.razaoSocial ?? "");
+    if (!nextCpf || !nextCnpj || !nextRazao) {
+      return {
+        badRequest: { error: "CPF, CNPJ e razão social são obrigatórios" } as const,
+      };
+    }
+
+    if (emailTrim && emailTrim !== (existing.email ?? "").toLowerCase()) {
+      const taken = await this.repo.findByEmail(emailTrim, id);
+      if (taken) {
+        return {
+          conflict: {
+            error: "Este e-mail já está cadastrado para outro dublador",
+            field: "email" as const,
+          },
+        };
       }
     }
-    if (input.whatsapp !== undefined) {
-      const whatsapp = normalizePhoneForStorage(input.whatsapp);
-      if (whatsapp) {
-        const taken = await this.repo.findByWhatsapp(whatsapp, id);
-        if (taken) {
-          return {
-            conflict: {
-              error: "Este WhatsApp já está cadastrado para outro dublador",
-              field: "whatsapp" as const,
-            },
-          };
-        }
+    if (nextWhatsapp && nextWhatsapp !== existing.whatsapp) {
+      const taken = await this.repo.findByWhatsapp(nextWhatsapp, id);
+      if (taken) {
+        return {
+          conflict: {
+            error: "Este WhatsApp já está cadastrado para outro dublador",
+            field: "whatsapp" as const,
+          },
+        };
       }
     }
 
     await this.repo.update(id, {
       ...(input.name !== undefined ? { name: input.name.trim() } : {}),
-      ...(input.role !== undefined ? { role: input.role?.trim() || null } : {}),
-      ...(input.whatsapp !== undefined ? { whatsapp: normalizePhoneForStorage(input.whatsapp) } : {}),
-      ...(input.email !== undefined
-        ? { email: input.email.trim() ? input.email.trim().toLowerCase() : null }
+      role: "DUBLADOR",
+      ...(input.cpf !== undefined ? { cpf: normalizeDocumentForStorage(input.cpf, 11) } : {}),
+      ...(input.cnpj !== undefined ? { cnpj: normalizeDocumentForStorage(input.cnpj, 14) } : {}),
+      ...(input.razaoSocial !== undefined
+        ? { razaoSocial: input.razaoSocial.trim() || null }
         : {}),
-      ...(input.preferredCommunicationChannel !== undefined
-        ? { preferredCommunicationChannel: input.preferredCommunicationChannel }
-        : {}),
+      ...(input.whatsapp !== undefined ? { whatsapp: nextWhatsapp } : {}),
+      ...(input.email !== undefined ? { email: emailTrim } : {}),
+      prefersEmail: true,
+      prefersWhatsapp: true,
       ...(input.specialties !== undefined ? { specialties: input.specialties } : {}),
       ...(input.manualInactive !== undefined
         ? { status: input.manualInactive ? "INACTIVE" : "AVAILABLE" }

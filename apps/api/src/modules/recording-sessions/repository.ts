@@ -3,6 +3,7 @@ import { prisma } from "../../infrastructure/db/prisma.client.js";
 
 export const recordingSessionFullInclude = {
   castMember: { select: { id: true, name: true, role: true } },
+  recordingTechnician: { select: { id: true, name: true, role: true } },
   sessionEpisodes: {
     orderBy: { episode: { number: "asc" as const } },
     include: {
@@ -23,6 +24,13 @@ export class RecordingSessionsRepository {
 
   findCastMemberById(castMemberId: string) {
     return prisma.castMember.findUnique({ where: { id: castMemberId }, select: { id: true } });
+  }
+
+  findRecordingTechnicianById(recordingTechnicianId: string) {
+    return prisma.collaborator.findFirst({
+      where: { id: recordingTechnicianId, role: "RECORDING_TECHNICIAN" },
+      select: { id: true },
+    });
   }
 
   findEpisodeInProject(projectId: string, episodeId: string) {

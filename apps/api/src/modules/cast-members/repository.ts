@@ -59,9 +59,13 @@ export class CastMembersRepository {
   create(data: {
     name: string;
     role: string | null;
+    cpf: string | null;
+    cnpj: string | null;
+    razaoSocial: string | null;
     whatsapp: string | null;
     email: string | null;
-    preferredCommunicationChannel: "EMAIL" | "WHATSAPP" | null;
+    prefersEmail: boolean;
+    prefersWhatsapp: boolean;
     specialties: string[];
     status: "AVAILABLE" | "BUSY" | "INACTIVE";
     notes: string | null;
@@ -74,9 +78,13 @@ export class CastMembersRepository {
     data: Partial<{
       name: string;
       role: string | null;
+      cpf: string | null;
+      cnpj: string | null;
+      razaoSocial: string | null;
       whatsapp: string | null;
       email: string | null;
-      preferredCommunicationChannel: "EMAIL" | "WHATSAPP" | null;
+      prefersEmail: boolean;
+      prefersWhatsapp: boolean;
       specialties: string[];
       status: "AVAILABLE" | "BUSY" | "INACTIVE";
       notes: string | null;

@@ -8,6 +8,7 @@ import type { CommunicationLogFull } from "./repository.js";
 export function serializeCommunicationLog(row: CommunicationLogFull) {
   return {
     id: row.id,
+    communicationGroupId: row.communicationGroupId ?? null,
     dubbingProjectId: row.dubbingProjectId,
     channel: row.channel as CommunicationChannel,
     direction: row.direction as CommunicationDirection,

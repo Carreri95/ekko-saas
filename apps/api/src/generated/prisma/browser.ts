@@ -113,6 +113,11 @@ export type RecordingSession = Prisma.RecordingSessionModel
  */
 export type CommunicationLog = Prisma.CommunicationLogModel
 /**
+ * Model Collaborator
+ * 
+ */
+export type Collaborator = Prisma.CollaboratorModel
+/**
  * Model RecordingSessionEpisode
  * Liga sessão de gravação a um ou mais episódios (N:N).
  */
